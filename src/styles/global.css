@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --paper: #f6f6f5;
+  --paper-2: #ecece9;
+  --card-bg: #ffffff;
+  --ink: #2d3142;
+  --muted: #4f5d75;
+  --soft: #7a8399;
+  --rule: rgba(45, 49, 66, 0.12);
+  --accent: #eb6c36;
+  --accent-tint: rgba(235, 108, 54, 0.08);
+  --dot-color: rgba(79, 93, 117, 0.15);
+
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+[data-theme="dark"] {
+  --paper: #111318;
+  --paper-2: #181b22;
+  --card-bg: #1a1e27;
+  --ink: #e8eaee;
+  --muted: #9ba3b4;
+  --soft: #677186;
+  --rule: rgba(255, 255, 255, 0.09);
+  --accent: #ff7d47;
+  --accent-tint: rgba(255, 125, 71, 0.14);
+  --dot-color: rgba(255, 255, 255, 0.06);
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.container {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Typography styles */
+.serif-title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.mono-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}

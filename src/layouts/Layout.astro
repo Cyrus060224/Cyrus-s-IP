@@ -1,0 +1,219 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Cyrus · 数字大本营",
+  description = "探索系统底层、AI 智能体与技术美学的交汇处。Cyrus 的个人独立站点与思考沉淀。"
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <script is:inline>
+      // Persistent theme init
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a href="/" class="brand">
+          <span class="brand-avatar">C</span>
+          <span class="brand-name">Cyrus</span>
+          <span class="brand-badge">IP</span>
+        </a>
+        
+        <nav class="nav">
+          <a href="/" class="nav-link">首页</a>
+          <a href="/#posts" class="nav-link">文章</a>
+          <a href="/about" class="nav-link">关于</a>
+          <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="nav-link">GitHub</a>
+          
+          <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">
+            <span class="icon-sun">☼</span>
+            <span class="icon-moon">☽</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div class="footer-meta">
+          <p class="mono-eyebrow">© 2026 CYRUS · CRAFTED WITH ASTRO &amp; CLOUDFLARE</p>
+          <p class="footer-desc">视觉设计规范基于 diagram-design · 追求极简与深度思考</p>
+        </div>
+        <div class="footer-links">
+          <a href="https://github.com/Cyrus060224/Cyrus-s-IP" target="_blank" rel="noreferrer">Source Code</a>
+          <span>·</span>
+          <a href="/">RSS</a>
+        </div>
+      </div>
+    </footer>
+
+    <script is:inline>
+      const toggle = document.getElementById('theme-toggle');
+      toggle?.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme') || 'light';
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid var(--rule);
+    padding: 1.25rem 0;
+    backdrop-filter: blur(8px);
+    background: rgba(246, 246, 245, 0.85);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  :global([data-theme="dark"]) .site-header {
+    background: rgba(17, 19, 24, 0.85);
+  }
+
+  .header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .brand-avatar {
+    width: 28px;
+    height: 28px;
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: var(--font-mono);
+  }
+
+  .brand-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  .brand-badge {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--accent-tint);
+    color: var(--accent);
+    border: 1px solid rgba(235, 108, 54, 0.25);
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .nav-link {
+    transition: color 0.15s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--ink);
+  }
+
+  .theme-btn {
+    border: 1px solid var(--rule);
+    background: var(--card-bg);
+    color: var(--muted);
+    border-radius: 20px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.15s ease;
+  }
+
+  .theme-btn:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+
+  .icon-moon { display: none; }
+  :global([data-theme="dark"]) .icon-sun { display: none; }
+  :global([data-theme="dark"]) .icon-moon { display: inline; }
+
+  .main-content {
+    padding: 3rem 0 5rem;
+  }
+
+  .site-footer {
+    border-top: 1px solid var(--rule);
+    padding: 3rem 0;
+    color: var(--soft);
+    font-size: 0.85rem;
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-desc {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+
+  .footer-links a:hover {
+    color: var(--ink);
+  }
+</style>

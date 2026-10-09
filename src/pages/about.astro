@@ -1,0 +1,128 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout 
+  title="关于 Cyrus · 个人数字大本营"
+  description="了解 Cyrus：背景、关注方向与联系方式。"
+>
+  <div class="container about-container">
+    <header class="about-header">
+      <div class="mono-eyebrow">ABOUT · CYRUS</div>
+      <h1 class="serif-title about-title">关于我</h1>
+      <p class="about-lead">
+        热爱技术、探索系统边界与审美表达的独立思考者。
+      </p>
+    </header>
+
+    <div class="about-body">
+      <section class="about-section">
+        <h2>我是谁？</h2>
+        <p>
+          你好，我是 <strong>Cyrus</strong>。我长期关注计算机系统底层、软硬件交互机制、前沿 AI 智能体（Agent）架构以及数字化个人品牌建设。
+        </p>
+        <p>
+          在日常生活中，我习惯通过动手实践去探究技术的本质——无论是拆解像 AnyPS5 这样的免模拟二进制重链接黑科技，还是尝试让大模型遵循严格的视觉语法绘制专业架构图。我深信：<strong>只有动手构建，才是最深刻的理解（What I cannot create, I do not understand）。</strong>
+        </p>
+      </section>
+
+      <section class="about-section">
+        <h2>关注与探索领域</h2>
+        <ul>
+          <li><strong>自主 AI 智能体（Autonomous Agents）</strong>：记忆中枢、任务规划、工具调用沙盒与人机协同对齐。</li>
+          <li><strong>系统底层与跨平台技术</strong>：二进制可执行文件格式（ELF/PE）、架构兼容层与高效运行机制。</li>
+          <li><strong>数字美学与视觉呈现</strong>：拒绝庸俗的 AI 生成垃圾，追求以最高质感的信息图表和文字表达思想。</li>
+        </ul>
+      </section>
+
+      <section class="about-section">
+        <h2>如何找到我？</h2>
+        <p>如果你想交流技术、探讨想法或有合作意向，可以通过以下方式与我取得联系：</p>
+        <div class="contact-links">
+          <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="contact-item">
+            <span class="contact-label">GitHub</span>
+            <span class="contact-value">@Cyrus060224 ↗</span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .about-container {
+    max-width: 720px;
+  }
+
+  .about-header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .about-title {
+    font-size: clamp(2rem, 3.5vw + 1rem, 2.75rem);
+    margin: 0.8rem 0 0.5rem;
+    color: var(--ink);
+  }
+
+  .about-lead {
+    font-size: 1.15rem;
+    color: var(--muted);
+  }
+
+  .about-body h2 {
+    font-family: var(--font-serif);
+    font-size: 1.6rem;
+    font-weight: 400;
+    margin: 2rem 0 0.75rem;
+    color: var(--ink);
+  }
+
+  .about-body p {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    margin-bottom: 1.25rem;
+    color: var(--ink);
+  }
+
+  .about-body ul {
+    margin-bottom: 1.5rem;
+    padding-left: 1.25rem;
+  }
+
+  .about-body li {
+    margin-bottom: 0.5rem;
+    font-size: 1.02rem;
+    line-height: 1.65;
+  }
+
+  .contact-links {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .contact-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    padding: 0.85rem 1.25rem;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    transition: all 0.15s ease;
+  }
+
+  .contact-item:hover {
+    border-color: var(--ink);
+    transform: translateY(-1px);
+  }
+
+  .contact-value {
+    color: var(--accent);
+  }
+</style>

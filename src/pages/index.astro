@@ -1,0 +1,312 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout 
+  title="Cyrus · 数字大本营"
+  description="探索系统底层、AI 智能体与技术美学的交汇处。Cyrus 的个人独立站点与思考沉淀。"
+>
+  <div class="container home-container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="mono-eyebrow">DIGITAL GARDEN · BUILD IN PUBLIC</div>
+      <h1 class="serif-title hero-title">
+        在喧嚣与代码之中，<br/>
+        构建属于自己的数字主权领地。
+      </h1>
+      <p class="hero-desc">
+        你好，我是 <strong>Cyrus</strong>。我热衷于探索系统底层架构、自主 AI 智能体以及具有杂志级质感的技术表达。这里是我的数字大本营，记录我从 0 到 1 的每一次思考与工程实践。
+      </p>
+
+      <div class="hero-actions">
+        <a href="#posts" class="btn btn-primary">阅读文章 ↓</a>
+        <a href="/about" class="btn btn-secondary">关于我</a>
+        <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="btn btn-ghost">GitHub ↗</a>
+      </div>
+    </section>
+
+    <!-- Featured Post Section -->
+    <section id="posts" class="posts-section">
+      <div class="section-header">
+        <h2 class="section-title">精选文章 / Writing</h2>
+        <span class="mono-eyebrow">LATEST ESSAYS</span>
+      </div>
+
+      <div class="post-cards">
+        <a href="/posts/building-my-digital-garden" class="featured-card">
+          <div class="card-top">
+            <span class="badge">创刊号 · DEBUT</span>
+            <span class="post-date">2026-10-09</span>
+          </div>
+
+          <h3 class="card-title">从零开始：构建我的个人数字大本营与视觉系统</h3>
+          
+          <p class="card-excerpt">
+            在算法推荐与碎片化信息充斥的时代，我为什么依然坚持搭建一个独立网站？记录我如何利用 Astro、Cloudflare 以及一套克制的“编辑级视觉系统”，从零打造属于自己的技术主权阵地。
+          </p>
+
+          <div class="card-preview-thumb">
+            <img src="/images/ai_agent_workflow.png" alt="AI Agent 工作流预览" />
+          </div>
+
+          <div class="card-footer">
+            <div class="tags">
+              <span class="tag">Build in Public</span>
+              <span class="tag">Astro</span>
+              <span class="tag">Cloudflare</span>
+              <span class="tag">diagram-design</span>
+            </div>
+            <span class="read-more">阅读全文 →</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Core Pillars / Philosophy -->
+    <section class="pillars-section">
+      <div class="section-header">
+        <h2 class="section-title">创作基准 / Principles</h2>
+        <span class="mono-eyebrow">CORE VALUES</span>
+      </div>
+
+      <div class="pillars-grid">
+        <div class="pillar-card">
+          <div class="pillar-num">01</div>
+          <h3>数字主权</h3>
+          <p>拒绝被平台算法与信息茧房绑架。独立博客是永不过期的思想自留地，为自己沉淀真正属于个人的长期数字资产。</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-num">02</div>
+          <h3>克制审美</h3>
+          <p>好的技术表达需要对等的视觉审美。摒弃浮夸的阴影与 AI 塑料感，坚持以 4/10 的克制密度呈现杂志级清晰结构。</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-num">03</div>
+          <h3>人机协同</h3>
+          <p>与前沿 AI Agent 结对共创，不只让 AI 停留在文本对话，而是将其融入架构设计、图表绘制与自动化落地的全流程。</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .home-container {
+    padding-top: 1.5rem;
+  }
+
+  .hero-section {
+    padding-bottom: 4rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .hero-title {
+    font-size: clamp(2.2rem, 4vw + 1.2rem, 3.4rem);
+    margin: 1.2rem 0 1.5rem;
+    color: var(--ink);
+  }
+
+  .hero-desc {
+    max-width: 62ch;
+    font-size: 1.15rem;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1.4rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+  }
+  .btn-secondary:hover {
+    border-color: var(--ink);
+  }
+
+  .btn-ghost {
+    color: var(--muted);
+  }
+  .btn-ghost:hover {
+    color: var(--ink);
+  }
+
+  .posts-section, .pillars-section {
+    padding: 4rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 2rem;
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 1.85rem;
+    font-weight: 400;
+    color: var(--ink);
+  }
+
+  .featured-card {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 2rem;
+    transition: all 0.2s ease;
+  }
+
+  .featured-card:hover {
+    border-color: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+
+  .badge {
+    background: var(--accent-tint);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .post-date {
+    color: var(--soft);
+  }
+
+  .card-title {
+    font-size: 1.45rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--ink);
+    line-height: 1.35;
+  }
+
+  .card-excerpt {
+    font-size: 0.95rem;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-preview-thumb {
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--paper-2);
+  }
+
+  .card-preview-thumb img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.85rem;
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--soft);
+    background: var(--paper-2);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .read-more {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .pillar-card {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .pillar-num {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .pillar-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .pillar-card p {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .pillars-grid { grid-template-columns: 1fr; }
+  }
+</style>
