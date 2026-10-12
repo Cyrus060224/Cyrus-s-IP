@@ -1,0 +1,319 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { getCategoryMeta } from '../../utils/categories';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  return posts.map(post => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+const category = getCategoryMeta(post.data.category);
+
+const formattedDate = new Intl.DateTimeFormat('zh-CN', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+}).format(post.data.pubDate);
+---
+
+<Layout 
+  title={`${post.data.title} · Cyrus`}
+  description={post.data.description}
+>
+  <article class="container post-container">
+    <!-- Breadcrumb & Category -->
+    <nav class="breadcrumb">
+      <a href="/">首页</a>
+      <span class="sep">/</span>
+      <a href="/posts">文章</a>
+      <span class="sep">/</span>
+      <a href={`/posts?category=${category.id}`} class="cat-link" style={`color: ${category.badgeColor}`}>
+        {category.name}
+      </a>
+    </nav>
+
+    <!-- Post Header -->
+    <header class="post-header">
+      <div class="post-badges">
+        <span class="cat-badge" style={`background: ${category.badgeBg}; color: ${category.badgeColor}`}>
+          {category.name}
+        </span>
+        <time class="post-date" datetime={post.data.pubDate.toISOString()}>{formattedDate}</time>
+      </div>
+
+      <h1 class="serif-title post-title">{post.data.title}</h1>
+      <p class="post-lead">{post.data.description}</p>
+
+      {post.data.tags && post.data.tags.length > 0 && (
+        <div class="post-tags">
+          {post.data.tags.map((tag: string) => (
+            <a href={`/posts?tag=${encodeURIComponent(tag)}`} class="tag-pill">
+              #{tag}
+            </a>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <!-- Post Body -->
+    <div class="post-body markdown-body">
+      <Content />
+    </div>
+
+    <!-- Post Footer -->
+    <footer class="post-footer">
+      <div class="author-card">
+        <div class="author-avatar">C</div>
+        <div class="author-info">
+          <h4>Cyrus</h4>
+          <p>独立探索者 · 专注于系统底层、AI 智能体工程与高品质技术表达。</p>
+        </div>
+      </div>
+
+      <div class="footer-nav">
+        <a href="/posts" class="back-link">← 返回全部文章与分类</a>
+      </div>
+    </footer>
+  </article>
+</Layout>
+
+<style>
+  .post-container {
+    max-width: 760px;
+    padding-top: 1rem;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--soft);
+    margin-bottom: 2rem;
+  }
+
+  .breadcrumb .sep {
+    opacity: 0.5;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--ink);
+  }
+
+  .post-header {
+    margin-bottom: 2.75rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .post-badges {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .cat-badge {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+
+  .post-date {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--soft);
+  }
+
+  .post-title {
+    font-size: clamp(2rem, 3.5vw + 1rem, 2.75rem);
+    margin-bottom: 1.25rem;
+    color: var(--ink);
+    line-height: 1.25;
+  }
+
+  .post-lead {
+    font-size: 1.125rem;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag-pill {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    background: var(--paper-2);
+    color: var(--soft);
+    padding: 2px 8px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+  }
+
+  .tag-pill:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+
+  /* Markdown body typography */
+  .post-body {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--ink);
+  }
+
+  .post-body :global(h2) {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    margin: 3rem 0 1rem;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .post-body :global(h3) {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 2rem 0 0.75rem;
+    color: var(--ink);
+  }
+
+  .post-body :global(p) {
+    margin-bottom: 1.5rem;
+  }
+
+  .post-body :global(ul), .post-body :global(ol) {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .post-body :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .post-body :global(hr) {
+    border: none;
+    border-top: 1px dashed var(--rule);
+    margin: 3rem 0;
+  }
+
+  .post-body :global(blockquote) {
+    border-left: 3px solid var(--accent);
+    background: var(--card-bg);
+    padding: 1rem 1.25rem;
+    margin: 2rem 0;
+    border-radius: 0 6px 6px 0;
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    color: var(--muted);
+  }
+
+  .post-body :global(blockquote p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .post-body :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--rule);
+    margin: 2rem 0 0.5rem;
+    display: block;
+  }
+
+  .post-body :global(em) {
+    font-style: italic;
+  }
+
+  .post-body :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--paper-2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--rule);
+  }
+
+  .post-body :global(pre) {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    padding: 1.25rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 2rem 0;
+  }
+
+  .post-body :global(pre code) {
+    background: none;
+    padding: 0;
+    border: none;
+  }
+
+  .post-footer {
+    margin-top: 4.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .author-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+  }
+
+  .author-info h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .author-info p {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .footer-nav {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  .back-link {
+    color: var(--accent);
+  }
+</style>

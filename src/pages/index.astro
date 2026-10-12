@@ -1,5 +1,15 @@
 ---
+import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
+import { CATEGORIES, getCategoryMeta } from '../utils/categories';
+
+const allPosts = await getCollection('posts');
+const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// Featured post (or the newest one)
+const featuredPost = sortedPosts.find(p => p.data.featured) || sortedPosts[0];
+// Other posts
+const otherPosts = sortedPosts.filter(p => p.id !== featuredPost?.id).slice(0, 4);
 ---
 
 <Layout 
@@ -19,48 +29,112 @@ import Layout from '../layouts/Layout.astro';
       </p>
 
       <div class="hero-actions">
-        <a href="#posts" class="btn btn-primary">阅读文章 ↓</a>
+        <a href="/posts" class="btn btn-primary">浏览文章库 →</a>
         <a href="/about" class="btn btn-secondary">关于我</a>
         <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="btn btn-ghost">GitHub ↗</a>
+      </div>
+
+      <!-- Quick Category Nav Pills -->
+      <div class="hero-categories">
+        <span class="cat-label">常设专栏：</span>
+        <div class="cat-pill-list">
+          {Object.values(CATEGORIES).map(cat => (
+            <a href={`/posts?category=${cat.id}`} class="hero-cat-pill">
+              <span class="pill-dot" style={`background: ${cat.badgeColor}`}></span>
+              {cat.name}
+            </a>
+          ))}
+        </div>
       </div>
     </section>
 
     <!-- Featured Post Section -->
-    <section id="posts" class="posts-section">
-      <div class="section-header">
-        <h2 class="section-title">精选文章 / Writing</h2>
-        <span class="mono-eyebrow">LATEST ESSAYS</span>
-      </div>
+    {featuredPost && (
+      <section class="featured-section">
+        <div class="section-header">
+          <h2 class="section-title">置顶推荐 / Featured</h2>
+          <span class="mono-eyebrow">EDITOR'S PICK</span>
+        </div>
 
-      <div class="post-cards">
-        <a href="/posts/building-my-digital-garden" class="featured-card">
-          <div class="card-top">
-            <span class="badge">创刊号 · DEBUT</span>
-            <span class="post-date">2026-10-09</span>
-          </div>
+        {(() => {
+          const cat = getCategoryMeta(featuredPost.data.category);
+          const formattedDate = new Intl.DateTimeFormat('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          }).format(featuredPost.data.pubDate);
 
-          <h3 class="card-title">从零开始：构建我的个人数字大本营与视觉系统</h3>
-          
-          <p class="card-excerpt">
-            在算法推荐与碎片化信息充斥的时代，我为什么依然坚持搭建一个独立网站？记录我如何利用 Astro、Cloudflare 以及一套克制的“编辑级视觉系统”，从零打造属于自己的技术主权阵地。
-          </p>
+          return (
+            <a href={`/posts/${featuredPost.id}`} class="featured-card">
+              <div class="card-top">
+                <span class="badge" style={`background: ${cat.badgeBg}; color: ${cat.badgeColor}`}>
+                  {cat.name}
+                </span>
+                <span class="post-date">{formattedDate}</span>
+              </div>
 
-          <div class="card-preview-thumb">
-            <img src="/images/ai_agent_workflow.png" alt="AI Agent 工作流预览" />
-          </div>
+              <h3 class="card-title">{featuredPost.data.title}</h3>
+              
+              <p class="card-excerpt">{featuredPost.data.description}</p>
 
-          <div class="card-footer">
-            <div class="tags">
-              <span class="tag">Build in Public</span>
-              <span class="tag">Astro</span>
-              <span class="tag">Cloudflare</span>
-              <span class="tag">diagram-design</span>
-            </div>
-            <span class="read-more">阅读全文 →</span>
-          </div>
-        </a>
-      </div>
-    </section>
+              {featuredPost.data.heroImage && (
+                <div class="card-preview-thumb">
+                  <img src={featuredPost.data.heroImage} alt={featuredPost.data.title} />
+                </div>
+              )}
+
+              <div class="card-footer">
+                <div class="tags">
+                  {featuredPost.data.tags?.map((t: string) => (
+                    <span class="tag">#{t}</span>
+                  ))}
+                </div>
+                <span class="read-more">阅读全文 →</span>
+              </div>
+            </a>
+          );
+        })()}
+      </section>
+    )}
+
+    <!-- Recent Posts Stream -->
+    {otherPosts.length > 0 && (
+      <section class="recent-posts-section">
+        <div class="section-header">
+          <h2 class="section-title">最新记录 / Recent Posts</h2>
+          <a href="/posts" class="view-all-link">查看全部文章 ({sortedPosts.length}) →</a>
+        </div>
+
+        <div class="recent-grid">
+          {otherPosts.map(post => {
+            const cat = getCategoryMeta(post.data.category);
+            const formattedDate = new Intl.DateTimeFormat('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).format(post.data.pubDate);
+
+            return (
+              <a href={`/posts/${post.id}`} class="recent-card">
+                <div class="recent-meta">
+                  <span class="recent-cat" style={`color: ${cat.badgeColor}`}>
+                    {cat.name}
+                  </span>
+                  <time class="recent-date">{formattedDate}</time>
+                </div>
+                <h4 class="recent-title">{post.data.title}</h4>
+                <p class="recent-excerpt">{post.data.description}</p>
+                <div class="recent-tags">
+                  {post.data.tags?.slice(0, 3).map((t: string) => (
+                    <span class="mini-tag">#{t}</span>
+                  ))}
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    )}
 
     <!-- Core Pillars / Philosophy -->
     <section class="pillars-section">
@@ -84,8 +158,8 @@ import Layout from '../layouts/Layout.astro';
 
         <div class="pillar-card">
           <div class="pillar-num">03</div>
-          <h3>人机协同</h3>
-          <p>与前沿 AI Agent 结对共创，不只让 AI 停留在文本对话，而是将其融入架构设计、图表绘制与自动化落地的全流程。</p>
+          <h3>多元共存</h3>
+          <p>硬核的技术造物与细腻的旷野游记并不冲突。代码是理性的骨架，文字与摄影是感性的血肉，二者共同构成丰满的个人 IP。</p>
         </div>
       </div>
     </section>
@@ -98,7 +172,7 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .hero-section {
-    padding-bottom: 4rem;
+    padding-bottom: 3.5rem;
     border-bottom: 1px solid var(--rule);
   }
 
@@ -121,6 +195,7 @@ import Layout from '../layouts/Layout.astro';
     align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
+    margin-bottom: 2rem;
   }
 
   .btn {
@@ -159,8 +234,57 @@ import Layout from '../layouts/Layout.astro';
     color: var(--ink);
   }
 
-  .posts-section, .pillars-section {
-    padding: 4rem 0;
+  /* Quick Category Nav */
+  .hero-categories {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--rule);
+    font-size: 0.85rem;
+  }
+
+  .cat-label {
+    font-family: var(--font-mono);
+    color: var(--soft);
+    font-size: 0.75rem;
+  }
+
+  .cat-pill-list {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-cat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    transition: all 0.15s ease;
+  }
+
+  .hero-cat-pill:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+    transform: translateY(-1px);
+  }
+
+  .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  /* Section Common */
+  .featured-section, .recent-posts-section, .pillars-section {
+    padding: 3.5rem 0;
     border-bottom: 1px solid var(--rule);
   }
 
@@ -178,6 +302,13 @@ import Layout from '../layouts/Layout.astro';
     color: var(--ink);
   }
 
+  .view-all-link {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--accent);
+  }
+
+  /* Featured Post Card */
   .featured-card {
     display: block;
     background: var(--card-bg);
@@ -203,8 +334,6 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .badge {
-    background: var(--accent-tint);
-    color: var(--accent);
     padding: 2px 8px;
     border-radius: 4px;
     font-weight: 600;
@@ -273,6 +402,80 @@ import Layout from '../layouts/Layout.astro';
     font-weight: 500;
   }
 
+  /* Recent Posts Grid */
+  .recent-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .recent-card {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+  }
+
+  .recent-card:hover {
+    border-color: var(--ink);
+    transform: translateY(-2px);
+  }
+
+  .recent-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .recent-cat {
+    font-weight: 600;
+  }
+
+  .recent-date {
+    color: var(--soft);
+  }
+
+  .recent-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+
+  .recent-excerpt {
+    font-size: 0.86rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .recent-tags {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .mini-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--soft);
+    background: var(--paper-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* Pillars */
   .pillars-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -307,6 +510,7 @@ import Layout from '../layouts/Layout.astro';
   }
 
   @media (max-width: 768px) {
+    .recent-grid { grid-template-columns: 1fr; }
     .pillars-grid { grid-template-columns: 1fr; }
   }
 </style>
