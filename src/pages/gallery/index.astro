@@ -1,0 +1,534 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+
+const allMedia = await getCollection('gallery');
+// Sort by date descending
+const items = allMedia.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const categoryMap: Record<string, { label: string; color: string }> = {
+  travel: { label: '旅行足迹', color: '#2a9d8f' },
+  film: { label: '胶片日记', color: '#eb6c36' },
+  video: { label: '视频动效', color: '#3b82f6' },
+  life: { label: '生活切片', color: '#805ad5' },
+};
+---
+
+<Layout 
+  title="光影画廊 · Moments · Cyrus"
+  description="Cyrus 的旅行摄影、胶片日记、视频作品与日常光影记录。"
+>
+  <div class="container gallery-container">
+    <header class="gallery-header">
+      <div class="mono-eyebrow">VISUAL LOG · 光影画廊 · MOMENTS</div>
+      <h1 class="serif-title gallery-title">光影、远行与瞬息之间</h1>
+      <p class="gallery-desc">
+        高原上的寒风暮色、街头的胶片颗粒，以及代码渲染的动效帧率。在严密的逻辑之外，用镜头和快门记录真实世界的呼吸与温度。
+      </p>
+    </header>
+
+    <!-- Filter Tabs -->
+    <div class="gallery-tabs">
+      <button class="gallery-tab active" data-filter="all">全部 ({items.length})</button>
+      <button class="gallery-tab" data-filter="travel">旅行足迹</button>
+      <button class="gallery-tab" data-filter="film">胶片日记</button>
+      <button class="gallery-tab" data-filter="video">视频动效</button>
+      <button class="gallery-tab" data-filter="life">生活切片</button>
+    </div>
+
+    <!-- Masonry Grid -->
+    <div class="gallery-grid">
+      {items.map(item => {
+        const cat = categoryMap[item.data.category] || { label: item.data.category, color: '#666' };
+        const isVideo = item.data.type === 'video';
+        const formattedDate = new Intl.DateTimeFormat('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(item.data.date);
+
+        return (
+          <div 
+            class="gallery-item"
+            data-category={item.data.category}
+            data-type={item.data.type}
+            data-title={item.data.title}
+            data-desc={item.data.description || ''}
+            data-media={item.data.mediaUrl}
+            data-location={item.data.location || ''}
+            data-camera={item.data.camera || ''}
+            data-date={formattedDate}
+          >
+            <div class="media-wrapper">
+              {isVideo ? (
+                <div class="video-preview-box">
+                  <video src={item.data.mediaUrl} muted loop playsinline preload="metadata" class="media-thumb"></video>
+                  <div class="video-badge">▶ 视频动效</div>
+                </div>
+              ) : (
+                <img 
+                  src={item.data.mediaUrl} 
+                  alt={item.data.title} 
+                  loading="lazy" 
+                  class="media-thumb" 
+                />
+              )}
+              
+              <div class="media-overlay">
+                <div class="overlay-top">
+                  <span class="cat-pill" style={`background: ${cat.color}22; color: ${cat.color}; border: 1px solid ${cat.color}44;`}>
+                    {cat.label}
+                  </span>
+                  <time class="meta-date">{formattedDate}</time>
+                </div>
+
+                <div class="overlay-bottom">
+                  <h3 class="item-title">{item.data.title}</h3>
+                  {item.data.location && (
+                    <div class="meta-row location">
+                      <span>📍</span> {item.data.location}
+                    </div>
+                  )}
+                  {item.data.camera && (
+                    <div class="meta-row camera">
+                      <span>📷</span> {item.data.camera}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div id="lightbox" class="lightbox" aria-hidden="true">
+    <div class="lightbox-backdrop"></div>
+    <div class="lightbox-dialog">
+      <button class="lightbox-close" aria-label="关闭">&times;</button>
+      
+      <div class="lightbox-content">
+        <div id="lightbox-media-container" class="lightbox-media-container"></div>
+        
+        <div class="lightbox-info">
+          <div class="lightbox-header-row">
+            <h2 id="lightbox-title" class="lightbox-title"></h2>
+            <span id="lightbox-date" class="lightbox-date"></span>
+          </div>
+
+          <p id="lightbox-desc" class="lightbox-desc"></p>
+
+          <div class="lightbox-exif">
+            <div id="lightbox-location" class="exif-item"></div>
+            <div id="lightbox-camera" class="exif-item"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script is:inline>
+  function initGallery() {
+    // 1. Filter tabs logic
+    const tabs = document.querySelectorAll('.gallery-tab');
+    const items = document.querySelectorAll('.gallery-item');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const filter = tab.getAttribute('data-filter');
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        items.forEach(item => {
+          const itemCat = item.getAttribute('data-category');
+          if (filter === 'all' || itemCat === filter) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // 2. Lightbox logic
+    const lightbox = document.getElementById('lightbox');
+    const backdrop = document.querySelector('.lightbox-backdrop');
+    const closeBtn = document.querySelector('.lightbox-close');
+    const mediaContainer = document.getElementById('lightbox-media-container');
+    const titleEl = document.getElementById('lightbox-title');
+    const descEl = document.getElementById('lightbox-desc');
+    const dateEl = document.getElementById('lightbox-date');
+    const locationEl = document.getElementById('lightbox-location');
+    const cameraEl = document.getElementById('lightbox-camera');
+
+    function openLightbox(item) {
+      const type = item.getAttribute('data-type');
+      const media = item.getAttribute('data-media');
+      const title = item.getAttribute('data-title');
+      const desc = item.getAttribute('data-desc');
+      const date = item.getAttribute('data-date');
+      const loc = item.getAttribute('data-location');
+      const cam = item.getAttribute('data-camera');
+
+      // Populate media
+      if (type === 'video') {
+        mediaContainer.innerHTML = `<video src="${media}" controls autoplay loop playsinline class="lightbox-video"></video>`;
+      } else {
+        mediaContainer.innerHTML = `<img src="${media}" alt="${title}" class="lightbox-img" />`;
+      }
+
+      // Populate text
+      titleEl.textContent = title || '';
+      descEl.textContent = desc || '';
+      dateEl.textContent = date || '';
+
+      if (loc) {
+        locationEl.style.display = 'flex';
+        locationEl.innerHTML = `<span>📍 地点：</span>${loc}`;
+      } else {
+        locationEl.style.display = 'none';
+      }
+
+      if (cam) {
+        cameraEl.style.display = 'flex';
+        cameraEl.innerHTML = `<span>📷 设备/参数：</span>${cam}`;
+      } else {
+        cameraEl.style.display = 'none';
+      }
+
+      lightbox.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('open');
+      document.body.style.overflow = '';
+      if (mediaContainer) {
+        mediaContainer.innerHTML = ''; // Stop video playback
+      }
+    }
+
+    items.forEach(item => {
+      item.addEventListener('click', () => openLightbox(item));
+    });
+
+    closeBtn?.addEventListener('click', closeLightbox);
+    backdrop?.addEventListener('click', closeLightbox);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightbox.classList.contains('open')) {
+        closeLightbox();
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initGallery);
+</script>
+
+<style>
+  .gallery-container {
+    max-width: 1000px;
+    padding-top: 1rem;
+  }
+
+  .gallery-header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .gallery-title {
+    font-size: clamp(2rem, 3.5vw + 1rem, 2.75rem);
+    margin: 0.8rem 0 0.75rem;
+    color: var(--ink);
+  }
+
+  .gallery-desc {
+    max-width: 66ch;
+    font-size: 1.05rem;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  /* Filter Tabs */
+  .gallery-tabs {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .gallery-tab {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    color: var(--muted);
+    padding: 0.45rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .gallery-tab:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+
+  .gallery-tab.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+
+  /* Masonry Grid (CSS Columns) */
+  .gallery-grid {
+    column-count: 2;
+    column-gap: 1.5rem;
+  }
+
+  @media (max-width: 700px) {
+    .gallery-grid {
+      column-count: 1;
+    }
+  }
+
+  .gallery-item {
+    break-inside: avoid;
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+  }
+
+  .media-wrapper {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .media-wrapper:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  .media-thumb {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .media-wrapper:hover .media-thumb {
+    transform: scale(1.02);
+  }
+
+  .video-preview-box {
+    position: relative;
+  }
+
+  .video-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    padding: 3px 8px;
+    border-radius: 4px;
+    z-index: 10;
+  }
+
+  /* Overlay on Hover */
+  .media-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.5) 100%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.25rem;
+    color: #fff;
+  }
+
+  .media-wrapper:hover .media-overlay {
+    opacity: 1;
+  }
+
+  .overlay-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .cat-pill {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .meta-date {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    opacity: 0.85;
+  }
+
+  .overlay-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .item-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #ffffff;
+  }
+
+  .meta-row {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  /* Lightbox Modal */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .lightbox.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .lightbox-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 12, 16, 0.88);
+    backdrop-filter: blur(8px);
+  }
+
+  .lightbox-dialog {
+    position: relative;
+    z-index: 10;
+    max-width: 900px;
+    width: 90vw;
+    max-height: 92vh;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.3);
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 0.8rem;
+    right: 1rem;
+    font-size: 1.8rem;
+    background: none;
+    border: none;
+    color: var(--ink);
+    cursor: pointer;
+    z-index: 20;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+  }
+
+  .lightbox-close:hover {
+    opacity: 1;
+  }
+
+  .lightbox-content {
+    overflow-y: auto;
+    max-height: 90vh;
+  }
+
+  .lightbox-media-container {
+    width: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-height: 65vh;
+  }
+
+  .lightbox-img, .lightbox-video {
+    max-width: 100%;
+    max-height: 65vh;
+    object-fit: contain;
+    display: block;
+  }
+
+  .lightbox-info {
+    padding: 1.5rem;
+  }
+
+  .lightbox-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.6rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .lightbox-title {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .lightbox-date {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--soft);
+  }
+
+  .lightbox-desc {
+    font-size: 0.95rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .lightbox-exif {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--soft);
+    padding-top: 0.85rem;
+    border-top: 1px dashed var(--rule);
+  }
+
+  .exif-item span {
+    color: var(--muted);
+    margin-right: 0.25rem;
+  }
+</style>
