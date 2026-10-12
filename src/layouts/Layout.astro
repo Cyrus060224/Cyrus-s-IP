@@ -44,6 +44,9 @@ const {
           <a href="/posts" class="nav-link">文章档案</a>
           <a href="/projects" class="nav-link">造物工坊</a>
           <a href="/gallery" class="nav-link">光影画廊</a>
+          <a href="/now" class="nav-link now-nav-link">
+            <span class="pulse-dot"></span>此刻
+          </a>
           <a href="/about" class="nav-link">关于</a>
           <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="nav-link">GitHub</a>
           
@@ -153,6 +156,27 @@ const {
 
   .nav-link {
     transition: color 0.15s ease;
+  }
+
+  .now-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulse-ring 2s infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
   }
 
   .nav-link:hover {

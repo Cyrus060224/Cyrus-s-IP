@@ -1,0 +1,290 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const lastUpdated = "2026 年 10 月 12 日";
+const currentLocation = "工作台 · 实验室";
+---
+
+<Layout 
+  title="此刻 · What I'm Doing Now · Cyrus"
+  description="了解 Cyrus 此时此刻的时间流向：正在推进的项目、近期输入与下一站计划。"
+>
+  <div class="container now-container">
+    <header class="now-header">
+      <div class="header-badge-row">
+        <span class="mono-eyebrow">LIVE STATUS · NOW PAGE</span>
+        <div class="live-status">
+          <span class="pulse-indicator"></span>
+          <span>实时同步中</span>
+        </div>
+      </div>
+
+      <h1 class="serif-title now-title">此刻 / What I'm Doing Now</h1>
+      
+      <div class="meta-strip">
+        <div class="strip-item">
+          <span class="label">📅 最后更新：</span>
+          <span class="value">{lastUpdated}</span>
+        </div>
+        <div class="strip-item">
+          <span class="label">📍 当前坐标：</span>
+          <span class="value">{currentLocation}</span>
+        </div>
+      </div>
+
+      <p class="now-lead">
+        这里记录了我<b>此时此刻</b>的时间与注意力流向。不同于代表过去的履历（About）或随时更新的社交碎碎念，这是一个公开声明：此时此刻对我最重要的是什么。
+      </p>
+    </header>
+
+    <div class="now-content">
+      <!-- Section 1: Deep Work & Projects -->
+      <section class="now-card">
+        <div class="card-icon">🚀</div>
+        <div class="card-body">
+          <h2>全力推进的核心课题</h2>
+          <ul class="task-list">
+            <li>
+              <strong>Cyrus 数字大本营演进</strong>
+              <p>持续打磨本站的视觉系统（对齐 diagram-design 编辑级美学），完善文章分类、项目展示与光影画廊体系，践行 Build in Public。</p>
+            </li>
+            <li>
+              <strong>自主 AI 智能体推理与审计工程</strong>
+              <p>深入探索 LLM 的状态记忆回写回路与多 Agent 辩论审计机制（推进 AuditCore 实验），探索从代码理解到自动漏洞修复的闭环。</p>
+            </li>
+            <li>
+              <strong>系统底层与跨平台运行机制调研</strong>
+              <p>拆解现代主机免模拟重链接架构（如 AnyPS5），研究二进制可执行文件修补、底层图形驱动（AGC → Vulkan）翻译与性能极限。</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Section 2: Inputs & Learning -->
+      <section class="now-card">
+        <div class="card-icon">📚</div>
+        <div class="card-body">
+          <h2>最近的输入与阅读</h2>
+          <ul class="task-list">
+            <li>
+              <strong>技术与架构</strong>
+              <p>重读现代编译器优化原理与分散式系统设计，思考如何为智能体提供更干净的沙盒隔离环境。</p>
+            </li>
+            <li>
+              <strong>视觉与审美</strong>
+              <p>研读经典摄影大师作品集，琢磨大片自然光线下高光与暗部的克制表达；尝试在代码动效中融入更高级的节奏感。</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Section 3: Life & Movement -->
+      <section class="now-card">
+        <div class="card-icon">🏔️</div>
+        <div class="card-body">
+          <h2>生活轨迹与远行计划</h2>
+          <ul class="task-list">
+            <li>
+              <strong>冲洗与整理胶片</strong>
+              <p>把上一趟高原自驾拍摄的彩色负片底片完成扫描与色彩校准，挑选出最满意的几张更新到光影画廊。</p>
+            </li>
+            <li>
+              <strong>筹备下一次无信号漫游</strong>
+              <p>计划在下一个季节窗口进行一次深山徒步，离开屏幕和键盘，去自然中重新校准感知。</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Sivers Footnote -->
+      <footer class="sivers-footnote">
+        <p>
+          💡 <strong>什么是 “Now” 页面？</strong><br/>
+          这个页面的概念源自 <a href="https://sive.rs/nowff" target="_blank" rel="noreferrer">Derek Sivers</a> 发起的 <a href="https://nownownow.com/" target="_blank" rel="noreferrer">nownownow.com</a> 运动。如果你也有自己的独立网站，不妨也写一个属于你的 Now 页面。
+        </p>
+      </footer>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .now-container {
+    max-width: 760px;
+    padding-top: 1rem;
+  }
+
+  .now-header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .header-badge-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .live-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  .pulse-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  }
+
+  .now-title {
+    font-size: clamp(2rem, 3.5vw + 1rem, 2.75rem);
+    margin-bottom: 1rem;
+    color: var(--ink);
+    line-height: 1.25;
+  }
+
+  .meta-strip {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--soft);
+    margin-bottom: 1.5rem;
+    padding: 0.6rem 0;
+  }
+
+  .strip-item .label {
+    color: var(--muted);
+  }
+
+  .strip-item .value {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .now-lead {
+    font-size: 1.08rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* Cards */
+  .now-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .now-card {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1.75rem;
+    display: flex;
+    gap: 1.25rem;
+    transition: all 0.2s ease;
+  }
+
+  .now-card:hover {
+    border-color: var(--ink);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  }
+
+  .card-icon {
+    font-size: 1.75rem;
+    line-height: 1;
+    flex-shrink: 0;
+    padding-top: 0.2rem;
+  }
+
+  .card-body {
+    flex-grow: 1;
+  }
+
+  .card-body h2 {
+    font-family: var(--font-serif);
+    font-size: 1.45rem;
+    font-weight: 400;
+    margin-bottom: 1.25rem;
+    color: var(--ink);
+  }
+
+  .task-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .task-list li {
+    position: relative;
+    padding-left: 1.1rem;
+  }
+
+  .task-list li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .task-list li strong {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--ink);
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .task-list li p {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* Sivers Footnote */
+  .sivers-footnote {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--paper-2);
+    border: 1px dashed var(--rule);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  .sivers-footnote a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (max-width: 640px) {
+    .now-card {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+  }
+</style>
