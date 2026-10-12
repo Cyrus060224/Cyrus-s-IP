@@ -1,0 +1,252 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map(proj => ({
+    params: { slug: proj.id },
+    props: { proj },
+  }));
+}
+
+const { proj } = Astro.props;
+const { Content } = await render(proj);
+
+const statusMap: Record<string, { label: string; dotClass: string }> = {
+  active: { label: '活跃维护', dotClass: 'status-active' },
+  shipped: { label: '已发布', dotClass: 'status-shipped' },
+  experiment: { label: '探索实验', dotClass: 'status-exp' },
+};
+const status = statusMap[proj.data.status] || { label: proj.data.status, dotClass: 'status-active' };
+---
+
+<Layout 
+  title={`${proj.data.title} · 项目详情 · Cyrus`}
+  description={proj.data.description}
+>
+  <article class="container project-detail-container">
+    <nav class="breadcrumb">
+      <a href="/">首页</a>
+      <span class="sep">/</span>
+      <a href="/projects">造物工坊</a>
+      <span class="sep">/</span>
+      <span class="current">{proj.data.title}</span>
+    </nav>
+
+    <header class="detail-header">
+      <div class="header-meta">
+        <div class="status-indicator">
+          <span class={`status-dot ${status.dotClass}`}></span>
+          <span class="status-text">{status.label}</span>
+        </div>
+        <span class="cat-pill">CATEGORY: {proj.data.category.toUpperCase()}</span>
+      </div>
+
+      <h1 class="serif-title detail-title">{proj.data.title}</h1>
+      <p class="detail-lead">{proj.data.description}</p>
+
+      <div class="detail-links">
+        {proj.data.github && (
+          <a href={proj.data.github} target="_blank" rel="noreferrer" class="btn btn-primary">
+            查看 GitHub 源码 ↗
+          </a>
+        )}
+        {proj.data.demo && (
+          <a href={proj.data.demo} target="_blank" rel="noreferrer" class="btn btn-secondary">
+            在线体验 / Demo ↗
+          </a>
+        )}
+      </div>
+
+      <div class="detail-tags">
+        {proj.data.tags.map(t => (
+          <span class="tag-pill">#{t}</span>
+        ))}
+      </div>
+    </header>
+
+    <div class="detail-body markdown-body">
+      <Content />
+    </div>
+
+    <footer class="detail-footer">
+      <a href="/projects" class="back-link">← 返回项目列表</a>
+    </footer>
+  </article>
+</Layout>
+
+<style>
+  .project-detail-container {
+    max-width: 760px;
+    padding-top: 1rem;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--soft);
+    margin-bottom: 2rem;
+  }
+
+  .breadcrumb .sep {
+    opacity: 0.5;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--ink);
+  }
+
+  .current {
+    color: var(--ink);
+  }
+
+  .detail-header {
+    margin-bottom: 2.75rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+  .status-active { background: #10b981; }
+  .status-shipped { background: #3b82f6; }
+  .status-exp { background: #f59e0b; }
+
+  .cat-pill {
+    color: var(--soft);
+  }
+
+  .detail-title {
+    font-size: clamp(2rem, 3.5vw + 1rem, 2.75rem);
+    margin-bottom: 1rem;
+    color: var(--ink);
+    line-height: 1.25;
+  }
+
+  .detail-lead {
+    font-size: 1.1rem;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 1.75rem;
+  }
+
+  .detail-links {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.55rem 1.2rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+  }
+  .btn-secondary:hover {
+    border-color: var(--ink);
+    transform: translateY(-1px);
+  }
+
+  .detail-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .tag-pill {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    background: var(--paper-2);
+    color: var(--soft);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* Body */
+  .detail-body {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--ink);
+  }
+
+  .detail-body :global(h2) {
+    font-family: var(--font-serif);
+    font-size: 1.65rem;
+    font-weight: 400;
+    margin: 2.5rem 0 1rem;
+    color: var(--ink);
+  }
+
+  .detail-body :global(p) {
+    margin-bottom: 1.5rem;
+  }
+
+  .detail-body :global(ul), .detail-body :global(ol) {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .detail-body :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .detail-body :global(hr) {
+    border: none;
+    border-top: 1px dashed var(--rule);
+    margin: 2.5rem 0;
+  }
+
+  .detail-footer {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  .back-link {
+    color: var(--accent);
+  }
+</style>

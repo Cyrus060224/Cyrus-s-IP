@@ -14,4 +14,19 @@ const posts = defineCollection({
   }),
 });
 
-export const collections = { posts };
+const projects = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/projects' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    category: z.enum(['ai', 'tool', 'system', 'web']).default('tool'),
+    status: z.enum(['active', 'shipped', 'experiment']).default('active'),
+    tags: z.array(z.string()).default([]),
+    github: z.string().optional(),
+    demo: z.string().optional(),
+    featured: z.boolean().default(false),
+    pubDate: z.coerce.date().optional(),
+  }),
+});
+
+export const collections = { posts, projects };
