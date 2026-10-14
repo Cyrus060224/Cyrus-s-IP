@@ -48,7 +48,10 @@ const {
             <span class="pulse-dot"></span>此刻
           </a>
           <a href="/about" class="nav-link">关于</a>
-          <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="nav-link">GitHub</a>
+          <a href="/studio" class="nav-link studio-nav-link">
+            <span>✍️</span> Studio
+          </a>
+          <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="nav-link github-nav">GitHub</a>
           
           <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">
             <span class="icon-sun">☼</span>
@@ -181,6 +184,44 @@ const {
 
   .nav-link:hover {
     color: var(--ink);
+  }
+
+  .studio-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ink);
+    transition: all 0.15s ease;
+  }
+
+  .studio-nav-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 640px) {
+    .header-inner {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .nav {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      gap: 1rem;
+      font-size: 0.85rem;
+    }
+    .github-nav {
+      display: none;
+    }
   }
 
   .theme-btn {
