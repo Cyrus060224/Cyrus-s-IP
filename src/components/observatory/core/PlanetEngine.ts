@@ -46,52 +46,29 @@ export class PlanetEngine {
       }
     });
     this.planetMesh = new THREE.Mesh(this.planetGeo, this.planetMat);
+    this.planetMesh.renderOrder = 0;
     this.group.add(this.planetMesh);
 
-    // 2. Amber Atmosphere Scattering Shell
-    this.atmosphereGeo = new THREE.SphereGeometry(planetRadius * 1.042, 64, 48);
-    this.atmosphereMat = new THREE.ShaderMaterial({
-      vertexShader: atmosphereVertexShader,
-      fragmentShader: atmosphereFragmentShader,
-      uniforms: {
-        uLightDir: { value: this.lightDirection },
-        uSunColor: { value: this.sunColor }
-      },
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.FrontSide
-    });
-    this.atmosphereMesh = new THREE.Mesh(this.atmosphereGeo, this.atmosphereMat);
-    this.group.add(this.atmosphereMesh);
-
-    // 3. High-Altitude Dust & Storm Layer (Thin semi-transparent wrapper)
+    // 2. High-Altitude Dust & Storm Layer (Thin semi-transparent wrapper)
     this.dustGeo = new THREE.SphereGeometry(planetRadius * 1.012, 48, 36);
     this.dustMat = new THREE.ShaderMaterial({
       vertexShader: /* glsl */ `
-        varying vec3 vNormal;
+        varying vec3 vWorldNormal;
         varying vec3 vPosition;
         void main() {
-          vNormal = normalize(normalMatrix * normal);
           vPosition = position;
+          vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
       fragmentShader: /* glsl */ `
         uniform float uTime;
         uniform vec3 uLightDir;
-        varying vec3 vNormal;
+        varying vec3 vWorldNormal;
         varying vec3 vPosition;
 
-        // Simple high-speed cloud bands
-        float hash(vec3 p) {
-          p = fract(p * 0.3183099 + 0.1);
-          p *= 17.0;
-          return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
-        }
-
         void main() {
-          vec3 n = normalize(vNormal);
+          vec3 n = normalize(vWorldNormal);
           float dayLight = smoothstep(-0.1, 0.25, dot(n, normalize(uLightDir)));
           
           float band = sin(vPosition.y * 0.8 + uTime * 0.05) * 0.5 + 0.5;
@@ -111,7 +88,26 @@ export class PlanetEngine {
       blending: THREE.NormalBlending
     });
     this.dustMesh = new THREE.Mesh(this.dustGeo, this.dustMat);
+    this.dustMesh.renderOrder = 1;
     this.group.add(this.dustMesh);
+
+    // 3. Amber Atmosphere Scattering Shell
+    this.atmosphereGeo = new THREE.SphereGeometry(planetRadius * 1.042, 64, 48);
+    this.atmosphereMat = new THREE.ShaderMaterial({
+      vertexShader: atmosphereVertexShader,
+      fragmentShader: atmosphereFragmentShader,
+      uniforms: {
+        uLightDir: { value: this.lightDirection },
+        uSunColor: { value: this.sunColor }
+      },
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.FrontSide
+    });
+    this.atmosphereMesh = new THREE.Mesh(this.atmosphereGeo, this.atmosphereMat);
+    this.atmosphereMesh.renderOrder = 2;
+    this.group.add(this.atmosphereMesh);
 
     // 4. Distant Low-Poly Scale Moonlet
     this.moonletGeo = new THREE.IcosahedronGeometry(0.55, 1);

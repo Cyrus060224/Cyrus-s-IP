@@ -42,8 +42,9 @@ export class InstrumentManager {
     this.group.name = 'instruments_fleet';
 
     // 1. OBS-01: Deep Space Optical Telescope (光影视窗 -> /gallery/)
+    // Placed in upper center-right void, clear of the left-side text block
     const telescope = createTelescopeGroup();
-    const obsPos = new THREE.Vector3(-6.2, 3.4, 7.5);
+    const obsPos = new THREE.Vector3(3.6, 4.4, 5.5);
     telescope.position.copy(obsPos);
     telescope.rotation.set(0.2, 0.4, -0.15);
     this.group.add(telescope);
@@ -61,8 +62,9 @@ export class InstrumentManager {
     });
 
     // 2. PRJ-02: Orbital Engineering Probe (轨道造物 -> /projects/)
+    // Placed in far upper-right deep space
     const probe = createProbeGroup();
-    const prjPos = new THREE.Vector3(5.5, 4.2, 6.0);
+    const prjPos = new THREE.Vector3(7.4, 1.8, 4.8);
     probe.position.copy(prjPos);
     probe.rotation.set(-0.35, -0.5, 0.1);
     this.group.add(probe);
@@ -80,8 +82,9 @@ export class InstrumentManager {
     });
 
     // 3. LOG-03: Flight Log Command Pod (航行日志 -> /posts/)
+    // Placed in lower center-right just above the sweeping planetary horizon
     const logPod = createLogPodGroup();
-    const logPos = new THREE.Vector3(-1.8, -2.8, 10.2);
+    const logPos = new THREE.Vector3(1.6, -3.6, 8.2);
     logPod.position.copy(logPos);
     logPod.rotation.set(0.4, 0.2, -0.3);
     this.group.add(logPod);

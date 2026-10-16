@@ -42,7 +42,7 @@ export class PostPipeline {
         uResolution: { value: new THREE.Vector2(width, height) },
         uTime: { value: 0 },
         uBloomIntensity: { value: 0.65 },
-        uGrainIntensity: { value: 0.038 },
+        uGrainIntensity: { value: 0.016 },
         uVignetteStrength: { value: 0.85 },
         uAberrationStrength: { value: 0.75 }
       },

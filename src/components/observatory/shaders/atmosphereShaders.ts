@@ -4,13 +4,13 @@
  */
 
 export const atmosphereVertexShader = /* glsl */ `
-  varying vec3 vNormal;
+  varying vec3 vWorldNormal;
   varying vec3 vWorldPosition;
 
   void main() {
-    vNormal = normalize(normalMatrix * normal);
     vec4 worldPos = modelMatrix * vec4(position, 1.0);
     vWorldPosition = worldPos.xyz;
+    vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
     gl_Position = projectionMatrix * viewMatrix * worldPos;
   }
 `;
@@ -19,15 +19,15 @@ export const atmosphereFragmentShader = /* glsl */ `
   uniform vec3 uLightDir;
   uniform vec3 uSunColor;
 
-  varying vec3 vNormal;
+  varying vec3 vWorldNormal;
   varying vec3 vWorldPosition;
 
   void main() {
-    vec3 normal = normalize(vNormal);
-    vec3 viewDir = normalize(-vWorldPosition);
+    vec3 normal = normalize(vWorldNormal);
+    vec3 viewDir = normalize(cameraPosition - vWorldPosition);
     vec3 lightDir = normalize(uLightDir);
 
-    // Fresnel Rim Glow
+    // Fresnel Rim Glow in continuous world space
     float vDotN = max(dot(viewDir, normal), 0.0);
     float fresnel = pow(1.0 - vDotN, 3.8);
 
@@ -38,7 +38,7 @@ export const atmosphereFragmentShader = /* glsl */ `
     float g2 = g * g;
     float phase = (1.0 - g2) / pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5) / 12.566;
 
-    // Normal-to-light term to extinguish atmosphere on deep dark side
+    // Normal-to-light term to smoothly extinguish atmosphere on night side
     float nDotL = dot(normal, lightDir);
     float dayFactor = smoothstep(-0.25, 0.45, nDotL);
 

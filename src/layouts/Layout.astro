@@ -257,14 +257,17 @@ const {
   .brand-avatar {
     width: 28px;
     height: 28px;
-    background: var(--ink);
-    color: var(--paper);
+    background: var(--paper-2);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    box-shadow: 0 0 6px var(--accent-glow);
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 6px;
     font-size: 0.85rem;
     font-family: var(--font-mono);
+    font-weight: 600;
   }
 
   .brand-name {
@@ -363,6 +366,10 @@ const {
 
   .main-content {
     padding: 3rem 0 5rem;
+  }
+
+  .main-content:has(.observatory-hero-wrapper) {
+    padding-top: 0;
   }
 
   .site-footer {

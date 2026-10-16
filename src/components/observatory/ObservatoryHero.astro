@@ -36,7 +36,10 @@ const {
   <div class="observatory-hud-header">
     <div class="hud-title-block">
       <div class="hud-station-tag">DEEP SPACE OBSERVATORY · 轨道高度 420KM</div>
-      <h1 class="hud-main-title">在寂静的深空与代码之中，<br/>锚定属于自己的认知坐标。</h1>
+      <h1 class="hud-main-title">
+        <span class="hud-title-line">在寂静的深空与代码之中，</span>
+        <span class="hud-title-line">锚定属于自己的认知坐标。</span>
+      </h1>
       <p class="hud-sub-desc">你好，我是 <strong>Cyrus</strong>。这里是一座孤独运转的深空观测站。点击轨道上的仪器即可进入各板块。</p>
     </div>
     <div class="hud-coordinates">
@@ -54,19 +57,25 @@ const {
       id="hud-pin-gallery" 
       class="instrument-hud-pin" 
       data-route="/gallery"
-      style="left: 22%; top: 38%; display: none;"
+      tabindex="0"
+      role="button"
+      aria-label="OBS-01 深空光影 观测望远镜"
+      style="left: 60%; top: 32%; display: none;"
     >
       <div class="hud-reticle-ring">
         <span class="hud-reticle-dot"></span>
       </div>
-      <div class="hud-card-label">
-        <div class="hud-code-row">
-          <span>OBS-01</span>
-          <span>//</span>
-          <span>深空光影</span>
+      <div class="hud-card-wrapper">
+        <span class="hud-guide-line"></span>
+        <div class="hud-card-label">
+          <div class="hud-code-row">
+            <span>OBS-01</span>
+            <span>//</span>
+            <span>深空光影</span>
+          </div>
+          <div class="hud-name-row">观测望远镜 · Viewport</div>
+          <div class="hud-stat-row">{galleryCount} 组光学记录 · 最近更新 {latestGalleryDate}</div>
         </div>
-        <div class="hud-name-row">观测望远镜 · Viewport</div>
-        <div class="hud-stat-row">{galleryCount} 组光学记录 · 最近更新 {latestGalleryDate}</div>
       </div>
     </a>
 
@@ -76,19 +85,25 @@ const {
       id="hud-pin-projects" 
       class="instrument-hud-pin" 
       data-route="/projects"
-      style="left: 72%; top: 34%; display: none;"
+      tabindex="0"
+      role="button"
+      aria-label="PRJ-02 轨道造物 深空探测器"
+      style="left: 78%; top: 28%; display: none;"
     >
       <div class="hud-reticle-ring">
         <span class="hud-reticle-dot"></span>
       </div>
-      <div class="hud-card-label">
-        <div class="hud-code-row">
-          <span>PRJ-02</span>
-          <span>//</span>
-          <span>轨道造物</span>
+      <div class="hud-card-wrapper">
+        <span class="hud-guide-line"></span>
+        <div class="hud-card-label">
+          <div class="hud-code-row">
+            <span>PRJ-02</span>
+            <span>//</span>
+            <span>轨道造物</span>
+          </div>
+          <div class="hud-name-row">深空探测器 · Probes</div>
+          <div class="hud-stat-row">{projectsCount} 台在轨造物 · 最近上线 {latestProjectDate}</div>
         </div>
-        <div class="hud-name-row">深空探测器 · Probes</div>
-        <div class="hud-stat-row">{projectsCount} 台在轨造物 · 最近上线 {latestProjectDate}</div>
       </div>
     </a>
 
@@ -98,19 +113,25 @@ const {
       id="hud-pin-posts" 
       class="instrument-hud-pin" 
       data-route="/posts"
-      style="left: 45%; top: 68%; display: none;"
+      tabindex="0"
+      role="button"
+      aria-label="LOG-03 航行日志 日志指令舱"
+      style="left: 62%; top: 72%; display: none;"
     >
       <div class="hud-reticle-ring">
         <span class="hud-reticle-dot"></span>
       </div>
-      <div class="hud-card-label">
-        <div class="hud-code-row">
-          <span>LOG-03</span>
-          <span>//</span>
-          <span>航行日志</span>
+      <div class="hud-card-wrapper">
+        <span class="hud-guide-line"></span>
+        <div class="hud-card-label">
+          <div class="hud-code-row">
+            <span>LOG-03</span>
+            <span>//</span>
+            <span>航行日志</span>
+          </div>
+          <div class="hud-name-row">日志指令舱 · Flight Logs</div>
+          <div class="hud-stat-row">{postsCount} 篇思想日志 · 最近发布 {latestPostDate}</div>
         </div>
-        <div class="hud-name-row">日志指令舱 · Flight Logs</div>
-        <div class="hud-stat-row">{postsCount} 篇思想日志 · 最近发布 {latestPostDate}</div>
       </div>
     </a>
   </div>
@@ -195,15 +216,39 @@ const {
         }
       });
 
-      // Intercept link clicks to trigger 3D camera dolly transition
-      document.querySelectorAll('.instrument-hud-pin').forEach(pin => {
+      // Touch, keyboard and click handling
+      const pins = document.querySelectorAll<HTMLElement>('.instrument-hud-pin');
+      const isTouch = window.matchMedia('(pointer: coarse)').matches;
+
+      pins.forEach(pin => {
         pin.addEventListener('click', (e) => {
           e.preventDefault();
           const route = pin.getAttribute('data-route');
+
+          // Mobile / touch devices: first tap expands, second tap navigates
+          if (isTouch) {
+            const wasExpanded = pin.classList.contains('expanded');
+            if (!wasExpanded) {
+              pins.forEach(p => p.classList.remove('expanded'));
+              pin.classList.add('expanded');
+              return;
+            }
+          }
+
+          // Desktop single click, keyboard Enter, or mobile second tap
           if (route && stage) {
             stage.triggerDollyTransition(route);
+          } else if (route) {
+            window.location.href = route;
           }
         });
+      });
+
+      // Collapse pins when tapping outside on touch devices
+      document.addEventListener('click', (e) => {
+        if (isTouch && !(e.target as Element).closest('.instrument-hud-pin')) {
+          pins.forEach(p => p.classList.remove('expanded'));
+        }
       });
 
       // Cleanup on Astro route transition

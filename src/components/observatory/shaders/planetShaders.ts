@@ -1,18 +1,19 @@
 /**
  * DEEP SPACE OBSERVATORY · PLANET SHADERS
- * Procedural Arid Rocky Planet with Domain Warping FBM & Smooth Terminator
+ * Smooth Procedural Rocky Planet with Seamless World-Space Lighting & Restrained Relief
  */
 
 export const planetVertexShader = /* glsl */ `
-  varying vec3 vNormal;
+  varying vec3 vWorldNormal;
   varying vec3 vWorldPosition;
-  varying vec3 vPosition;
+  varying vec3 vLocalPosition;
 
   void main() {
-    vNormal = normalize(normalMatrix * normal);
-    vPosition = position;
+    vLocalPosition = position;
     vec4 worldPos = modelMatrix * vec4(position, 1.0);
     vWorldPosition = worldPos.xyz;
+    // Compute true World Space Normal to prevent UV seam discontinuities
+    vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
     gl_Position = projectionMatrix * viewMatrix * worldPos;
   }
 `;
@@ -22,20 +23,17 @@ export const planetFragmentShader = /* glsl */ `
   uniform vec3 uSunColor;
   uniform float uTime;
 
-  varying vec3 vNormal;
+  varying vec3 vWorldNormal;
   varying vec3 vWorldPosition;
-  varying vec3 vPosition;
+  varying vec3 vLocalPosition;
 
   // -------------------------------------------------------------
-  // GLSL 3D Simplex / Periodic Noise Implementation
+  // Seamless 3D Simplex Noise for Continuous Smooth Relief
   // -------------------------------------------------------------
-  vec4 permute(vec4 x) {
-    return mod(((x * 34.0) + 1.0) * x, 289.0);
-  }
-
-  vec4 taylorInvSqrt(vec4 r) {
-    return 1.79284291400159 - 0.85373472095314 * r;
-  }
+  vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
+  vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
 
   float snoise(vec3 v) {
     const vec2 C = vec2(1.0 / 6.0, 1.0 / 3.0);
@@ -53,7 +51,7 @@ export const planetFragmentShader = /* glsl */ `
     vec3 x2 = x0 - i2 + C.yyy;
     vec3 x3 = x0 - D.yyy;
 
-    i = mod(i, 289.0);
+    i = mod289(i);
     vec4 p = permute(permute(permute(
               i.z + vec4(0.0, i1.z, i2.z, 1.0))
             + i.y + vec4(0.0, i1.y, i2.y, 1.0))
@@ -63,7 +61,6 @@ export const planetFragmentShader = /* glsl */ `
     vec3 ns = n_ * D.wyz - D.xzx;
 
     vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-
     vec4 x_ = floor(j * ns.z);
     vec4 y_ = floor(j - 7.0 * x_);
 
@@ -97,76 +94,48 @@ export const planetFragmentShader = /* glsl */ `
     return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
   }
 
-  // -------------------------------------------------------------
-  // Fractional Brownian Motion (4 octaves)
-  // -------------------------------------------------------------
-  float fbm(vec3 p) {
-    float v = 0.0;
-    float a = 0.5;
-    vec3 shift = vec3(100.0);
-    for (int i = 0; i < 4; ++i) {
-      v += a * snoise(p);
-      p = p * 2.05 + shift;
-      a *= 0.48;
-    }
-    return v;
-  }
-
-  // Domain Warping for Tectonic Canyons & Continental Ridges
-  float domainWarpTerrain(vec3 p) {
-    vec3 q = vec3(
-      fbm(p + vec3(0.0, 0.0, 0.0)),
-      fbm(p + vec3(5.2, 1.3, 2.8)),
-      fbm(p + vec3(1.8, 9.2, 4.1))
-    );
-    vec3 r = vec3(
-      fbm(p + 1.8 * q + vec3(1.7, 9.2, 0.5)),
-      fbm(p + 1.8 * q + vec3(8.3, 2.8, 1.1)),
-      fbm(p + 1.8 * q + vec3(2.4, 4.3, 7.6))
-    );
-    return fbm(p + 2.2 * r);
+  // Smooth, low-frequency planetary swells (no harsh high-frequency noise)
+  float macroTerrain(vec3 p) {
+    float n = 0.0;
+    n += 0.58 * snoise(p * 0.45);
+    n += 0.28 * snoise(p * 0.95 + vec3(1.2, 3.4, 5.6));
+    n += 0.14 * snoise(p * 2.10 + vec3(4.5, 1.8, 2.3));
+    return n;
   }
 
   void main() {
-    // Spherical base coordinates
-    vec3 spherePos = normalize(vPosition) * 3.2;
+    // Continuous 3D position on sphere
+    vec3 spherePos = normalize(vLocalPosition) * 4.2;
 
-    // Height calculation with Domain Warping
-    float h = domainWarpTerrain(spherePos);
-    h = clamp((h + 0.6) * 0.8, 0.0, 1.0);
+    // Macro geological elevation (smooth range [0, 1])
+    float h = macroTerrain(spherePos);
+    h = clamp(h * 0.5 + 0.5, 0.0, 1.0);
 
-    // Analytical-style normal perturbation via derivatives
-    vec3 normal = normalize(vNormal);
-    float dHx = dFdx(h);
-    float dHy = dFdy(h);
-    vec3 perturbedNormal = normalize(normal - vec3(dHx, dHy, 0.0) * 1.6);
-
-    // Color Palette: Cold Basalt -> Weathered Sandstone -> Oxidized Amber
-    vec3 basalt = vec3(0.065, 0.072, 0.088);        // Deep dark basalt
-    vec3 canyon = vec3(0.16, 0.12, 0.10);           // Deep rift shadows
-    vec3 sandrock = vec3(0.42, 0.31, 0.22);         // Wind-eroded silicate sand
-    vec3 oxidizedAmber = vec3(0.82, 0.48, 0.22);     // Oxidized iron ridge
-    vec3 highlands = vec3(0.92, 0.62, 0.34);         // Sunlit mountain caps
-
-    vec3 albedo = mix(basalt, canyon, smoothstep(0.0, 0.25, h));
-    albedo = mix(albedo, sandrock, smoothstep(0.25, 0.55, h));
-    albedo = mix(albedo, oxidizedAmber, smoothstep(0.55, 0.80, h));
-    albedo = mix(albedo, highlands, smoothstep(0.80, 1.0, h));
-
-    // Directional Lighting & Soft Terminator
+    // World Space Normal (Strictly uniform and seamless)
+    vec3 normal = normalize(vWorldNormal);
     vec3 lightDir = normalize(uLightDir);
-    float NdotL = dot(perturbedNormal, lightDir);
+    vec3 viewDir = normalize(cameraPosition - vWorldPosition);
 
-    // Smooth terminator transition across the planetary limb
-    float dayLight = smoothstep(-0.06, 0.14, NdotL);
+    // Color Palette: Cold Basalt -> Wind-swept Sandstone -> Subtle Oxidized Ridge
+    vec3 basalt = vec3(0.065, 0.072, 0.088);        // Deep dark basalt
+    vec3 canyon = vec3(0.135, 0.115, 0.100);        // Deep rift shade
+    vec3 weatheredSand = vec3(0.32, 0.24, 0.17);     // Wind-eroded rock plain
+    vec3 amberRidge = vec3(0.68, 0.39, 0.19);        // Soft oxidized iron ridges
 
-    // Extremely subtle deep-space cold ambient light for night hemisphere
-    vec3 nightAmbient = vec3(0.006, 0.007, 0.010);
+    vec3 albedo = mix(basalt, canyon, smoothstep(0.15, 0.40, h));
+    albedo = mix(albedo, weatheredSand, smoothstep(0.40, 0.70, h));
+    albedo = mix(albedo, amberRidge, smoothstep(0.70, 0.95, h));
 
-    // Specular glint on exposed mineral ridges on sunward side
-    vec3 viewDir = normalize(-vWorldPosition);
+    // Directional Lighting & Soft Cinematic Terminator
+    float NdotL = dot(normal, lightDir);
+    float dayLight = smoothstep(-0.08, 0.16, NdotL);
+
+    // Deep-space cold ambient light for night hemisphere (almost pure void)
+    vec3 nightAmbient = vec3(0.005, 0.006, 0.009);
+
+    // Very subtle specular sheen on dry mineral crust (sunward limb only)
     vec3 halfVec = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(perturbedNormal, halfVec), 0.0), 18.0) * 0.18 * dayLight;
+    float spec = pow(max(dot(normal, halfVec), 0.0), 24.0) * 0.12 * dayLight;
 
     vec3 litColor = albedo * (dayLight * uSunColor + nightAmbient) + spec * uSunColor;
 

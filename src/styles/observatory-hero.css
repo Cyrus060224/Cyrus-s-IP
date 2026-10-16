@@ -50,7 +50,7 @@
 }
 
 .hud-title-block {
-  max-width: 480px;
+  max-width: 620px;
 }
 
 .hud-station-tag {
@@ -62,7 +62,7 @@
   letter-spacing: 0.16em;
   color: var(--accent);
   text-transform: uppercase;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
 }
 
 .hud-station-tag::before {
@@ -77,10 +77,16 @@
 
 .hud-main-title {
   font-family: var(--font-serif);
-  font-size: clamp(1.8rem, 3.5vw, 2.7rem);
+  font-size: clamp(1.6rem, 3.2vw, 2.5rem);
   color: #ece8e1;
-  line-height: 1.18;
-  margin-bottom: 0.5rem;
+  line-height: 1.25;
+  margin-bottom: 0.65rem;
+  text-wrap: balance;
+  word-break: keep-all;
+}
+
+.hud-title-line {
+  display: block;
 }
 
 .hud-sub-desc {
@@ -92,7 +98,7 @@
 .hud-coordinates {
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  color: #505763;
+  color: #8a929e; /* Raised contrast by one tier from #505763 */
   text-align: right;
   line-height: 1.6;
 }
@@ -110,20 +116,24 @@
 .instrument-hud-pin {
   position: absolute;
   pointer-events: auto;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -11px);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   text-decoration: none;
   cursor: pointer;
+  outline: none;
   transition: transform var(--duration-fast) var(--ease-obs);
 }
 
-.instrument-hud-pin:hover {
-  transform: translate(-50%, -52%) scale(1.04);
+.instrument-hud-pin:hover,
+.instrument-hud-pin:focus-visible,
+.instrument-hud-pin.hovered,
+.instrument-hud-pin.expanded {
+  transform: translate(-50%, -11px) scale(1.02);
 }
 
-/* Crosshair Reticle Anchor */
+/* Crosshair Reticle Anchor (Always visible as subtle locator dot) */
 .hud-reticle-ring {
   width: 22px;
   height: 22px;
@@ -134,7 +144,7 @@
   justify-content: center;
   position: relative;
   transition: all var(--duration-fast) var(--ease-obs);
-  background: rgba(11, 13, 16, 0.35);
+  background: rgba(11, 13, 16, 0.45);
   backdrop-filter: blur(2px);
 }
 
@@ -146,34 +156,84 @@
   transition: all var(--duration-fast) var(--ease-obs);
 }
 
-.instrument-hud-pin:hover .hud-reticle-ring {
+.instrument-hud-pin:hover .hud-reticle-ring,
+.instrument-hud-pin:focus-visible .hud-reticle-ring,
+.instrument-hud-pin.hovered .hud-reticle-ring,
+.instrument-hud-pin.expanded .hud-reticle-ring {
   border-color: var(--accent);
   box-shadow: 0 0 12px var(--accent-glow);
 }
 
-.instrument-hud-pin:hover .hud-reticle-dot {
+.instrument-hud-pin:hover .hud-reticle-dot,
+.instrument-hud-pin:focus-visible .hud-reticle-dot,
+.instrument-hud-pin.hovered .hud-reticle-dot,
+.instrument-hud-pin.expanded .hud-reticle-dot {
   background: var(--accent);
   box-shadow: 0 0 8px var(--accent);
 }
 
-/* Connecting hairline */
+.instrument-hud-pin:focus-visible .hud-reticle-ring {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Floating Card Wrapper with Connecting Hairline Guide */
+.hud-card-wrapper {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-obs), 
+              transform var(--duration-fast) var(--ease-obs),
+              visibility var(--duration-fast);
+  z-index: 30;
+}
+
+/* Hairline Guide Line from reticle ring down to card */
+.hud-guide-line {
+  display: block;
+  width: 1px;
+  height: 12px;
+  background: linear-gradient(to bottom, var(--accent), rgba(217, 119, 54, 0.25));
+}
+
+/* Expanded Card Content */
 .hud-card-label {
-  margin-top: 6px;
   padding: 8px 12px;
-  background: rgba(19, 22, 28, 0.88);
-  backdrop-filter: blur(8px);
+  background: rgba(19, 22, 28, 0.94);
+  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-left: 2px solid var(--accent);
   border-radius: 2px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
   white-space: nowrap;
   transition: all var(--duration-fast) var(--ease-obs);
 }
 
-.instrument-hud-pin:hover .hud-card-label {
+/* Reveal card on hover, keyboard focus-visible, or touch expanded state */
+.instrument-hud-pin:hover .hud-card-wrapper,
+.instrument-hud-pin:focus-visible .hud-card-wrapper,
+.instrument-hud-pin.hovered .hud-card-wrapper,
+.instrument-hud-pin.expanded .hud-card-wrapper {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.instrument-hud-pin:hover .hud-card-label,
+.instrument-hud-pin:focus-visible .hud-card-label,
+.instrument-hud-pin.hovered .hud-card-label,
+.instrument-hud-pin.expanded .hud-card-label {
   border-color: var(--accent);
-  background: rgba(23, 27, 34, 0.95);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  background: rgba(23, 27, 34, 0.98);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75);
 }
 
 .hud-code-row {
@@ -237,6 +297,25 @@
 @media (max-width: 640px) {
   .observatory-hero-wrapper {
     height: 520px;
+  }
+  .observatory-hud-header {
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+  }
+  .hud-title-block {
+    max-width: 100%;
+  }
+  .hud-main-title {
+    font-size: 1.45rem;
+    line-height: 1.32;
+  }
+  .hud-title-line {
+    display: inline;
+  }
+  .hud-sub-desc {
+    font-size: 0.82rem;
+    line-height: 1.5;
   }
   .hud-coordinates {
     display: none;
