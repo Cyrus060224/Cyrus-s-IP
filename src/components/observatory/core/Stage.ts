@@ -87,8 +87,8 @@ export class Stage {
     this.renderer.toneMappingExposure = 1.05;
     this.container.appendChild(this.renderer.domElement);
 
-    // 4. Lighting Rig (Side-rear sun key + planetary bounce + cosmic rim + ambient)
-    const ambientLight = new THREE.AmbientLight(0x1c2230, 0.65);
+    // 4. Lighting Rig (Side-rear sun key + planetary bounce + warm-white rim + cosmic rim + ambient)
+    const ambientLight = new THREE.AmbientLight(0x222a38, 0.75);
     this.scene.add(ambientLight);
 
     const sunLight = new THREE.DirectionalLight(0xfff5e6, 2.4);
@@ -100,10 +100,44 @@ export class Stage {
     planetaryBounceLight.position.set(12, -15, 2);
     this.scene.add(planetaryBounceLight);
 
+    // Warm-white directional rim light for crisp specular edges on instruments (#F2E8D5)
+    const warmWhiteRimLight = new THREE.DirectionalLight(0xf2e8d5, 1.5);
+    warmWhiteRimLight.position.set(-16, 14, 16);
+    this.scene.add(warmWhiteRimLight);
+
     // Subtle cosmic rim light to catch instrument facets against deep void
     const cosmicRimLight = new THREE.DirectionalLight(0xa5c4e8, 0.95);
-    cosmicRimLight.position.set(-14, 10, 16);
+    cosmicRimLight.position.set(-14, -8, 14);
     this.scene.add(cosmicRimLight);
+
+    // Procedural low-intensity cosmic environment map (0KB external file)
+    try {
+      const pmremGen = new THREE.PMREMGenerator(this.renderer);
+      pmremGen.compileEquirectangularShader();
+
+      const envCanvas = document.createElement('canvas');
+      envCanvas.width = 64;
+      envCanvas.height = 32;
+      const ctx = envCanvas.getContext('2d');
+      if (ctx) {
+        const grad = ctx.createLinearGradient(0, 0, 0, 32);
+        grad.addColorStop(0.0, '#0a0e16');
+        grad.addColorStop(0.4, '#151e2c');
+        grad.addColorStop(0.7, '#1d2736');
+        grad.addColorStop(1.0, '#2e2016');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 64, 32);
+      }
+
+      const envTexture = new THREE.CanvasTexture(envCanvas);
+      envTexture.mapping = THREE.EquirectangularReflectionMapping;
+      const envMap = pmremGen.fromEquirectangular(envTexture).texture;
+      this.scene.environment = envMap;
+      envTexture.dispose();
+      pmremGen.dispose();
+    } catch (e) {
+      console.warn('Procedural PMREM environment fallback:', e);
+    }
 
     // 5. Star Field
     this.starField = new StarField(this.profile.tier === 'tier-1' ? 1500 : 800);
@@ -259,7 +293,7 @@ export class Stage {
     // 2. Update Subsystems
     this.starField.update(elapsed);
     this.planetEngine.update(delta, elapsed);
-    this.instrumentManager.update(elapsed, this.camera);
+    this.instrumentManager.update(elapsed, this.camera, this.profile.prefersReducedMotion);
 
     // 3. Project 2D Screen Coordinates for Telemetry HUD EVERY FRAME
     if (this.onScreenCoordsUpdate) {
@@ -289,6 +323,11 @@ export class Stage {
 
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
+    }
+
+    if (this.scene.environment) {
+      this.scene.environment.dispose();
+      this.scene.environment = null;
     }
 
     this.starField.dispose();

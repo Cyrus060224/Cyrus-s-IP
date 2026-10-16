@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 
 // Shared high-grade space hardware PBR material with balanced reflection
-export function createHardwareMaterial(colorHex: number = 0x3d4452, roughness: number = 0.40, metalness: number = 0.62): THREE.MeshStandardMaterial {
+export function createHardwareMaterial(colorHex: number = 0x505a6e, roughness: number = 0.38, metalness: number = 0.48): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
     color: new THREE.Color(colorHex),
     roughness,
@@ -15,14 +15,67 @@ export function createHardwareMaterial(colorHex: number = 0x3d4452, roughness: n
   });
 }
 
+// Low-saturation metallic/glass photovoltaic panel material with fine wafer grid lines
+export function createSolarMaterial(): THREE.MeshStandardMaterial {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    // Deep desaturated slate navy silicon base
+    ctx.fillStyle = '#1c2432';
+    ctx.fillRect(0, 0, 128, 128);
+
+    // Segmented wafer cells
+    ctx.fillStyle = '#242f40';
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        ctx.fillRect(c * 32 + 2, r * 32 + 2, 28, 28);
+      }
+    }
+
+    // Grid fingers (fine silver divisional rules)
+    ctx.strokeStyle = '#38465a';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 128; i += 32) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0); ctx.lineTo(i, 128);
+      ctx.moveTo(0, i); ctx.lineTo(128, i);
+      ctx.stroke();
+    }
+
+    // Silver busbar conductors
+    ctx.strokeStyle = '#5a6e88';
+    ctx.beginPath();
+    ctx.moveTo(16, 0); ctx.lineTo(16, 128);
+    ctx.moveTo(48, 0); ctx.lineTo(48, 128);
+    ctx.moveTo(80, 0); ctx.lineTo(80, 128);
+    ctx.moveTo(112, 0); ctx.lineTo(112, 128);
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(2, 1);
+
+  return new THREE.MeshStandardMaterial({
+    map: texture,
+    color: 0xdce6f2,
+    roughness: 0.18, // Glassy specular reflection
+    metalness: 0.65, // Metallic wafer sheen
+    flatShading: false,
+  });
+}
+
 // 1. OBS-01: Deep Space Optical Telescope (深空光影 / 观测望远镜)
 export function createTelescopeGroup(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'instrument_obs';
 
-  const bodyMat = createHardwareMaterial(0x424a5a, 0.35, 0.65);
-  const darkMetal = createHardwareMaterial(0x262b36, 0.48, 0.58);
-  const goldFoil = createHardwareMaterial(0xcc8432, 0.32, 0.75);
+  const bodyMat = createHardwareMaterial(0x566072, 0.35, 0.52);
+  const darkMetal = createHardwareMaterial(0x384150, 0.42, 0.45);
+  const solarMat = createSolarMaterial();
 
   // Main 8-sided optical cylinder
   const barrelGeo = new THREE.CylinderGeometry(0.55, 0.62, 2.6, 8);
@@ -43,9 +96,9 @@ export function createTelescopeGroup(): THREE.Group {
   rear.position.x = -1.4;
   group.add(rear);
 
-  // Deployable twin radiator panels
+  // Deployable twin radiator / solar panels
   const panelGeo = new THREE.BoxGeometry(0.9, 0.04, 2.8);
-  const panels = new THREE.Mesh(panelGeo, goldFoil);
+  const panels = new THREE.Mesh(panelGeo, solarMat);
   panels.position.x = -0.5;
   panels.position.y = 0.2;
   panels.rotation.x = 0.25;
@@ -58,7 +111,6 @@ export function createTelescopeGroup(): THREE.Group {
   truss.rotation.z = -Math.PI / 2;
   group.add(truss);
 
-  // Enlarged 1.8x for clear silhouette (was 0.75)
   group.scale.setScalar(1.35);
   return group;
 }
@@ -68,9 +120,9 @@ export function createProbeGroup(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'instrument_prj';
 
-  const bodyMat = createHardwareMaterial(0x444d5c, 0.38, 0.65);
-  const foilMat = createHardwareMaterial(0xc47a32, 0.30, 0.78);
-  const dishMat = createHardwareMaterial(0xa0aab8, 0.35, 0.55);
+  const bodyMat = createHardwareMaterial(0x505a6c, 0.36, 0.50);
+  const solarMat = createSolarMaterial();
+  const dishMat = createHardwareMaterial(0xa0abbc, 0.30, 0.48);
 
   // Central octagonal core bus
   const coreGeo = new THREE.CylinderGeometry(0.7, 0.75, 1.2, 6);
@@ -91,26 +143,25 @@ export function createProbeGroup(): THREE.Group {
   horn.rotation.x = 0.7;
   group.add(horn);
 
-  // Folded / deployed photovoltaic wings (Left & Right)
-  const wingGeo = new THREE.BoxGeometry(2.4, 0.03, 0.85);
-  const leftWing = new THREE.Mesh(wingGeo, foilMat);
-  leftWing.position.set(1.9, 0, 0);
+  // Photovoltaic wings (Left & Right) with glass-coated segmented solar wafer texture
+  const wingGeo = new THREE.BoxGeometry(2.2, 0.03, 0.85);
+  const leftWing = new THREE.Mesh(wingGeo, solarMat);
+  leftWing.position.set(1.8, 0, 0);
   leftWing.rotation.z = -0.08;
   group.add(leftWing);
 
-  const rightWing = new THREE.Mesh(wingGeo, foilMat);
-  rightWing.position.set(-1.9, 0, 0);
+  const rightWing = new THREE.Mesh(wingGeo, solarMat);
+  rightWing.position.set(-1.8, 0, 0);
   rightWing.rotation.z = 0.08;
   group.add(rightWing);
 
-  // Magnetometer instrument boom
-  const boomGeo = new THREE.CylinderGeometry(0.03, 0.03, 2.2, 4);
+  // Magnetometer instrument boom (compact 1.4 length to avoid canvas boundary clipping)
+  const boomGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.4, 4);
   const boom = new THREE.Mesh(boomGeo, bodyMat);
-  boom.position.set(0, -1.2, -0.4);
-  boom.rotation.x = -0.5;
+  boom.position.set(0, -0.85, -0.3);
+  boom.rotation.x = -0.4;
   group.add(boom);
 
-  // Enlarged 1.8x for clear silhouette (was 0.72)
   group.scale.setScalar(1.30);
   return group;
 }
@@ -120,9 +171,9 @@ export function createLogPodGroup(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'instrument_log';
 
-  const hullMat = createHardwareMaterial(0x3e4656, 0.35, 0.65);
-  const heatShieldMat = createHardwareMaterial(0x222730, 0.50, 0.55);
-  const accentMat = createHardwareMaterial(0xd97e3a, 0.32, 0.72);
+  const hullMat = createHardwareMaterial(0x525c6e, 0.35, 0.50);
+  const heatShieldMat = createHardwareMaterial(0x28303c, 0.48, 0.42);
+  const accentMat = createHardwareMaterial(0x7c8a9e, 0.30, 0.65);
 
   // Re-entry blunt capsule head (cone + rounded base)
   const headGeo = new THREE.ConeGeometry(0.85, 1.6, 8);
@@ -160,7 +211,6 @@ export function createLogPodGroup(): THREE.Group {
   mast.position.y = -1.1;
   group.add(mast);
 
-  // Enlarged 1.8x for clear silhouette (was 0.78)
   group.scale.setScalar(1.40);
   return group;
 }

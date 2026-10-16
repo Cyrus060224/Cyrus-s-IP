@@ -14,6 +14,7 @@ export interface InstrumentItem {
   group: THREE.Group;
   basePosition: THREE.Vector3;
   targetOffset: THREE.Vector3;
+  visualAnchorOffset: THREE.Vector3;
   floatingSeed: number;
   hitRadius: number;
 }
@@ -42,9 +43,9 @@ export class InstrumentManager {
     this.group.name = 'instruments_fleet';
 
     // 1. OBS-01: Deep Space Optical Telescope (光影视窗 -> /gallery/)
-    // Placed in upper-mid right void, comfortably inside FOV and well away from left text
+    // Placed in upper-mid space, safe from left text and 80px above atmosphere arc
     const telescope = createTelescopeGroup();
-    const obsPos = new THREE.Vector3(3.4, 2.3, 6.5);
+    const obsPos = new THREE.Vector3(2.8, 3.2, 5.8);
     telescope.position.copy(obsPos);
     telescope.rotation.set(0.2, 0.4, -0.15);
     this.group.add(telescope);
@@ -57,14 +58,15 @@ export class InstrumentManager {
       group: telescope,
       basePosition: obsPos.clone(),
       targetOffset: new THREE.Vector3(0, 0, 3.2),
+      visualAnchorOffset: new THREE.Vector3(0, 0, 0),
       floatingSeed: 12.5,
       hitRadius: 3.2
     });
 
     // 2. PRJ-02: Orbital Engineering Probe (轨道造物 -> /projects/)
-    // Placed in far upper-right deep space (well above the planetary limb to avoid any occlusion)
+    // Placed in far upper-right open space, safely away from canvas top edge and atmosphere arc
     const probe = createProbeGroup();
-    const prjPos = new THREE.Vector3(7.2, 4.0, 4.8);
+    const prjPos = new THREE.Vector3(6.4, 2.2, 5.2);
     probe.position.copy(prjPos);
     probe.rotation.set(-0.35, -0.5, 0.1);
     this.group.add(probe);
@@ -77,14 +79,15 @@ export class InstrumentManager {
       group: probe,
       basePosition: prjPos.clone(),
       targetOffset: new THREE.Vector3(0, 0, 3.0),
+      visualAnchorOffset: new THREE.Vector3(0, 0.15, 0),
       floatingSeed: 48.2,
       hitRadius: 3.2
     });
 
     // 3. LOG-03: Flight Log Command Pod (航行日志 -> /posts/)
-    // Placed in lower center-right void, clear of the atmosphere arc
+    // Placed in lower center-right void, anchored on command capsule head
     const logPod = createLogPodGroup();
-    const logPos = new THREE.Vector3(2.2, -2.6, 8.5);
+    const logPos = new THREE.Vector3(2.0, -2.8, 8.2);
     logPod.position.copy(logPos);
     logPod.rotation.set(0.4, 0.2, -0.3);
     this.group.add(logPod);
@@ -97,6 +100,7 @@ export class InstrumentManager {
       group: logPod,
       basePosition: logPos.clone(),
       targetOffset: new THREE.Vector3(0, 0, 3.0),
+      visualAnchorOffset: new THREE.Vector3(0, 0.55, 0),
       floatingSeed: 91.7,
       hitRadius: 3.2
     });
@@ -106,24 +110,26 @@ export class InstrumentManager {
     this.mouseVec.set(normalizedX, normalizedY);
   }
 
-  public update(time: number, camera: THREE.Camera): void {
-    // Gentle zero-g orbital float & subtle yaw
-    this.instruments.forEach(inst => {
-      const s = inst.floatingSeed;
-      const floatX = Math.sin(time * 0.45 + s) * 0.12;
-      const floatY = Math.cos(time * 0.55 + s * 1.3) * 0.15;
-      const floatZ = Math.sin(time * 0.35 + s * 0.7) * 0.08;
+  public update(time: number, camera: THREE.Camera, prefersReducedMotion: boolean = false): void {
+    if (!prefersReducedMotion) {
+      // Gentle zero-g orbital float & controlled rotation (>= 2s per specular sweep)
+      this.instruments.forEach(inst => {
+        const s = inst.floatingSeed;
+        const floatX = Math.sin(time * 0.45 + s) * 0.08;
+        const floatY = Math.cos(time * 0.55 + s * 1.3) * 0.10;
+        const floatZ = Math.sin(time * 0.35 + s * 0.7) * 0.06;
 
-      inst.group.position.set(
-        inst.basePosition.x + floatX,
-        inst.basePosition.y + floatY,
-        inst.basePosition.z + floatZ
-      );
+        inst.group.position.set(
+          inst.basePosition.x + floatX,
+          inst.basePosition.y + floatY,
+          inst.basePosition.z + floatZ
+        );
 
-      // Low angular velocity rotation
-      inst.group.rotation.y += 0.0025;
-      inst.group.rotation.x += 0.0012;
-    });
+        // Smooth angular rate ensures specular sweeps take ~2.5s without rapid strobe
+        inst.group.rotation.y += 0.0016;
+        inst.group.rotation.x += 0.0008;
+      });
+    }
 
     // Ensure all world transforms are completely updated before raycasting
     this.group.updateMatrixWorld(true);
@@ -135,6 +141,8 @@ export class InstrumentManager {
 
     for (const inst of this.instruments) {
       inst.group.getWorldPosition(worldPos);
+      const anchorOffset = inst.visualAnchorOffset.clone().applyQuaternion(inst.group.quaternion);
+      worldPos.add(anchorOffset);
       const ray = this.raycaster.ray;
       const distToSphere = ray.distanceToPoint(worldPos);
       if (distToSphere < inst.hitRadius) {
@@ -151,8 +159,10 @@ export class InstrumentManager {
     const worldPos = new THREE.Vector3();
 
     this.instruments.forEach(inst => {
-      // True 3D world position
+      // True 3D world position + custom visual anchor offset
       inst.group.getWorldPosition(worldPos);
+      const anchorOffset = inst.visualAnchorOffset.clone().applyQuaternion(inst.group.quaternion);
+      worldPos.add(anchorOffset);
 
       // Project into camera normalized device coordinates
       const proj = worldPos.clone().project(camera);
