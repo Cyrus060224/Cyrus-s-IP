@@ -257,17 +257,18 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
           var modal = document.getElementById('create-post-modal');
           if (btn) btn.style.setProperty('display', 'inline-flex', 'important');
           
-          var params = new URLSearchParams(window.location.search);
-          if (params.get('action') === 'new' || params.get('create') === 'true') {
-            if (modal) {
-              modal.style.display = 'flex';
-              document.body.style.overflow = 'hidden';
-            }
+          var search = window.location.search || '';
+          var hash = window.location.hash || '';
+          var hasAction = search.indexOf('action=new') !== -1 || search.indexOf('create=true') !== -1 || hash === '#new';
+          if (hasAction && modal) {
+            modal.style.setProperty('display', 'flex', 'important');
+            document.body.style.overflow = 'hidden';
           }
           
-          btn?.addEventListener('click', function() {
+          btn?.addEventListener('click', function(e) {
+            e.preventDefault();
             if (modal) {
-              modal.style.display = 'flex';
+              modal.style.setProperty('display', 'flex', 'important');
               document.body.style.overflow = 'hidden';
             }
           });
@@ -306,13 +307,18 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
     let currentCategory = urlParams.get('category') || 'all';
     let currentTag = urlParams.get('tag') || null;
 
-    function applyFilter() {
+    function applyFilter(updateHistory = false) {
       let visibleCount = 0;
 
       postCards.forEach(card => {
         const cardCategory = card.getAttribute('data-category');
         const cardTagsRaw = card.getAttribute('data-tags');
-        const cardTags: string[] = cardTagsRaw ? JSON.parse(cardTagsRaw) : [];
+        let cardTags: string[] = [];
+        try {
+          cardTags = cardTagsRaw ? JSON.parse(cardTagsRaw) : [];
+        } catch (e) {
+          cardTags = [];
+        }
 
         const categoryMatches = (currentCategory === 'all') || (cardCategory === currentCategory);
         const tagMatches = (!currentTag) || cardTags.includes(currentTag);
@@ -343,17 +349,28 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
         emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
       }
 
-      const params = new URLSearchParams();
-      if (currentCategory !== 'all') params.set('category', currentCategory);
-      if (currentTag) params.set('tag', currentTag);
-      const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
+      if (updateHistory) {
+        const params = new URLSearchParams(window.location.search);
+        if (currentCategory !== 'all') {
+          params.set('category', currentCategory);
+        } else {
+          params.delete('category');
+        }
+        if (currentTag) {
+          params.set('tag', currentTag);
+        } else {
+          params.delete('tag');
+        }
+        const query = params.toString();
+        const newUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
     }
 
     catButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         currentCategory = btn.getAttribute('data-category') || 'all';
-        applyFilter();
+        applyFilter(true);
       });
     });
 
@@ -361,17 +378,17 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
       btn.addEventListener('click', () => {
         const tag = btn.getAttribute('data-tag');
         currentTag = (currentTag === tag) ? null : tag;
-        applyFilter();
+        applyFilter(true);
       });
     });
 
     resetBtn?.addEventListener('click', () => {
       currentCategory = 'all';
       currentTag = null;
-      applyFilter();
+      applyFilter(true);
     });
 
-    applyFilter();
+    applyFilter(false);
   }
 
   // 2. In-Place Post Creation Modal
@@ -400,12 +417,16 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
     const refreshBtn = document.getElementById('post-refresh-btn');
 
     function openModal() {
-      if (modal) modal.style.display = 'flex';
+      if (modal) {
+        modal.style.setProperty('display', 'flex', 'important');
+      }
       document.body.style.overflow = 'hidden';
     }
 
     function closeModal() {
-      if (modal) modal.style.display = 'none';
+      if (modal) {
+        modal.style.setProperty('display', 'none', 'important');
+      }
       document.body.style.overflow = '';
       const params = new URLSearchParams(window.location.search);
       if (params.get('action') === 'new' || params.get('create') === 'true') {
@@ -417,7 +438,10 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
       }
     }
 
-    openBtn?.addEventListener('click', openModal);
+    openBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      openModal();
+    });
     closeBtn?.addEventListener('click', closeModal);
     cancelBtn?.addEventListener('click', closeModal);
 
@@ -435,7 +459,9 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
 
     // Auto-open if query param ?action=new or ?create=true
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('action') === 'new' || urlParams.get('create') === 'true') {
+    const searchStr = window.location.search || '';
+    const hashStr = window.location.hash || '';
+    if (urlParams.get('action') === 'new' || urlParams.get('create') === 'true' || searchStr.indexOf('action=new') !== -1 || hashStr === '#new') {
       openModal();
     }
 
@@ -571,8 +597,16 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
   }
 
   function run() {
-    initFilters();
-    initInPlaceCreator();
+    try {
+      initInPlaceCreator();
+    } catch (e) {
+      console.error('initInPlaceCreator error:', e);
+    }
+    try {
+      initFilters();
+    } catch (e) {
+      console.error('initFilters error:', e);
+    }
   }
 
   if (document.readyState === 'loading') {
