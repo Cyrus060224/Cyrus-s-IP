@@ -21,8 +21,8 @@ export const CATEGORIES: Record<string, CategoryMeta> = {
     name: '造物日记',
     enName: 'Build in Public',
     description: '独立开发、开源项目打磨与从 0 到 1 的踩坑记录',
-    badgeBg: 'rgba(235, 108, 54, 0.12)',
-    badgeColor: '#eb6c36',
+    badgeBg: 'rgba(74, 138, 204, 0.12)',
+    badgeColor: '#4a8acc',
   },
   travel: {
     id: 'travel',
@@ -37,8 +37,8 @@ export const CATEGORIES: Record<string, CategoryMeta> = {
     name: '散文随笔',
     enName: 'Essays & Prose',
     description: '关于生活节奏、胶片摄影、书影音与自省的散文片段',
-    badgeBg: 'rgba(128, 90, 213, 0.12)',
-    badgeColor: '#805ad5',
+    badgeBg: 'rgba(104, 120, 142, 0.12)',
+    badgeColor: '#68788e',
   },
 };
 

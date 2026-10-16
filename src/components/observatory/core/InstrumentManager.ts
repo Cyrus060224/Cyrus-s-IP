@@ -71,10 +71,10 @@ export class InstrumentManager {
     });
 
     // 2. PRJ-02: Orbital Engineering Probe (轨道造物 -> /projects)
-    // Desktop: Upper right space (1144, 89), well above atmospheric arc apex (Y=147)
+    // Desktop: Upper right space (1057, 111), 130px+ clear of telemetry text area and well above arc
     // Mobile: Mid-right space (288, 382), completely inside mobile viewport
     const probe = createProbeGroup();
-    const prjDesktop = new THREE.Vector3(7.8, 4.8, 2.2);
+    const prjDesktop = new THREE.Vector3(6.2, 4.4, 2.2);
     const prjMobile = new THREE.Vector3(1.4, 0.6, 2.4);
     probe.position.copy(prjDesktop);
     probe.rotation.set(-0.35, -0.5, 0.1);

@@ -28,54 +28,57 @@
   --container-max: 880px;
   --prose-max: 680px;
 
-  /* 4. Default: Dark Observatory (深空暗色模式) */
-  --paper: #0b0d10;              /* Near-black warm basalt */
-  --paper-2: #13161c;            /* Surface / module panel */
-  --card-bg: #171b22;            /* Station bay card */
-  --card-bg-elevated: #1f242e;   /* Floating hover surface */
-  --ink: #ece8e1;                /* Ivory white text */
-  --muted: #8a929e;              /* Cold slate gray secondary text */
-  --soft: #505763;               /* Dim telemetry / coordinate lines */
-  --rule: rgba(255, 255, 255, 0.08);       /* 1px hairline rule */
-  --rule-bold: rgba(255, 255, 255, 0.16);  /* Framing rule */
-  --accent: #d97736;             /* Oxidized Amber / Dusk Corona */
-  --accent-tint: rgba(217, 119, 54, 0.14);
-  --accent-glow: rgba(217, 119, 54, 0.22);
-  --dot-color: rgba(255, 255, 255, 0.035); /* Deep cosmic dust grid */
+  /* 4. Default: Dark Observatory (深空冷色调暗色模式) */
+  --paper: #05070B;                        /* Deep cold space void */
+  --paper-2: #0A0E14;                      /* Station bay surface */
+  --card-bg: #0A0E14;                      /* Cold dark card */
+  --card-bg-elevated: #121822;             /* Floating hover surface */
+  --ink: #E6EAF0;                          /* Primary cold ivory-white text */
+  --muted: #8A94A3;                        /* Secondary cold slate gray text */
+  --soft: #4c5666;                         /* Dim telemetry / coordinate lines */
+  --rule: rgba(143, 196, 255, 0.18);       /* 1px ice blue hairline rule */
+  --rule-bold: rgba(143, 196, 255, 0.32);  /* Framing rule */
+  --accent: #8FC4FF;                       /* Low-saturation Ice Blue */
+  --accent-tint: rgba(143, 196, 255, 0.12);
+  --accent-glow: rgba(143, 196, 255, 0.22);
+  --stellar-warm: #F2E8D5;                 /* Warm white stellar beacon (only for stars/terminator) */
+  --dot-color: rgba(143, 196, 255, 0.04);  /* Deep space dust grid */
 }
 
-/* Sunlit Manual (日照观测手册 · 象牙粗面纸墨风格) */
+/* Sunlit Manual (日照观测手册 · 冷灰白观测手册风格) */
 [data-theme="light"] {
-  --paper: #f4f1ea;              /* Sunlit parchment */
-  --paper-2: #eae5db;            /* Plate paper surface */
-  --card-bg: #e3ded3;            /* Log docket card */
-  --card-bg-elevated: #d8d2c5;   /* Elevated ledger panel */
-  --ink: #181a1f;                /* Deep carbon ink black */
-  --muted: #575e6b;              /* Cold graphite gray */
-  --soft: #8b929e;               /* Fine drafting pencil mark */
-  --rule: rgba(30, 32, 38, 0.10);
-  --rule-bold: rgba(30, 32, 38, 0.20);
-  --accent: #b8561d;             /* Terracotta / scorched seal orange */
-  --accent-tint: rgba(184, 86, 29, 0.10);
-  --accent-glow: rgba(184, 86, 29, 0.16);
-  --dot-color: rgba(30, 32, 38, 0.04);
+  --paper: #F2F5F9;                        /* Cold grayish-white paper */
+  --paper-2: #E9EEF4;                      /* Surface / module panel */
+  --card-bg: #FFFFFF;                      /* Clean manual card */
+  --card-bg-elevated: #E9EEF4;             /* Elevated card */
+  --ink: #121820;                          /* Primary dark ink */
+  --muted: #5B6573;                        /* Secondary graphite text */
+  --soft: #8B96A5;                         /* Dim telemetry marks */
+  --rule: rgba(18, 24, 32, 0.12);          /* Hairline rule */
+  --rule-bold: rgba(18, 24, 32, 0.22);     /* Framing rule */
+  --accent: #2F6FB5;                       /* Deep steel blue */
+  --accent-tint: rgba(47, 111, 181, 0.10);
+  --accent-glow: rgba(47, 111, 181, 0.18);
+  --stellar-warm: #F2E8D5;
+  --dot-color: rgba(18, 24, 32, 0.04);
 }
 
 /* Explicit Dark theme selector mirroring default */
 [data-theme="dark"] {
-  --paper: #0b0d10;
-  --paper-2: #13161c;
-  --card-bg: #171b22;
-  --card-bg-elevated: #1f242e;
-  --ink: #ece8e1;
-  --muted: #8a929e;
-  --soft: #505763;
-  --rule: rgba(255, 255, 255, 0.08);
-  --rule-bold: rgba(255, 255, 255, 0.16);
-  --accent: #d97736;
-  --accent-tint: rgba(217, 119, 54, 0.14);
-  --accent-glow: rgba(217, 119, 54, 0.22);
-  --dot-color: rgba(255, 255, 255, 0.035);
+  --paper: #05070B;
+  --paper-2: #0A0E14;
+  --card-bg: #0A0E14;
+  --card-bg-elevated: #121822;
+  --ink: #E6EAF0;
+  --muted: #8A94A3;
+  --soft: #4c5666;
+  --rule: rgba(143, 196, 255, 0.18);
+  --rule-bold: rgba(143, 196, 255, 0.32);
+  --accent: #8FC4FF;
+  --accent-tint: rgba(143, 196, 255, 0.12);
+  --accent-glow: rgba(143, 196, 255, 0.22);
+  --stellar-warm: #F2E8D5;
+  --dot-color: rgba(143, 196, 255, 0.04);
 }
 
 html {

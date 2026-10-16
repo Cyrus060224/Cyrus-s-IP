@@ -1,6 +1,6 @@
 /**
  * DEEP SPACE OBSERVATORY · PLANET ENGINE
- * Manages Procedural Planet Mesh, Amber Atmosphere Shell, Dust Layer & Scale Moonlet
+ * Manages Procedural Planet Mesh, Ice-Blue Atmosphere Shell, Dust Layer & Scale Moonlet
  */
 
 import * as THREE from 'three';
@@ -26,7 +26,7 @@ export class PlanetEngine {
 
   // Key directional light vector (Behind/Right)
   public lightDirection: THREE.Vector3 = new THREE.Vector3(1.6, 0.75, -1.9).normalize();
-  public sunColor: THREE.Vector3 = new THREE.Vector3(1.0, 0.92, 0.82);
+  public sunColor: THREE.Vector3 = new THREE.Vector3(0.95, 0.91, 0.84); // #F2E8D5 warm-white stellar light
 
   constructor() {
     this.group = new THREE.Group();
@@ -75,8 +75,8 @@ export class PlanetEngine {
           float patch = sin(vPosition.x * 0.6 + vPosition.z * 0.4 + uTime * 0.08) * 0.5 + 0.5;
           float dustMask = smoothstep(0.45, 0.85, band * patch);
 
-          vec3 dustColor = vec3(0.78, 0.48, 0.24);
-          gl_FragColor = vec4(dustColor, dustMask * 0.22 * dayLight);
+          vec3 hazeColor = vec3(0.42, 0.58, 0.78);
+          gl_FragColor = vec4(hazeColor, dustMask * 0.16 * dayLight);
         }
       `,
       uniforms: {
@@ -91,7 +91,7 @@ export class PlanetEngine {
     this.dustMesh.renderOrder = 1;
     this.group.add(this.dustMesh);
 
-    // 3. Amber Atmosphere Scattering Shell
+    // 3. Ice-Blue Atmosphere Scattering Shell
     this.atmosphereGeo = new THREE.SphereGeometry(planetRadius * 1.042, 64, 48);
     this.atmosphereMat = new THREE.ShaderMaterial({
       vertexShader: atmosphereVertexShader,

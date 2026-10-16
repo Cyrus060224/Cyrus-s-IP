@@ -1,6 +1,6 @@
 /**
  * DEEP SPACE OBSERVATORY · PLANET SHADERS
- * Smooth Procedural Rocky Planet with Seamless World-Space Lighting & Restrained Relief
+ * Smooth Procedural Rocky/Icy Planet with Seamless World-Space Lighting & Volumetric Spherical Relief
  */
 
 export const planetVertexShader = /* glsl */ `
@@ -28,7 +28,7 @@ export const planetFragmentShader = /* glsl */ `
   varying vec3 vLocalPosition;
 
   // -------------------------------------------------------------
-  // Seamless 3D Simplex Noise for Continuous Smooth Relief
+  // Seamless 3D Simplex Noise for Continuous Smooth Geological Relief
   // -------------------------------------------------------------
   vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -94,7 +94,7 @@ export const planetFragmentShader = /* glsl */ `
     return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
   }
 
-  // Smooth, low-frequency planetary swells (no harsh high-frequency noise)
+  // Smooth, continuous macro topography (no point clouds, no grain)
   float macroTerrain(vec3 p) {
     float n = 0.0;
     n += 0.58 * snoise(p * 0.45);
@@ -112,32 +112,47 @@ export const planetFragmentShader = /* glsl */ `
     h = clamp(h * 0.5 + 0.5, 0.0, 1.0);
 
     // World Space Normal (Strictly uniform and seamless)
-    vec3 normal = normalize(vWorldNormal);
+    vec3 baseNormal = normalize(vWorldNormal);
     vec3 lightDir = normalize(uLightDir);
     vec3 viewDir = normalize(cameraPosition - vWorldPosition);
 
-    // Color Palette: Cold Basalt -> Wind-swept Sandstone -> Subtle Oxidized Ridge
-    vec3 basalt = vec3(0.065, 0.072, 0.088);        // Deep dark basalt
-    vec3 canyon = vec3(0.135, 0.115, 0.100);        // Deep rift shade
-    vec3 weatheredSand = vec3(0.32, 0.24, 0.17);     // Wind-eroded rock plain
-    vec3 amberRidge = vec3(0.68, 0.39, 0.19);        // Soft oxidized iron ridges
+    // Restrained surface normal perturbation for subtle tactile relief
+    float eps = 0.02;
+    float hX = macroTerrain(spherePos + vec3(eps, 0.0, 0.0));
+    float hY = macroTerrain(spherePos + vec3(0.0, eps, 0.0));
+    float hZ = macroTerrain(spherePos + vec3(0.0, 0.0, eps));
+    vec3 grad = vec3(hX - h, hY - h, hZ - h) / eps;
+    vec3 normal = normalize(baseNormal - grad * 0.12);
 
-    vec3 albedo = mix(basalt, canyon, smoothstep(0.15, 0.40, h));
-    albedo = mix(albedo, weatheredSand, smoothstep(0.40, 0.70, h));
-    albedo = mix(albedo, amberRidge, smoothstep(0.70, 0.95, h));
+    // Cold Planetary Palette: Deep Cold Basalt -> Dark Basin -> Slate Ice-Rock Plain -> Restrained Frost Ridge
+    vec3 deepBasalt      = vec3(0.042, 0.052, 0.072); // Deep dark cold basalt
+    vec3 coldBasin       = vec3(0.078, 0.098, 0.132); // Cold rock shelf / depression
+    vec3 weatheredPlain  = vec3(0.145, 0.185, 0.245); // Subdued cold gray-blue mineral plain
+    vec3 frostRidge      = vec3(0.240, 0.310, 0.395); // Restrained ice/frost plateau ridge
 
-    // Directional Lighting & Soft Cinematic Terminator
+    vec3 albedo = mix(deepBasalt, coldBasin, smoothstep(0.10, 0.38, h));
+    albedo = mix(albedo, weatheredPlain, smoothstep(0.38, 0.68, h));
+    albedo = mix(albedo, frostRidge, smoothstep(0.68, 0.95, h));
+
+    // Volumetric Spherical Shading from terminator inward
     float NdotL = dot(normal, lightDir);
-    float dayLight = smoothstep(-0.08, 0.16, NdotL);
+    float dayFactor = clamp((NdotL + 0.06) / 1.06, 0.0, 1.0);
+    float terminatorSoft = smoothstep(-0.08, 0.22, NdotL);
+    float diffuse = pow(dayFactor, 1.25) * terminatorSoft;
 
-    // Deep-space cold ambient light for night hemisphere (almost pure void)
-    vec3 nightAmbient = vec3(0.005, 0.006, 0.009);
+    // Subtle warm-white to cold-ice intersection along the grazing terminator
+    vec3 stellarWarm = vec3(0.95, 0.91, 0.84); // #F2E8D5 warm star light
+    float terminatorBand = smoothstep(-0.05, 0.14, NdotL) * (1.0 - smoothstep(0.14, 0.40, NdotL));
+    vec3 lightColor = mix(uSunColor, stellarWarm, terminatorBand * 0.42);
 
-    // Very subtle specular sheen on dry mineral crust (sunward limb only)
+    // Night hemisphere cold ambient light (readable dark blue-black cosmic void tone, not pure black)
+    vec3 nightAmbient = vec3(0.012, 0.016, 0.024);
+
+    // Restrained specular sheen on crystalline ice/rock crust (grazing sunward limb only)
     vec3 halfVec = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(normal, halfVec), 0.0), 24.0) * 0.12 * dayLight;
+    float spec = pow(max(dot(normal, halfVec), 0.0), 28.0) * 0.09 * terminatorSoft;
 
-    vec3 litColor = albedo * (dayLight * uSunColor + nightAmbient) + spec * uSunColor;
+    vec3 litColor = albedo * (diffuse * lightColor + nightAmbient) + spec * stellarWarm;
 
     gl_FragColor = vec4(litColor, 1.0);
   }

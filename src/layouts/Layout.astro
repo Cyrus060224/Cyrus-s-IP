@@ -21,8 +21,9 @@ const {
     <title>{title}</title>
     <meta name="description" content={description} />
     <script is:inline>
-      // Persistent theme init (Default: Dark Observatory)
-      const savedTheme = localStorage.getItem('theme');
+      // Persistent theme init (Default: Dark Observatory, supports ?theme=light/dark)
+      const urlTheme = new URLSearchParams(window.location.search).get('theme');
+      const savedTheme = urlTheme || localStorage.getItem('theme');
       if (savedTheme) {
         document.documentElement.setAttribute('data-theme', savedTheme);
       } else {
@@ -229,7 +230,7 @@ const {
     padding: 1.15rem 0;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    background: rgba(11, 13, 16, 0.85);
+    background: rgba(5, 7, 11, 0.85);
     position: sticky;
     top: 0;
     z-index: 50;
@@ -237,7 +238,7 @@ const {
   }
 
   :global([data-theme="light"]) .site-header {
-    background: rgba(244, 241, 234, 0.88);
+    background: rgba(242, 245, 249, 0.88);
   }
 
   .header-inner {
@@ -282,7 +283,7 @@ const {
     border-radius: 4px;
     background: var(--accent-tint);
     color: var(--accent);
-    border: 1px solid rgba(235, 108, 54, 0.25);
+    border: 1px solid var(--accent-glow);
   }
 
   .nav {
@@ -307,15 +308,15 @@ const {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #10b981;
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    background: #38a882;
+    box-shadow: 0 0 0 0 rgba(56, 168, 130, 0.7);
     animation: pulse-ring 2s infinite;
   }
 
   @keyframes pulse-ring {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 168, 130, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(56, 168, 130, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 168, 130, 0); }
   }
 
   .nav-link:hover {

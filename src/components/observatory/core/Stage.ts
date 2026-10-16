@@ -67,7 +67,7 @@ export class Stage {
 
     // 1. Scene
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0b0d10);
+    this.scene.background = new THREE.Color(0x05070B);
 
     // 2. Perspective Camera (Narrow FOV 36deg for cinematic scale)
     this.camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 700);
@@ -87,31 +87,36 @@ export class Stage {
     this.renderer.toneMappingExposure = 1.05;
     this.container.appendChild(this.renderer.domElement);
 
-    // 4. Lighting Rig (Side-rear sun key + terminator rim + cool-blue dark fill + planetary bounce + ambient)
-    // Ambient: sets instrument base tone ~1 tier above void (#0b0d10)
-    const ambientLight = new THREE.AmbientLight(0x1c2534, 0.52);
+    // 4. Lighting Rig (Side-rear stellar key + terminator rim + cool-blue dark fill + planetary bounce + ambient)
+    // Ambient: sets instrument base tone ~1 tier above void (#05070B)
+    const ambientLight = new THREE.AmbientLight(0x182230, 0.48);
     this.scene.add(ambientLight);
 
-    // Main distant star directional key light
-    const sunLight = new THREE.DirectionalLight(0xfff5e6, 2.0);
+    // Main distant star directional key light (warm-white #F2E8D5)
+    const sunLight = new THREE.DirectionalLight(0xf2e8d5, 2.2);
     sunLight.position.set(24, 12, -28);
     this.scene.add(sunLight);
 
     // Primary warm-white rim light (#F2E8D5) from planet terminator angle (side-rear grazing)
     // Traces crisp, narrow razor-sharp rim lights along instrument silhouettes
-    const warmWhiteRimLight = new THREE.DirectionalLight(0xf2e8d5, 2.4);
+    const warmWhiteRimLight = new THREE.DirectionalLight(0xf2e8d5, 2.0);
     warmWhiteRimLight.position.set(15, 9, -6);
     this.scene.add(warmWhiteRimLight);
 
     // Faint cool-blue fill light from void side to keep dark sides in readable blue-black depth
-    const coolBlueFillLight = new THREE.DirectionalLight(0x405570, 0.65);
+    const coolBlueFillLight = new THREE.DirectionalLight(0x426084, 0.60);
     coolBlueFillLight.position.set(-14, -4, 16);
     this.scene.add(coolBlueFillLight);
 
-    // Planetary reflection (warm amber bounce from planet limb up towards instruments)
-    const planetaryBounceLight = new THREE.DirectionalLight(0xd08048, 0.40);
+    // Planetary reflection (subtle cold blue bounce from ice planet)
+    const planetaryBounceLight = new THREE.DirectionalLight(0x456c98, 0.40);
     planetaryBounceLight.position.set(12, -15, 3);
     this.scene.add(planetaryBounceLight);
+
+    // Dedicated cool-blue fill light for lower-left instrument (LOG-03) to ensure readable silhouette without excess brightness
+    const logPodFillLight = new THREE.DirectionalLight(0x4a709c, 0.55);
+    logPodFillLight.position.set(-16, 2, 14);
+    this.scene.add(logPodFillLight);
 
     // Procedural low-intensity cosmic environment map (0KB external file)
     try {
@@ -124,10 +129,10 @@ export class Stage {
       const ctx = envCanvas.getContext('2d');
       if (ctx) {
         const grad = ctx.createLinearGradient(0, 0, 0, 32);
-        grad.addColorStop(0.0, '#0a0e16');
-        grad.addColorStop(0.4, '#151e2c');
-        grad.addColorStop(0.7, '#1d2736');
-        grad.addColorStop(1.0, '#2e2016');
+        grad.addColorStop(0.0, '#04060a');
+        grad.addColorStop(0.4, '#0d1522');
+        grad.addColorStop(0.7, '#152030');
+        grad.addColorStop(1.0, '#1c283c');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, 64, 32);
       }

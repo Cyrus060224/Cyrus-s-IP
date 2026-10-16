@@ -40,23 +40,31 @@ export class StarField {
       let bCol = 0.96;
 
       if (roll > 0.96) {
-        // 4% bright stars with subtle amber/white tint
+        // 4% bright stars with subtle warm-white or pale ice-blue tint
         size = 2.4 + Math.random() * 1.2;
-        rCol = 0.98;
-        gCol = 0.82;
-        bCol = 0.62;
+        if (Math.random() > 0.5) {
+          // Warm-white stellar point (#F2E8D5)
+          rCol = 0.95;
+          gCol = 0.91;
+          bCol = 0.84;
+        } else {
+          // Pale ice-blue stellar point (#8FC4FF)
+          rCol = 0.65;
+          gCol = 0.82;
+          bCol = 1.00;
+        }
       } else if (roll > 0.82) {
-        // 14% medium stars
-        size = 1.5 + Math.random() * 0.6;
-        rCol = 0.85;
+        // 14% medium stars (crisp pale ice-white)
+        size = 1.4 + Math.random() * 0.6;
+        rCol = 0.82;
         gCol = 0.88;
-        bCol = 0.95;
+        bCol = 0.96;
       } else {
         // 82% faint deep-space background stars
         size = 0.7 + Math.random() * 0.5;
-        rCol = 0.55;
-        gCol = 0.60;
-        bCol = 0.70;
+        rCol = 0.42;
+        gCol = 0.48;
+        bCol = 0.58;
       }
 
       colors[i * 3 + 0] = rCol;
