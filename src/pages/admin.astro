@@ -34,32 +34,47 @@ import Layout from '../layouts/Layout.astro';
         <p class="panel-sub">你可以直接前往以下板块就地添加或更新内容，或者在浏览过程中随时点击页面上的新建按钮：</p>
 
         <div class="quick-nav-grid">
-          <a href="/posts" class="quick-nav-card">
+          <div class="quick-nav-card">
             <span class="card-icon">✍️</span>
-            <div>
+            <div class="card-text">
               <strong>文章档案 / Posts</strong>
-              <p>就地撰写 Markdown 深度长文或散文随笔</p>
+              <p>就地撰写 Markdown 深度长文、技术思考或散文随笔</p>
             </div>
-            <span class="arrow">→</span>
-          </a>
+            <div class="card-action-btns">
+              <a href="/posts" class="btn btn-secondary btn-sm">浏览列表</a>
+              <a href="/posts?action=new" class="btn btn-primary btn-sm action-highlight">
+                <span>+</span> 立即写文章 ✍️
+              </a>
+            </div>
+          </div>
 
-          <a href="/gallery" class="quick-nav-card">
+          <div class="quick-nav-card">
             <span class="card-icon">📸</span>
-            <div>
+            <div class="card-text">
               <strong>光影画廊 / Moments</strong>
-              <p>就地拖拽上传胶片相片、旅行足迹或短视频</p>
+              <p>就地拖拽上传胶片相片、旅行足迹、拍摄参数或短视频</p>
             </div>
-            <span class="arrow">→</span>
-          </a>
+            <div class="card-action-btns">
+              <a href="/gallery" class="btn btn-secondary btn-sm">浏览画廊</a>
+              <a href="/gallery?action=upload" class="btn btn-primary btn-sm action-highlight">
+                <span>+</span> 立即传光影 📸
+              </a>
+            </div>
+          </div>
 
-          <a href="/projects" class="quick-nav-card">
+          <div class="quick-nav-card">
             <span class="card-icon">🚀</span>
-            <div>
+            <div class="card-text">
               <strong>造物工坊 / Projects</strong>
-              <p>登记新的开源项目、工具造物与技术实验</p>
+              <p>登记新的开源项目、工具造物、运行状态与技术实验</p>
             </div>
-            <span class="arrow">→</span>
-          </a>
+            <div class="card-action-btns">
+              <a href="/projects" class="btn btn-secondary btn-sm">浏览造物</a>
+              <a href="/projects?action=new" class="btn btn-primary btn-sm action-highlight">
+                <span>+</span> 立即登记造物 🚀
+              </a>
+            </div>
+          </div>
         </div>
 
         <div class="admin-danger-row">
@@ -352,41 +367,57 @@ import Layout from '../layouts/Layout.astro';
   .quick-nav-card {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem;
     background: var(--paper);
     border: 1px solid var(--rule);
     border-radius: 8px;
-    padding: 1rem 1.25rem;
+    padding: 1.15rem 1.4rem;
     transition: all 0.15s ease;
+    flex-wrap: wrap;
   }
 
   .quick-nav-card:hover {
     border-color: var(--ink);
-    transform: translateX(3px);
   }
 
   .card-icon {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
+  }
+
+  .card-text {
+    flex: 1;
+    min-width: 220px;
   }
 
   .quick-nav-card strong {
     display: block;
-    font-size: 0.95rem;
+    font-size: 1rem;
     color: var(--ink);
-    margin-bottom: 2px;
+    margin-bottom: 3px;
   }
 
   .quick-nav-card p {
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     color: var(--muted);
     margin: 0;
+    line-height: 1.5;
   }
 
-  .arrow {
-    margin-left: auto;
-    font-family: var(--font-mono);
-    color: var(--soft);
-    font-size: 1.1rem;
+  .card-action-btns {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .action-highlight {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #fff !important;
+    font-weight: 600;
+  }
+  .action-highlight:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
   }
 
   .admin-danger-row {

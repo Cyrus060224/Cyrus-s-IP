@@ -103,6 +103,16 @@ const {
           <span id="popover-status-text">已连接到 GitHub 仓库</span>
         </div>
         <div class="popover-actions">
+          <a href="/posts?action=new" class="popover-btn popover-highlight">
+            <span>✍️</span> 撰写新文章
+          </a>
+          <a href="/gallery?action=upload" class="popover-btn popover-highlight">
+            <span>📸</span> 上传相片 / 视频
+          </a>
+          <a href="/projects?action=new" class="popover-btn popover-highlight">
+            <span>🚀</span> 登记新造物
+          </a>
+          <div class="popover-divider"></div>
           <button id="toggle-preview-btn" class="popover-btn">
             👁️ <span id="toggle-preview-text">切换为访客视角</span>
           </button>
@@ -158,6 +168,10 @@ const {
           if (pillLabel) pillLabel.textContent = '站长模式';
           if (pillBtn) pillBtn.classList.remove('in-preview');
           if (togglePreviewText) togglePreviewText.textContent = '切换为访客视角';
+          document.documentElement.setAttribute('data-owner-mode', 'true');
+          document.querySelectorAll('.owner-only').forEach(el => {
+            el.style.setProperty('display', 'inline-flex', 'important');
+          });
         }
 
         pillBtn?.addEventListener('click', (e) => {
@@ -539,5 +553,23 @@ const {
   .popover-btn.danger:hover {
     background: rgba(239, 68, 68, 0.08);
     border-color: #ef4444;
+  }
+
+  .popover-highlight {
+    background: var(--accent-tint);
+    border-color: rgba(235, 108, 54, 0.3);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .popover-highlight:hover {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+  }
+
+  .popover-divider {
+    height: 1px;
+    background: var(--rule);
+    margin: 4px 0;
   }
 </style>
