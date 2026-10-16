@@ -246,6 +246,37 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
       </div>
     </div>
   </div>
+
+  <!-- Immediate inline failsafe for owner creation mode -->
+  <script is:inline>
+    (function() {
+      try {
+        var isOwner = localStorage.getItem('cyrus_owner_mode') === 'true' && Boolean(localStorage.getItem('cyrus_github_pat')) && localStorage.getItem('cyrus_visitor_preview') !== 'true';
+        if (isOwner) {
+          var btn = document.getElementById('btn-open-create-post');
+          var modal = document.getElementById('create-post-modal');
+          if (btn) btn.style.setProperty('display', 'inline-flex', 'important');
+          
+          var params = new URLSearchParams(window.location.search);
+          if (params.get('action') === 'new' || params.get('create') === 'true') {
+            if (modal) {
+              modal.style.display = 'flex';
+              document.body.style.overflow = 'hidden';
+            }
+          }
+          
+          btn?.addEventListener('click', function() {
+            if (modal) {
+              modal.style.display = 'flex';
+              document.body.style.overflow = 'hidden';
+            }
+          });
+        }
+      } catch (e) {
+        console.error('Owner post script error', e);
+      }
+    })();
+  </script>
 </Layout>
 
 <script>
@@ -376,11 +407,25 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
     function closeModal() {
       if (modal) modal.style.display = 'none';
       document.body.style.overflow = '';
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('action') === 'new' || params.get('create') === 'true') {
+        params.delete('action');
+        params.delete('create');
+        const query = params.toString();
+        const newUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
     }
 
     openBtn?.addEventListener('click', openModal);
     closeBtn?.addEventListener('click', closeModal);
     cancelBtn?.addEventListener('click', closeModal);
+
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal || (e.target as HTMLElement).classList.contains('modal-backdrop')) {
+        closeModal();
+      }
+    });
 
     // Explicitly guarantee owner button visibility
     const { isOwner } = getOwnerState();
@@ -391,7 +436,7 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
     // Auto-open if query param ?action=new or ?create=true
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('action') === 'new' || urlParams.get('create') === 'true') {
-      setTimeout(openModal, 150);
+      openModal();
     }
 
     // Auto slug from title
@@ -525,10 +570,16 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
     });
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function run() {
     initFilters();
     initInPlaceCreator();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
 </script>
 
 <style>

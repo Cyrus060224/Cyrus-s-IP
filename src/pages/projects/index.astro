@@ -216,6 +216,37 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       </div>
     </div>
   </div>
+
+  <!-- Immediate inline failsafe for owner project creation mode -->
+  <script is:inline>
+    (function() {
+      try {
+        var isOwner = localStorage.getItem('cyrus_owner_mode') === 'true' && Boolean(localStorage.getItem('cyrus_github_pat')) && localStorage.getItem('cyrus_visitor_preview') !== 'true';
+        if (isOwner) {
+          var btn = document.getElementById('btn-open-create-proj');
+          var modal = document.getElementById('create-proj-modal');
+          if (btn) btn.style.setProperty('display', 'inline-flex', 'important');
+          
+          var params = new URLSearchParams(window.location.search);
+          if (params.get('action') === 'new' || params.get('create') === 'true') {
+            if (modal) {
+              modal.style.display = 'flex';
+              document.body.style.overflow = 'hidden';
+            }
+          }
+          
+          btn?.addEventListener('click', function() {
+            if (modal) {
+              modal.style.display = 'flex';
+              document.body.style.overflow = 'hidden';
+            }
+          });
+        }
+      } catch (e) {
+        console.error('Owner project script error', e);
+      }
+    })();
+  </script>
 </Layout>
 
 <script>
@@ -275,11 +306,25 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
     function closeModal() {
       if (modal) modal.style.display = 'none';
       document.body.style.overflow = '';
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('action') === 'new' || params.get('create') === 'true') {
+        params.delete('action');
+        params.delete('create');
+        const query = params.toString();
+        const newUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
     }
 
     openBtn?.addEventListener('click', openModal);
     closeBtn?.addEventListener('click', closeModal);
     cancelBtn?.addEventListener('click', closeModal);
+
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal || (e.target as HTMLElement).classList.contains('modal-backdrop')) {
+        closeModal();
+      }
+    });
 
     // Explicitly guarantee owner button visibility
     const { isOwner } = getOwnerState();
@@ -290,7 +335,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
     // Auto-open if query param ?action=new or ?create=true
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('action') === 'new' || urlParams.get('create') === 'true') {
-      setTimeout(openModal, 150);
+      openModal();
     }
 
     titleInput?.addEventListener('blur', () => {
@@ -371,10 +416,16 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
     });
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function run() {
     initProjectFilters();
     initInPlaceProject();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
 </script>
 
 <style>

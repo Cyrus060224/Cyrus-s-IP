@@ -244,7 +244,11 @@ import Layout from '../layouts/Layout.astro';
   });
 
   // Run on mount
-  document.addEventListener('DOMContentLoaded', checkState);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkState);
+  } else {
+    checkState();
+  }
 </script>
 
 <style>

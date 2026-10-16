@@ -214,7 +214,11 @@ const {
         });
       }
 
-      document.addEventListener('DOMContentLoaded', initOwnerWidget);
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initOwnerWidget);
+      } else {
+        initOwnerWidget();
+      }
     </script>
   </body>
 </html>
