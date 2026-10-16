@@ -34,8 +34,8 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
     <header class="projects-header">
       <div class="projects-header-row">
         <div>
-          <div class="mono-eyebrow">SHOWCASE &amp; CRAFTS · 造物工坊</div>
-          <h1 class="serif-title projects-title">我的项目与实验</h1>
+          <div class="mono-eyebrow">ORBITAL PROBES &amp; WORKBENCH · 轨道造物与探测器</div>
+          <h1 class="serif-title projects-title">轨道工程与造物实验</h1>
         </div>
         <!-- Owner-only trigger -->
         <button id="btn-open-create-proj" class="btn btn-primary owner-only in-place-btn">
@@ -43,7 +43,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
         </button>
       </div>
       <p class="projects-desc">
-        “What I cannot create, I do not understand.” 记录我从想法雏形、技术选型到完整落地的每一个作品。
+        “What I cannot create, I do not understand.” 记录深空观测站的轨道探测器、自主智能体与系统级工程工具。
       </p>
     </header>
 
@@ -57,13 +57,14 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
 
     <!-- Projects Grid -->
     <div class="projects-grid">
-      {projects.map(proj => {
+      {projects.map((proj, idx) => {
         const cat = categoryMap[proj.data.category] || { label: proj.data.category, color: '#666' };
         const status = statusMap[proj.data.status] || { label: proj.data.status, dotClass: 'status-active' };
 
         return (
           <article class="project-card" data-category={proj.data.category}>
             <div class="card-header">
+              <span class="telemetry-badge">PRJ-00{idx + 1}</span>
               <span class="cat-pill" style={`color: ${cat.color}; border-color: ${cat.color}33;`}>
                 {cat.label}
               </span>

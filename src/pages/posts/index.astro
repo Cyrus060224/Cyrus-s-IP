@@ -34,8 +34,8 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
     <header class="archive-header">
       <div class="archive-header-row">
         <div>
-          <div class="mono-eyebrow">ARCHIVE &amp; THOUGHTS · ALL WRITINGS</div>
-          <h1 class="serif-title archive-title">文章与思考</h1>
+          <div class="mono-eyebrow">DEEP SPACE FLIGHT LOGS · 航行日志档案</div>
+          <h1 class="serif-title archive-title">航行日志与思考</h1>
         </div>
         <!-- Owner-only in-place creation trigger -->
         <button id="btn-open-create-post" class="btn btn-primary owner-only in-place-btn">
@@ -43,7 +43,7 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
         </button>
       </div>
       <p class="archive-desc">
-        这里记录了我所有的探索与心境。从硬核的 AI 架构与底层技术，到远方的山川旷野与散文杂感。
+        记录深空航行中的系统底层、AI 智能体工程、漫长思考与行旅随笔。以文字为刻度，锚定认知坐标。
       </p>
     </header>
 
@@ -96,6 +96,7 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
               data-tags={JSON.stringify(post.data.tags || [])}
             >
               <div class="card-meta">
+                <span class="telemetry-badge">LOG-{formattedDate.replace(/\//g, '.')}</span>
                 <span class="card-cat" style={`background: ${cat.badgeBg}; color: ${cat.badgeColor}`}>
                   {cat.name}
                 </span>

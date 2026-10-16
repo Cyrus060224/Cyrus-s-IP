@@ -29,9 +29,9 @@ const formattedDate = new Intl.DateTimeFormat('zh-CN', {
   <article class="container post-container">
     <!-- Breadcrumb & Category -->
     <nav class="breadcrumb">
-      <a href="/">首页</a>
+      <a href="/">深空视窗</a>
       <span class="sep">/</span>
-      <a href="/posts">文章</a>
+      <a href="/posts">航行日志</a>
       <span class="sep">/</span>
       <a href={`/posts?category=${category.id}`} class="cat-link" style={`color: ${category.badgeColor}`}>
         {category.name}
@@ -41,6 +41,7 @@ const formattedDate = new Intl.DateTimeFormat('zh-CN', {
     <!-- Post Header -->
     <header class="post-header">
       <div class="post-badges">
+        <span class="telemetry-badge">LOG-{formattedDate.replace(/\//g, '.')}</span>
         <span class="cat-badge" style={`background: ${category.badgeBg}; color: ${category.badgeColor}`}>
           {category.name}
         </span>
@@ -71,13 +72,13 @@ const formattedDate = new Intl.DateTimeFormat('zh-CN', {
       <div class="author-card">
         <div class="author-avatar">C</div>
         <div class="author-info">
-          <h4>Cyrus</h4>
-          <p>独立探索者 · 专注于系统底层、AI 智能体工程与高品质技术表达。</p>
+          <h4>Cyrus · 深空观测站站长</h4>
+          <p>专注于系统底层、AI 智能体工程与高品质技术表达。</p>
         </div>
       </div>
 
       <div class="footer-nav">
-        <a href="/posts" class="back-link">← 返回全部文章与分类</a>
+        <a href="/posts" class="back-link">← 返回全部航行日志</a>
       </div>
     </footer>
   </article>
@@ -85,7 +86,8 @@ const formattedDate = new Intl.DateTimeFormat('zh-CN', {
 
 <style>
   .post-container {
-    max-width: 760px;
+    max-width: var(--prose-max);
+    margin: 0 auto;
     padding-top: 1rem;
   }
 

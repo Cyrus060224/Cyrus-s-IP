@@ -22,8 +22,8 @@ const categoryMap: Record<string, { label: string; color: string }> = {
     <header class="gallery-header">
       <div class="gallery-header-row">
         <div>
-          <div class="mono-eyebrow">VISUAL LOG · 光影画廊 · MOMENTS</div>
-          <h1 class="serif-title gallery-title">光影、远行与瞬息之间</h1>
+          <div class="mono-eyebrow">DEEP SPACE VIEWPORT · 光影观测窗</div>
+          <h1 class="serif-title gallery-title">深空视窗与光影切片</h1>
         </div>
         <!-- Owner-only trigger -->
         <button id="btn-open-upload-gal" class="btn btn-primary owner-only in-place-btn">
@@ -31,7 +31,7 @@ const categoryMap: Record<string, { label: string; color: string }> = {
         </button>
       </div>
       <p class="gallery-desc">
-        高原上的寒风暮色、街头的胶片颗粒，以及代码渲染的动效帧率。在严密的逻辑之外，用镜头和快门记录真实世界的呼吸与温度。
+        高原上的寒风暮色、街头的胶片颗粒，以及代码渲染的动效帧率。在深空航行中，用光学传感器记录真实世界的呼吸与温度。
       </p>
     </header>
 
@@ -46,7 +46,7 @@ const categoryMap: Record<string, { label: string; color: string }> = {
 
     <!-- Masonry Grid -->
     <div class="gallery-grid">
-      {items.map(item => {
+      {items.map((item, idx) => {
         const cat = categoryMap[item.data.category] || { label: item.data.category, color: '#666' };
         const isVideo = item.data.type === 'video';
         const formattedDate = new Intl.DateTimeFormat('zh-CN', {
@@ -84,6 +84,7 @@ const categoryMap: Record<string, { label: string; color: string }> = {
               
               <div class="media-overlay">
                 <div class="overlay-top">
+                  <span class="telemetry-badge">OBS-00{idx + 1}</span>
                   <span class="cat-pill" style={`background: ${cat.color}22; color: ${cat.color}; border: 1px solid ${cat.color}44;`}>
                     {cat.label}
                   </span>

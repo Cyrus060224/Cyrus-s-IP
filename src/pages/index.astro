@@ -44,20 +44,20 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
   <div class="container home-container">
     <!-- 1. Hero Section -->
     <section class="hero-section">
-      <div class="mono-eyebrow">DIGITAL GARDEN · BUILD IN PUBLIC · VER. 2026</div>
+      <div class="mono-eyebrow">DEEP SPACE OBSERVATORY · SYSTEM VER. 2026 · CYRUS ORBIT</div>
       <h1 class="serif-title hero-title">
-        在喧嚣与代码之中，<br/>
-        构建属于自己的数字主权领地。
+        在寂静的深空与代码之中，<br/>
+        锚定属于自己的认知坐标。
       </h1>
       <p class="hero-desc">
-        你好，我是 <strong>Cyrus</strong>。我热衷于探索系统底层架构、自主 AI 智能体与高质感技术表达。这里是我的数字大本营，自由容纳我的工程造物、深度思考、行旅随笔与光影记录。
+        你好，我是 <strong>Cyrus</strong>。这是一座孤独运转的深空观测站。在这里，我以<strong>航行日志</strong>沉淀系统底层与深度思考，以<strong>轨道造物</strong>调试工程实验，以<strong>深空视窗</strong>记录行旅瞬息与光影切片。
       </p>
 
       <div class="hero-actions">
-        <a href="/posts" class="btn btn-primary">文章档案 ({allPosts.length}) →</a>
-        <a href="/projects" class="btn btn-secondary">造物工坊 ({allProjects.length})</a>
-        <a href="/gallery" class="btn btn-secondary">光影画廊 ({allGallery.length})</a>
-        <a href="/about" class="btn btn-ghost">关于我</a>
+        <a href="/posts" class="btn btn-primary">航行日志 ({allPosts.length}) →</a>
+        <a href="/projects" class="btn btn-secondary">轨道造物 ({allProjects.length})</a>
+        <a href="/gallery" class="btn btn-secondary">深空光影 ({allGallery.length})</a>
+        <a href="/about" class="btn btn-ghost">观测站档案</a>
       </div>
 
       <!-- Quick Category Nav Pills -->
@@ -79,10 +79,10 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       <section class="featured-section">
         <div class="section-header">
           <div>
-            <span class="mono-eyebrow">EDITOR'S SPOTLIGHT</span>
-            <h2 class="section-title">置顶焦点 / Featured</h2>
+            <span class="mono-eyebrow">STATION SPOTLIGHT · 观测台焦点</span>
+            <h2 class="section-title">重点航行日志 / Featured Log</h2>
           </div>
-          <span class="header-badge">本期主打</span>
+          <span class="header-badge">本期主标</span>
         </div>
 
         {(() => {
@@ -96,6 +96,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
           return (
             <a href={`/posts/${featuredPost.id}`} class="featured-card">
               <div class="card-top">
+                <span class="telemetry-badge">LOG-{formattedDate.replace(/\//g, '.')}</span>
                 <span class="badge" style={`background: ${cat.badgeBg}; color: ${cat.badgeColor}`}>
                   {cat.name}
                 </span>
@@ -117,7 +118,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
                     <span class="tag">#{t}</span>
                   ))}
                 </div>
-                <span class="read-more">阅读深度长文 →</span>
+                <span class="read-more">阅读日志全文 →</span>
               </div>
             </a>
           );
@@ -130,10 +131,10 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       <section class="recent-posts-section">
         <div class="section-header">
           <div>
-            <span class="mono-eyebrow">LATEST WRITINGS &amp; ESSAYS</span>
-            <h2 class="section-title">思想与随笔 / Recent Posts</h2>
+            <span class="mono-eyebrow">FLIGHT LOG ARCHIVES · 航行日志</span>
+            <h2 class="section-title">最新思想记录 / Recent Logs</h2>
           </div>
-          <a href="/posts" class="view-all-link">查看全部档案 ({allPosts.length}) →</a>
+          <a href="/posts" class="view-all-link">查看全部日志 ({allPosts.length}) →</a>
         </div>
 
         <div class="recent-grid">
@@ -148,6 +149,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
             return (
               <a href={`/posts/${post.id}`} class="recent-card">
                 <div class="recent-meta">
+                  <span class="telemetry-badge">LOG-{formattedDate.replace(/\//g, '.')}</span>
                   <span class="recent-cat" style={`color: ${cat.badgeColor}`}>
                     {cat.name}
                   </span>
@@ -172,20 +174,21 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       <section class="projects-section">
         <div class="section-header">
           <div>
-            <span class="mono-eyebrow">ENGINEERING &amp; TOOLS</span>
-            <h2 class="section-title">造物工坊 / Selected Crafts</h2>
+            <span class="mono-eyebrow">ORBITAL INSTRUMENTS · 轨道造物</span>
+            <h2 class="section-title">探测器与实验台 / Selected Crafts</h2>
           </div>
           <a href="/projects" class="view-all-link">全部造物 ({allProjects.length}) →</a>
         </div>
 
         <div class="projects-grid">
-          {sortedProjects.map(proj => {
+          {sortedProjects.map((proj, idx) => {
             const cat = projectCategoryMap[proj.data.category] || { label: proj.data.category, color: '#666' };
             const status = statusMap[proj.data.status] || { label: proj.data.status, dotClass: 'status-active' };
 
             return (
               <article class="proj-card">
                 <div class="proj-card-top">
+                  <span class="telemetry-badge">PRJ-00{idx + 1}</span>
                   <span class="proj-cat" style={`color: ${cat.color}; border-color: ${cat.color}33;`}>
                     {cat.label}
                   </span>
@@ -230,14 +233,14 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       <section class="gallery-preview-section">
         <div class="section-header">
           <div>
-            <span class="mono-eyebrow">VISUAL JOURNAL &amp; MOMENTS</span>
-            <h2 class="section-title">光影瞬息 / Visual Journal</h2>
+            <span class="mono-eyebrow">OPTICAL OBSERVATION · 深空光影</span>
+            <h2 class="section-title">深空视窗存档 / Visual Journal</h2>
           </div>
-          <a href="/gallery" class="view-all-link">浏览完整画廊 ({allGallery.length}) →</a>
+          <a href="/gallery" class="view-all-link">浏览完整视窗 ({allGallery.length}) →</a>
         </div>
 
         <div class="gallery-strip">
-          {recentGallery.map(item => {
+          {recentGallery.map((item, idx) => {
             const isVideo = item.data.type === 'video';
             const formattedDate = new Intl.DateTimeFormat('zh-CN', {
               year: 'numeric',
@@ -253,10 +256,11 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
                   ) : (
                     <img src={item.data.mediaUrl} alt={item.data.title} loading="lazy" class="strip-thumb" />
                   )}
-                  {isVideo && <span class="video-pill">▶ 视频动效</span>}
+                  {isVideo && <span class="video-pill">▶ 动效记录</span>}
                 </div>
                 <div class="strip-info">
                   <div class="strip-meta">
+                    <span class="telemetry-badge">OBS-00{idx + 1}</span>
                     <span class="strip-date">{formattedDate}</span>
                     {item.data.location && <span class="strip-loc">📍 {item.data.location}</span>}
                   </div>
@@ -275,8 +279,8 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
     <section class="pillars-section">
       <div class="section-header">
         <div>
-          <span class="mono-eyebrow">CORE PRINCIPLES</span>
-          <h2 class="section-title">创作基准 / Principles</h2>
+          <span class="mono-eyebrow">OBSERVATORY PROTOCOLS · 站长基准</span>
+          <h2 class="section-title">观测原则 / Protocols</h2>
         </div>
       </div>
 

@@ -13,7 +13,7 @@ const {
 ---
 
 <!doctype html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,11 +21,11 @@ const {
     <title>{title}</title>
     <meta name="description" content={description} />
     <script is:inline>
-      // Persistent theme init
+      // Persistent theme init (Default: Dark Observatory)
       const savedTheme = localStorage.getItem('theme');
       if (savedTheme) {
         document.documentElement.setAttribute('data-theme', savedTheme);
-      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      } else {
         document.documentElement.setAttribute('data-theme', 'dark');
       }
 
@@ -44,16 +44,16 @@ const {
         <a href="/" class="brand">
           <span class="brand-avatar">C</span>
           <span class="brand-name">Cyrus</span>
-          <span class="brand-badge">IP</span>
+          <span class="brand-badge">OBS · 2026</span>
         </a>
         
         <nav class="nav">
-          <a href="/" class="nav-link">首页</a>
-          <a href="/posts" class="nav-link">文章档案</a>
-          <a href="/projects" class="nav-link">造物工坊</a>
-          <a href="/gallery" class="nav-link">光影画廊</a>
+          <a href="/" class="nav-link">深空视窗</a>
+          <a href="/posts" class="nav-link">航行日志</a>
+          <a href="/projects" class="nav-link">轨道造物</a>
+          <a href="/gallery" class="nav-link">深空光影</a>
           <a href="/now" class="nav-link now-nav-link">
-            <span class="pulse-dot"></span>此刻
+            <span class="pulse-dot"></span>信标
           </a>
           <a href="/about" class="nav-link">关于</a>
           <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="nav-link github-nav">GitHub</a>
@@ -73,15 +73,15 @@ const {
     <footer class="site-footer">
       <div class="container footer-inner">
         <div class="footer-meta">
-          <p class="mono-eyebrow">© 2026 CYRUS · CRAFTED WITH ASTRO &amp; CLOUDFLARE</p>
-          <p class="footer-desc">视觉设计规范基于 diagram-design · 追求极简与深度思考</p>
+          <p class="mono-eyebrow">© 2026 CYRUS · DEEP SPACE OBSERVATORY · ORBIT: CF-EDGE</p>
+          <p class="footer-desc">遥测状态：所有系统运转正常 · 坐标时区 UTC+8 · 保持克制与深空凝视</p>
         </div>
         <div class="footer-links">
-          <a href="https://github.com/Cyrus060224/Cyrus-s-IP" target="_blank" rel="noreferrer">Source Code</a>
+          <a href="https://github.com/Cyrus060224/Cyrus-s-IP" target="_blank" rel="noreferrer">Git-as-CMS</a>
           <span>·</span>
-          <a href="/now">此刻</a>
+          <a href="/now">信标</a>
           <span>·</span>
-          <a href="/admin" class="footer-admin-link">站长入口</a>
+          <a href="/admin" class="footer-admin-link">指令终端</a>
         </div>
       </div>
     </footer>
@@ -226,17 +226,18 @@ const {
 <style>
   .site-header {
     border-bottom: 1px solid var(--rule);
-    padding: 1.25rem 0;
-    backdrop-filter: blur(8px);
-    background: rgba(246, 246, 245, 0.85);
+    padding: 1.15rem 0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(11, 13, 16, 0.85);
     position: sticky;
     top: 0;
     z-index: 50;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: background var(--duration-base) var(--ease-obs), border-color var(--duration-base) var(--ease-obs);
   }
 
-  :global([data-theme="dark"]) .site-header {
-    background: rgba(17, 19, 24, 0.85);
+  :global([data-theme="light"]) .site-header {
+    background: rgba(244, 241, 234, 0.88);
   }
 
   .header-inner {

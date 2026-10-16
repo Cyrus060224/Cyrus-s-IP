@@ -8,10 +8,10 @@ import Layout from '../layouts/Layout.astro';
 >
   <div class="container admin-container">
     <div class="admin-card">
-      <div class="mono-eyebrow">OWNER AUTHENTICATION · 独立主权管理</div>
-      <h1 class="serif-title admin-title">站长身份认证</h1>
+      <div class="mono-eyebrow">COMMAND TERMINAL · 站长指令终端</div>
+      <h1 class="serif-title admin-title">站长指令终端 / Level-4 Clear</h1>
       <p class="admin-desc">
-        在你的主力设备（电脑、手机或平板）上输入 GitHub 访问密钥（PAT），即可在此设备上激活专属的<strong>「就地创作模式」</strong>。
+        在你的主力设备上输入 GitHub 访问密钥（PAT），即可在此终端激活深空观测站专属的<strong>「就地创作与遥测录入」</strong>。
       </p>
 
       <!-- Connection Status Card -->
@@ -20,7 +20,7 @@ import Layout from '../layouts/Layout.astro';
           <span id="status-dot" class="status-dot-lg checking"></span>
           <div>
             <div id="status-main-text" class="status-title">正在检测本地权限...</div>
-            <div id="status-sub-text" class="status-subtitle">读取当前浏览器密钥状态</div>
+            <div id="status-sub-text" class="status-subtitle">读取当前终端密钥状态</div>
           </div>
         </div>
         <button id="btn-toggle-visitor" class="btn btn-secondary btn-sm" style="display: none;">
@@ -30,20 +30,20 @@ import Layout from '../layouts/Layout.astro';
 
       <!-- Connected View Actions -->
       <div id="connected-panel" class="connected-panel" style="display: none;">
-        <h3 class="panel-heading">⚡ 站长模式已在此设备激活</h3>
-        <p class="panel-sub">你可以直接前往以下板块就地添加或更新内容，或者在浏览过程中随时点击页面上的新建按钮：</p>
+        <h3 class="panel-heading">⚡ 观测站指挥权已在此终端激活</h3>
+        <p class="panel-sub">你拥有深空观测站最高写入与覆写权限。可直接前往以下模块就地写入日志、上传光学切片或登记轨道探测器：</p>
 
         <div class="quick-nav-grid">
           <div class="quick-nav-card">
             <span class="card-icon">✍️</span>
             <div class="card-text">
-              <strong>文章档案 / Posts</strong>
-              <p>就地撰写 Markdown 深度长文、技术思考或散文随笔</p>
+              <strong>航行日志 / Flight Logs</strong>
+              <p>就地撰写 Markdown 深度日志、技术深潜思考或行旅随笔</p>
             </div>
             <div class="card-action-btns">
               <a href="/posts/" class="btn btn-secondary btn-sm">浏览列表</a>
               <a href="/posts/?action=new" class="btn btn-primary btn-sm action-highlight">
-                <span>+</span> 立即写文章 ✍️
+                <span>+</span> 立即写日志 ✍️
               </a>
             </div>
           </div>
@@ -51,11 +51,11 @@ import Layout from '../layouts/Layout.astro';
           <div class="quick-nav-card">
             <span class="card-icon">📸</span>
             <div class="card-text">
-              <strong>光影画廊 / Moments</strong>
-              <p>就地拖拽上传胶片相片、旅行足迹、拍摄参数或短视频</p>
+              <strong>深空光影 / Visual Viewport</strong>
+              <p>就地拖拽上传胶片相片、旅行足迹、光学传感器参数或短视频</p>
             </div>
             <div class="card-action-btns">
-              <a href="/gallery/" class="btn btn-secondary btn-sm">浏览画廊</a>
+              <a href="/gallery/" class="btn btn-secondary btn-sm">浏览视窗</a>
               <a href="/gallery/?action=upload" class="btn btn-primary btn-sm action-highlight">
                 <span>+</span> 立即传光影 📸
               </a>
@@ -65,8 +65,8 @@ import Layout from '../layouts/Layout.astro';
           <div class="quick-nav-card">
             <span class="card-icon">🚀</span>
             <div class="card-text">
-              <strong>造物工坊 / Projects</strong>
-              <p>登记新的开源项目、工具造物、运行状态与技术实验</p>
+              <strong>轨道造物 / Orbital Probes</strong>
+              <p>登记新的轨道探测器、智能体工具、运行状态与技术实验</p>
             </div>
             <div class="card-action-btns">
               <a href="/projects/" class="btn btn-secondary btn-sm">浏览造物</a>
