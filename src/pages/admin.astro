@@ -1,0 +1,553 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout 
+  title="站长权限认证 · Admin · Cyrus"
+  description="专属站长权限通道。安全连接 GitHub 授权令牌，在任何设备上激活就地创作与上传功能。"
+>
+  <div class="container admin-container">
+    <div class="admin-card">
+      <div class="mono-eyebrow">OWNER AUTHENTICATION · 独立主权管理</div>
+      <h1 class="serif-title admin-title">站长身份认证</h1>
+      <p class="admin-desc">
+        在你的主力设备（电脑、手机或平板）上输入 GitHub 访问密钥（PAT），即可在此设备上激活专属的<strong>「就地创作模式」</strong>。
+      </p>
+
+      <!-- Connection Status Card -->
+      <div id="status-card" class="connection-status-box">
+        <div class="status-left">
+          <span id="status-dot" class="status-dot-lg checking"></span>
+          <div>
+            <div id="status-main-text" class="status-title">正在检测本地权限...</div>
+            <div id="status-sub-text" class="status-subtitle">读取当前浏览器密钥状态</div>
+          </div>
+        </div>
+        <button id="btn-toggle-visitor" class="btn btn-secondary btn-sm" style="display: none;">
+          切换访客视角
+        </button>
+      </div>
+
+      <!-- Connected View Actions -->
+      <div id="connected-panel" class="connected-panel" style="display: none;">
+        <h3 class="panel-heading">⚡ 站长模式已在此设备激活</h3>
+        <p class="panel-sub">你可以直接前往以下板块就地添加或更新内容，或者在浏览过程中随时点击页面上的新建按钮：</p>
+
+        <div class="quick-nav-grid">
+          <a href="/posts" class="quick-nav-card">
+            <span class="card-icon">✍️</span>
+            <div>
+              <strong>文章档案 / Posts</strong>
+              <p>就地撰写 Markdown 深度长文或散文随笔</p>
+            </div>
+            <span class="arrow">→</span>
+          </a>
+
+          <a href="/gallery" class="quick-nav-card">
+            <span class="card-icon">📸</span>
+            <div>
+              <strong>光影画廊 / Moments</strong>
+              <p>就地拖拽上传胶片相片、旅行足迹或短视频</p>
+            </div>
+            <span class="arrow">→</span>
+          </a>
+
+          <a href="/projects" class="quick-nav-card">
+            <span class="card-icon">🚀</span>
+            <div>
+              <strong>造物工坊 / Projects</strong>
+              <p>登记新的开源项目、工具造物与技术实验</p>
+            </div>
+            <span class="arrow">→</span>
+          </a>
+        </div>
+
+        <div class="admin-danger-row">
+          <button id="btn-disconnect" class="btn btn-ghost danger-btn">
+            ✕ 登出并清除此设备的 Token
+          </button>
+          <a href="/" class="btn btn-primary">返回首页</a>
+        </div>
+      </div>
+
+      <!-- Disconnected / Auth Form -->
+      <form id="auth-form" class="auth-form" style="display: none;">
+        <div class="form-group">
+          <label class="form-label" for="admin-pat">GitHub 访问令牌 (Personal Access Token)</label>
+          <input 
+            type="password" 
+            id="admin-pat" 
+            class="form-input mono-font" 
+            placeholder="ghp_... 或 github_pat_..." 
+            autocomplete="off" 
+            required 
+          />
+          <span class="field-hint">Token 将仅加密保存在当前设备的浏览器缓存中，不会经过任何第三方服务器。</span>
+        </div>
+
+        <div class="help-box">
+          <h4>如何获取专属 Token？(只需 30 秒)</h4>
+          <ol>
+            <li>打开 GitHub <a href="https://github.com/settings/tokens" target="_blank" rel="noreferrer">Tokens (Classic) ↗</a>；</li>
+            <li>点击 <strong>Generate new token (classic)</strong>；</li>
+            <li>Note 填写 <code>Cyrus Blog Admin</code>，并在下方勾选 <strong><code>repo</code></strong> 权限；</li>
+            <li>点击底部绿色按钮 <strong>Generate token</strong>，复制生成的密钥并粘贴至上方。</li>
+          </ol>
+        </div>
+
+        <div id="auth-error-msg" class="auth-msg error" style="display: none;"></div>
+        <div id="auth-success-msg" class="auth-msg success" style="display: none;"></div>
+
+        <div class="form-actions">
+          <a href="/" class="btn btn-secondary">返回首页</a>
+          <button type="submit" id="btn-connect" class="btn btn-primary">
+            <span class="btn-text">验证并激活站长模式</span>
+            <span class="btn-spinner" style="display: none;"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { 
+    getOwnerState, 
+    setOwnerToken, 
+    clearOwnerToken, 
+    toggleVisitorPreview, 
+    verifyGitHubToken 
+  } from '../utils/github';
+
+  const statusDot = document.getElementById('status-dot');
+  const statusMainText = document.getElementById('status-main-text');
+  const statusSubText = document.getElementById('status-sub-text');
+  const btnToggleVisitor = document.getElementById('btn-toggle-visitor');
+  const connectedPanel = document.getElementById('connected-panel');
+  const authForm = document.getElementById('auth-form') as HTMLFormElement;
+  const patInput = document.getElementById('admin-pat') as HTMLInputElement;
+  const authErrorMsg = document.getElementById('auth-error-msg');
+  const authSuccessMsg = document.getElementById('auth-success-msg');
+  const btnDisconnect = document.getElementById('btn-disconnect');
+
+  async function checkState() {
+    const state = getOwnerState();
+
+    if (!state.hasToken || !state.token) {
+      // Disconnected
+      if (statusDot) statusDot.className = 'status-dot-lg disconnected';
+      if (statusMainText) statusMainText.textContent = '当前未激活站长模式';
+      if (statusSubText) statusSubText.textContent = '请输入 GitHub Token 以解锁专属创作入口';
+      if (connectedPanel) connectedPanel.style.display = 'none';
+      if (btnToggleVisitor) btnToggleVisitor.style.display = 'none';
+      if (authForm) authForm.style.display = 'block';
+      return;
+    }
+
+    // Has token, verify it
+    if (statusDot) statusDot.className = 'status-dot-lg checking';
+    if (statusMainText) statusMainText.textContent = '正在向 GitHub 验证权限...';
+
+    const verify = await verifyGitHubToken(state.token);
+
+    if (verify.valid) {
+      if (statusDot) statusDot.className = 'status-dot-lg connected';
+      if (statusMainText) statusMainText.textContent = '✓ 站长身份已认证 (Cyrus)';
+      if (statusSubText) statusSubText.textContent = `仓库 Cyrus060224/Cyrus-s-IP · ${verify.user}`;
+      if (connectedPanel) connectedPanel.style.display = 'block';
+      if (authForm) authForm.style.display = 'none';
+      if (btnToggleVisitor) {
+        btnToggleVisitor.style.display = 'inline-flex';
+        btnToggleVisitor.textContent = state.isVisitorPreview ? '恢复站长视角' : '切换访客视角';
+      }
+    } else {
+      if (statusDot) statusDot.className = 'status-dot-lg disconnected';
+      if (statusMainText) statusMainText.textContent = 'Token 鉴权失败或已过期';
+      if (statusSubText) statusSubText.textContent = verify.error || '请重新输入有效的 GitHub 访问令牌';
+      if (connectedPanel) connectedPanel.style.display = 'none';
+      if (btnToggleVisitor) btnToggleVisitor.style.display = 'none';
+      if (authForm) authForm.style.display = 'block';
+    }
+  }
+
+  // Handle Form Submit
+  authForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const token = patInput.value.trim();
+    if (!token) return;
+
+    if (authErrorMsg) authErrorMsg.style.display = 'none';
+    if (authSuccessMsg) authSuccessMsg.style.display = 'none';
+
+    const btn = document.getElementById('btn-connect');
+    if (btn) btn.setAttribute('disabled', 'true');
+
+    try {
+      const verify = await verifyGitHubToken(token);
+      if (verify.valid) {
+        setOwnerToken(token);
+        if (authSuccessMsg) {
+          authSuccessMsg.textContent = '✓ 认证成功！站长模式已激活，正在就绪...';
+          authSuccessMsg.style.display = 'block';
+        }
+        setTimeout(() => {
+          checkState();
+        }, 1000);
+      } else {
+        if (authErrorMsg) {
+          authErrorMsg.textContent = `✗ 连接失败：${verify.error || 'Token 无效或权限不足'}`;
+          authErrorMsg.style.display = 'block';
+        }
+      }
+    } catch (err: any) {
+      if (authErrorMsg) {
+        authErrorMsg.textContent = `✗ 网络错误：${err.message}`;
+        authErrorMsg.style.display = 'block';
+      }
+    } finally {
+      if (btn) btn.removeAttribute('disabled');
+    }
+  });
+
+  // Toggle Visitor Preview
+  btnToggleVisitor?.addEventListener('click', () => {
+    const isNowVisitor = toggleVisitorPreview();
+    if (btnToggleVisitor) {
+      btnToggleVisitor.textContent = isNowVisitor ? '恢复站长视角' : '切换访客视角';
+    }
+    if (statusSubText) {
+      statusSubText.textContent = isNowVisitor ? '（当前正处于访客预览模式）' : '仓库 Cyrus060224/Cyrus-s-IP · 已授权写权限';
+    }
+  });
+
+  // Disconnect
+  btnDisconnect?.addEventListener('click', () => {
+    if (confirm('确定要在当前设备上清除站长 Token 吗？退出后将恢复纯净访客模式。')) {
+      clearOwnerToken();
+      checkState();
+    }
+  });
+
+  // Run on mount
+  document.addEventListener('DOMContentLoaded', checkState);
+</script>
+
+<style>
+  .admin-container {
+    max-width: 680px;
+    padding-top: 2rem;
+    padding-bottom: 5rem;
+  }
+
+  .admin-card {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+  }
+
+  @media (max-width: 640px) {
+    .admin-card {
+      padding: 1.5rem;
+    }
+  }
+
+  .admin-title {
+    font-size: clamp(2rem, 3.5vw + 1rem, 2.6rem);
+    margin: 0.6rem 0 0.8rem;
+    color: var(--ink);
+  }
+
+  .admin-desc {
+    font-size: 0.95rem;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 2rem;
+  }
+
+  /* Status Box */
+  .connection-status-box {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .status-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .status-dot-lg {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-dot-lg.connected {
+    background: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+  .status-dot-lg.disconnected {
+    background: #ef4444;
+  }
+  .status-dot-lg.checking {
+    background: #f59e0b;
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.9); }
+  }
+
+  .status-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--ink);
+  }
+
+  .status-subtitle {
+    font-size: 0.82rem;
+    color: var(--soft);
+    font-family: var(--font-mono);
+    margin-top: 2px;
+  }
+
+  /* Connected Panel */
+  .connected-panel {
+    animation: fadeIn 0.25s ease-out;
+  }
+
+  .panel-heading {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.4rem;
+  }
+
+  .panel-sub {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .quick-nav-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .quick-nav-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    transition: all 0.15s ease;
+  }
+
+  .quick-nav-card:hover {
+    border-color: var(--ink);
+    transform: translateX(3px);
+  }
+
+  .card-icon {
+    font-size: 1.5rem;
+  }
+
+  .quick-nav-card strong {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+
+  .quick-nav-card p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .arrow {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    color: var(--soft);
+    font-size: 1.1rem;
+  }
+
+  .admin-danger-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .danger-btn {
+    color: #ef4444;
+    font-size: 0.85rem;
+    font-family: var(--font-mono);
+  }
+  .danger-btn:hover {
+    background: rgba(239, 68, 68, 0.08);
+  }
+
+  /* Form */
+  .auth-form {
+    animation: fadeIn 0.25s ease-out;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 0.92rem;
+    transition: border-color 0.15s ease;
+  }
+
+  .mono-font {
+    font-family: var(--font-mono);
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--card-bg);
+  }
+
+  .field-hint {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--soft);
+    margin-top: 0.4rem;
+  }
+
+  .help-box {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1.25rem 1.4rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .help-box h4 {
+    font-size: 0.9rem;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+  }
+
+  .help-box ol {
+    padding-left: 1.25rem;
+    line-height: 1.7;
+  }
+
+  .help-box a {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .auth-msg {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .auth-msg.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+  }
+
+  .auth-msg.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1.4rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+  }
+
+  .btn-sm {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+  }
+  .btn-secondary:hover {
+    border-color: var(--ink);
+  }
+
+  .btn-ghost {
+    background: none;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>

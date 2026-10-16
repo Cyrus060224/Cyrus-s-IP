@@ -20,8 +20,16 @@ const categoryMap: Record<string, { label: string; color: string }> = {
 >
   <div class="container gallery-container">
     <header class="gallery-header">
-      <div class="mono-eyebrow">VISUAL LOG · 光影画廊 · MOMENTS</div>
-      <h1 class="serif-title gallery-title">光影、远行与瞬息之间</h1>
+      <div class="gallery-header-row">
+        <div>
+          <div class="mono-eyebrow">VISUAL LOG · 光影画廊 · MOMENTS</div>
+          <h1 class="serif-title gallery-title">光影、远行与瞬息之间</h1>
+        </div>
+        <!-- Owner-only trigger -->
+        <button id="btn-open-upload-gal" class="btn btn-primary owner-only in-place-btn">
+          <span>📸</span> 上传相片 / 视频
+        </button>
+      </div>
       <p class="gallery-desc">
         高原上的寒风暮色、街头的胶片颗粒，以及代码渲染的动效帧率。在严密的逻辑之外，用镜头和快门记录真实世界的呼吸与温度。
       </p>
@@ -128,11 +136,148 @@ const categoryMap: Record<string, { label: string; color: string }> = {
       </div>
     </div>
   </div>
+
+  <!-- ============================================================== -->
+  <!-- In-Place Upload Modal (Only accessible to Owner) -->
+  <!-- ============================================================== -->
+  <div id="upload-gal-modal" class="in-place-modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <span class="mono-eyebrow">IN-PLACE UPLOADER · 实时上传</span>
+          <h2 class="modal-title">📸 上传光影 / 视频</h2>
+        </div>
+        <button id="btn-close-gal-modal" class="modal-close">&times;</button>
+      </div>
+
+      <form id="form-upload-gal" class="modal-form">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="inp-gal-title">光影标题 <span class="req">*</span></label>
+            <input type="text" id="inp-gal-title" class="form-input" placeholder="例如：川西高原的暮色星芒" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inp-gal-slug">文件名标识 (Slug) <span class="req">*</span></label>
+            <input type="text" id="inp-gal-slug" class="form-input mono-font" placeholder="sunset-plateau" required />
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label" for="inp-gal-type">作品类型 <span class="req">*</span></label>
+            <select id="inp-gal-type" class="form-select">
+              <option value="image">摄影相片 (Image)</option>
+              <option value="video">视频 / 动效片段 (Video)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inp-gal-cat">所属栏目 <span class="req">*</span></label>
+            <select id="inp-gal-cat" class="form-select">
+              <option value="travel">旅行足迹 (travel)</option>
+              <option value="film">胶片日记 (film)</option>
+              <option value="video">视频动效 (video)</option>
+              <option value="life">生活切片 (life)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inp-gal-date">记录时间 <span class="req">*</span></label>
+            <input type="date" id="inp-gal-date" class="form-input" required />
+          </div>
+        </div>
+
+        <!-- File upload dropzone or URL -->
+        <div class="form-group">
+          <label class="form-label">媒体源文件 <span class="req">*</span></label>
+          <div class="media-tabs">
+            <button type="button" class="media-tab-btn active" data-type="upload">本地文件拖拽上传</button>
+            <button type="button" class="media-tab-btn" data-type="url">外部网络直链</button>
+          </div>
+
+          <div id="gal-drop-box" class="drop-box">
+            <input type="file" id="inp-gal-file" class="hidden-file" accept="image/*,video/mp4,video/webm,video/quicktime" />
+            <div id="drop-text-prompt" class="drop-prompt">
+              <span class="drop-icon">📁</span>
+              <p class="drop-main">拖拽图片或视频到此处，或 <strong>点击选择文件</strong></p>
+              <span class="drop-sub">支持 JPG, PNG, WebP, MP4, WebM (单文件推荐小于 50MB)</span>
+            </div>
+            <div id="drop-preview-area" class="drop-preview-area" style="display: none;">
+              <div id="gal-preview-container"></div>
+              <div class="preview-meta">
+                <span id="gal-file-name" class="mono-font">filename.jpg</span>
+                <span id="gal-file-size" class="mono-font">0 MB</span>
+                <button type="button" id="btn-reselect-file" class="btn-text-danger">重新选择</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="gal-url-box" class="url-box" style="display: none;">
+            <input type="url" id="inp-gal-url" class="form-input" placeholder="https://example.com/assets/video.mp4" />
+            <span class="field-hint">适用于高码率 4K 视频、B站/YouTube/Cloudflare R2 直链或图床链接</span>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="inp-gal-location">拍摄地点 (可选)</label>
+            <input type="text" id="inp-gal-location" class="form-input" placeholder="例如：川西 · 稻城亚丁" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inp-gal-camera">设备与参数 (可选)</label>
+            <input type="text" id="inp-gal-camera" class="form-input" placeholder="例如：Fujifilm X-T5 · 23mm f/2.0 · ISO 160" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inp-gal-desc">作品背后的故事随笔 (可选)</label>
+          <textarea id="inp-gal-desc" class="form-textarea" rows="2" placeholder="写下一两句当时的心境、光影变幻或创作背景..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inp-gal-tags">标签 Tags</label>
+          <input type="text" id="inp-gal-tags" class="form-input" placeholder="例如：旅行, 雪山, 富士胶片 (逗号分隔)" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-gal-modal" class="btn btn-secondary">取消</button>
+          <button type="submit" id="btn-submit-gal" class="btn btn-primary">
+            <span class="btn-text">立即上传并发布</span>
+            <span class="btn-spinner" style="display: none;"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Progress Overlay -->
+  <div id="gal-progress-overlay" class="progress-backdrop" style="display: none;">
+    <div class="progress-dialog">
+      <div class="progress-spinner"></div>
+      <h3 id="gal-progress-title" class="progress-title">正在上传发布...</h3>
+      <p id="gal-progress-desc" class="progress-desc">请勿关闭页面，正在处理媒体并同步至 GitHub</p>
+      <div id="gal-progress-done" style="display: none; margin-top: 1.5rem; gap: 0.75rem; justify-content: center;">
+        <a id="gal-view-commit-btn" href="#" target="_blank" rel="noreferrer" class="btn btn-secondary btn-sm">查看 Commit ↗</a>
+        <button id="gal-refresh-btn" class="btn btn-primary btn-sm">完成并刷新页面</button>
+      </div>
+    </div>
+  </div>
 </Layout>
 
-<script is:inline>
+<script>
+  import { 
+    getOwnerState, 
+    commitFileToGitHub, 
+    utf8ToBase64, 
+    fileToBase64, 
+    slugify 
+  } from '../../utils/github';
+
+  // 1. Existing Lightbox & filter logic
   function initGallery() {
-    // 1. Filter tabs logic
     const tabs = document.querySelectorAll('.gallery-tab');
     const items = document.querySelectorAll('.gallery-item');
 
@@ -145,15 +290,15 @@ const categoryMap: Record<string, { label: string; color: string }> = {
         items.forEach(item => {
           const itemCat = item.getAttribute('data-category');
           if (filter === 'all' || itemCat === filter) {
-            item.style.display = 'block';
+            (item as HTMLElement).style.display = 'block';
           } else {
-            item.style.display = 'none';
+            (item as HTMLElement).style.display = 'none';
           }
         });
       });
     });
 
-    // 2. Lightbox logic
+    // Lightbox
     const lightbox = document.getElementById('lightbox');
     const backdrop = document.querySelector('.lightbox-backdrop');
     const closeBtn = document.querySelector('.lightbox-close');
@@ -164,7 +309,7 @@ const categoryMap: Record<string, { label: string; color: string }> = {
     const locationEl = document.getElementById('lightbox-location');
     const cameraEl = document.getElementById('lightbox-camera');
 
-    function openLightbox(item) {
+    function openLightbox(item: Element) {
       const type = item.getAttribute('data-type');
       const media = item.getAttribute('data-media');
       const title = item.getAttribute('data-title');
@@ -173,14 +318,14 @@ const categoryMap: Record<string, { label: string; color: string }> = {
       const loc = item.getAttribute('data-location');
       const cam = item.getAttribute('data-camera');
 
-      // Populate media
+      if (!mediaContainer || !titleEl || !descEl || !dateEl || !locationEl || !cameraEl || !lightbox) return;
+
       if (type === 'video') {
         mediaContainer.innerHTML = `<video src="${media}" controls autoplay loop playsinline class="lightbox-video"></video>`;
       } else {
         mediaContainer.innerHTML = `<img src="${media}" alt="${title}" class="lightbox-img" />`;
       }
 
-      // Populate text
       titleEl.textContent = title || '';
       descEl.textContent = desc || '';
       dateEl.textContent = date || '';
@@ -204,10 +349,11 @@ const categoryMap: Record<string, { label: string; color: string }> = {
     }
 
     function closeLightbox() {
+      if (!lightbox) return;
       lightbox.classList.remove('open');
       document.body.style.overflow = '';
       if (mediaContainer) {
-        mediaContainer.innerHTML = ''; // Stop video playback
+        mediaContainer.innerHTML = '';
       }
     }
 
@@ -219,13 +365,258 @@ const categoryMap: Record<string, { label: string; color: string }> = {
     backdrop?.addEventListener('click', closeLightbox);
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && lightbox.classList.contains('open')) {
+      if (e.key === 'Escape' && lightbox?.classList.contains('open')) {
         closeLightbox();
       }
     });
   }
 
-  document.addEventListener('DOMContentLoaded', initGallery);
+  // 2. In-Place Gallery Uploader
+  function initInPlaceGallery() {
+    const openBtn = document.getElementById('btn-open-upload-gal');
+    const modal = document.getElementById('upload-gal-modal');
+    const closeBtn = document.getElementById('btn-close-gal-modal');
+    const cancelBtn = document.getElementById('btn-cancel-gal-modal');
+    const form = document.getElementById('form-upload-gal') as HTMLFormElement;
+
+    const titleInput = document.getElementById('inp-gal-title') as HTMLInputElement;
+    const slugInput = document.getElementById('inp-gal-slug') as HTMLInputElement;
+    const typeSelect = document.getElementById('inp-gal-type') as HTMLSelectElement;
+    const dateInput = document.getElementById('inp-gal-date') as HTMLInputElement;
+    const fileInput = document.getElementById('inp-gal-file') as HTMLInputElement;
+    const dropBox = document.getElementById('gal-drop-box');
+    const dropPrompt = document.getElementById('drop-text-prompt');
+    const dropPreviewArea = document.getElementById('drop-preview-area');
+    const previewContainer = document.getElementById('gal-preview-container');
+    const fileNameEl = document.getElementById('gal-file-name');
+    const fileSizeEl = document.getElementById('gal-file-size');
+    const reselectBtn = document.getElementById('btn-reselect-file');
+    const mediaTabBtns = document.querySelectorAll('.media-tab-btn');
+    const urlBox = document.getElementById('gal-url-box');
+    const urlInput = document.getElementById('inp-gal-url') as HTMLInputElement;
+
+    const progressOverlay = document.getElementById('gal-progress-overlay');
+    const progressTitle = document.getElementById('gal-progress-title');
+    const progressDesc = document.getElementById('gal-progress-desc');
+    const progressDone = document.getElementById('gal-progress-done');
+    const viewCommitBtn = document.getElementById('gal-view-commit-btn') as HTMLAnchorElement;
+    const refreshBtn = document.getElementById('gal-refresh-btn');
+
+    let currentFile: File | null = null;
+    let mode: 'upload' | 'url' = 'upload';
+
+    if (dateInput) {
+      dateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    function openModal() {
+      if (modal) modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      if (modal) modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    openBtn?.addEventListener('click', openModal);
+    closeBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+
+    titleInput?.addEventListener('blur', () => {
+      if (!slugInput.value.trim() && titleInput.value.trim()) {
+        slugInput.value = slugify(titleInput.value);
+      }
+    });
+
+    // Switch between local upload vs URL
+    mediaTabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-type') as 'upload' | 'url';
+        mode = type;
+        mediaTabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        if (type === 'upload') {
+          if (dropBox) dropBox.style.display = 'block';
+          if (urlBox) urlBox.style.display = 'none';
+        } else {
+          if (dropBox) dropBox.style.display = 'none';
+          if (urlBox) urlBox.style.display = 'block';
+        }
+      });
+    });
+
+    function setFile(file: File) {
+      currentFile = file;
+      const isVideo = file.type.startsWith('video/');
+      if (typeSelect) {
+        typeSelect.value = isVideo ? 'video' : 'image';
+      }
+
+      if (fileNameEl) fileNameEl.textContent = file.name;
+      if (fileSizeEl) fileSizeEl.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+
+      if (previewContainer) {
+        const objUrl = URL.createObjectURL(file);
+        if (isVideo) {
+          previewContainer.innerHTML = `<video src="${objUrl}" controls class="preview-media"></video>`;
+        } else {
+          previewContainer.innerHTML = `<img src="${objUrl}" alt="Preview" class="preview-media" />`;
+        }
+      }
+
+      if (dropPrompt) dropPrompt.style.display = 'none';
+      if (dropPreviewArea) dropPreviewArea.style.display = 'flex';
+    }
+
+    dropBox?.addEventListener('click', (e) => {
+      if (e.target !== reselectBtn) {
+        fileInput.click();
+      }
+    });
+
+    fileInput?.addEventListener('change', () => {
+      if (fileInput.files?.[0]) {
+        setFile(fileInput.files[0]);
+      }
+    });
+
+    dropBox?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropBox.classList.add('drag-over');
+    });
+
+    dropBox?.addEventListener('dragleave', () => {
+      dropBox.classList.remove('drag-over');
+    });
+
+    dropBox?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropBox.classList.remove('drag-over');
+      if (e.dataTransfer?.files?.[0]) {
+        setFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    reselectBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentFile = null;
+      fileInput.value = '';
+      if (previewContainer) previewContainer.innerHTML = '';
+      if (dropPreviewArea) dropPreviewArea.style.display = 'none';
+      if (dropPrompt) dropPrompt.style.display = 'block';
+    });
+
+    // Form submission
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const { isOwner, token } = getOwnerState();
+      if (!isOwner || !token) {
+        alert('未检测到站长授权信息，请先访问 /admin 进行认证。');
+        window.location.href = '/admin';
+        return;
+      }
+
+      if (mode === 'upload' && !currentFile) {
+        alert('请先选择或拖拽要上传的文件。');
+        return;
+      }
+      if (mode === 'url' && !urlInput.value.trim()) {
+        alert('请输入有效的媒体 URL。');
+        return;
+      }
+
+      const title = titleInput.value.trim();
+      const slug = slugInput.value.trim().toLowerCase();
+      const type = typeSelect.value;
+      const category = (document.getElementById('inp-gal-cat') as HTMLSelectElement).value;
+      const date = dateInput.value || new Date().toISOString().split('T')[0];
+      const location = (document.getElementById('inp-gal-location') as HTMLInputElement).value.trim();
+      const camera = (document.getElementById('inp-gal-camera') as HTMLInputElement).value.trim();
+      const desc = (document.getElementById('inp-gal-desc') as HTMLTextAreaElement).value.trim();
+      const tagsRaw = (document.getElementById('inp-gal-tags') as HTMLInputElement).value;
+      const tags = tagsRaw ? tagsRaw.split(/[,，]/).map(t => t.trim()).filter(Boolean) : [];
+
+      if (progressOverlay && progressTitle && progressDesc && progressDone) {
+        progressTitle.textContent = '正在上传光影资源...';
+        progressDesc.textContent = '正在准备媒体文件与数据';
+        progressDone.style.display = 'none';
+        progressOverlay.style.display = 'flex';
+      }
+
+      try {
+        let finalMediaUrl = '';
+
+        if (mode === 'upload' && currentFile) {
+          if (progressDesc) progressDesc.textContent = `正在上传 ${currentFile.name} (${(currentFile.size / 1024 / 1024).toFixed(2)} MB)...`;
+          const ext = currentFile.name.split('.').pop() || (type === 'video' ? 'mp4' : 'jpg');
+          const folder = type === 'video' ? 'public/videos' : 'public/images/gallery';
+          const targetPath = `${folder}/${slug}-${Date.now()}.${ext}`;
+          const base64 = await fileToBase64(currentFile);
+
+          await commitFileToGitHub(
+            targetPath,
+            base64,
+            `Upload gallery media: ${title}`,
+            token
+          );
+          finalMediaUrl = `/${targetPath.replace(/^public\//, '')}`;
+        } else {
+          finalMediaUrl = urlInput.value.trim();
+        }
+
+        // Generate metadata markdown in src/content/gallery/{slug}.md
+        if (progressDesc) progressDesc.textContent = '正在生成并提交作品元数据...';
+        let md = `---\n`;
+        md += `title: ${JSON.stringify(title)}\n`;
+        if (desc) md += `description: ${JSON.stringify(desc)}\n`;
+        md += `date: ${date}\n`;
+        md += `category: "${category}"\n`;
+        md += `type: "${type}"\n`;
+        md += `mediaUrl: ${JSON.stringify(finalMediaUrl)}\n`;
+        if (location) md += `location: ${JSON.stringify(location)}\n`;
+        if (camera) md += `camera: ${JSON.stringify(camera)}\n`;
+        md += `aspectRatio: "4/3"\n`;
+        md += `tags: [${tags.map(t => JSON.stringify(t)).join(', ')}]\n`;
+        md += `---\n`;
+
+        const mdPath = `src/content/gallery/${slug}.md`;
+        const commitRes = await commitFileToGitHub(
+          mdPath,
+          utf8ToBase64(md),
+          `Publish gallery moment: ${title} via In-Place Studio`,
+          token
+        );
+
+        if (progressTitle && progressDesc && progressDone && viewCommitBtn) {
+          progressTitle.textContent = '📸 光影发布成功！';
+          progressDesc.textContent = '资源与作品元数据已提交至仓库。Cloudflare Pages 正在增量部署，片刻后即可在画廊中欣赏！';
+          viewCommitBtn.href = commitRes?.commit?.html_url || 'https://github.com/Cyrus060224/Cyrus-s-IP/commits/main';
+          progressDone.style.display = 'flex';
+        }
+
+        closeModal();
+        form.reset();
+        currentFile = null;
+        if (dropPreviewArea) dropPreviewArea.style.display = 'none';
+        if (dropPrompt) dropPrompt.style.display = 'block';
+      } catch (err: any) {
+        if (progressOverlay) progressOverlay.style.display = 'none';
+        alert(`上传发布失败：${err.message}`);
+      }
+    });
+
+    refreshBtn?.addEventListener('click', () => {
+      window.location.reload();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initGallery();
+    initInPlaceGallery();
+  });
 </script>
 
 <style>
@@ -238,6 +629,24 @@ const categoryMap: Record<string, { label: string; color: string }> = {
     margin-bottom: 2.5rem;
     padding-bottom: 1.5rem;
     border-bottom: 1px solid var(--rule);
+  }
+
+  .gallery-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .in-place-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 0.8rem;
   }
 
   .gallery-title {
@@ -530,5 +939,302 @@ const categoryMap: Record<string, { label: string; color: string }> = {
   .exif-item span {
     color: var(--muted);
     margin-right: 0.25rem;
+  }
+
+  /* In-Place Upload Modal */
+  .in-place-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+
+  .modal-dialog {
+    position: relative;
+    z-index: 10;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    max-width: 780px;
+    width: 100%;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 2rem;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .modal-title {
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-top: 0.35rem;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.6rem;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .form-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 768px) {
+    .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+    .modal-dialog { padding: 1.25rem; }
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.4rem;
+  }
+
+  .req {
+    color: var(--accent);
+  }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 0.9rem;
+    font-family: var(--font-sans);
+    transition: border-color 0.15s ease;
+  }
+
+  .mono-font {
+    font-family: var(--font-mono);
+  }
+
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--card-bg);
+  }
+
+  .field-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--soft);
+    margin-top: 0.35rem;
+  }
+
+  /* Media Tabs */
+  .media-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .media-tab-btn {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .media-tab-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .drop-box {
+    border: 2px dashed var(--rule);
+    border-radius: 8px;
+    padding: 2.2rem 1.5rem;
+    text-align: center;
+    background: var(--paper);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .drop-box:hover, .drop-box.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-tint);
+  }
+
+  .drop-icon {
+    font-size: 2.2rem;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .drop-main {
+    font-size: 0.95rem;
+    color: var(--ink);
+    margin-bottom: 0.25rem;
+  }
+
+  .drop-sub {
+    font-size: 0.75rem;
+    color: var(--soft);
+  }
+
+  .drop-preview-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  :global(.preview-media) {
+    max-width: 260px;
+    max-height: 180px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .preview-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+  }
+
+  .btn-text-danger {
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--accent);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .hidden-file {
+    display: none;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1.4rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+  }
+
+  .btn-sm {
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+  }
+  .btn-secondary:hover {
+    border-color: var(--ink);
+  }
+
+  /* Progress */
+  .progress-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(10, 12, 16, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .progress-dialog {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    max-width: 480px;
+    width: 100%;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 16px 50px rgba(0,0,0,0.3);
+  }
+
+  .progress-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--paper-2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .progress-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+  }
+
+  .progress-desc {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
   }
 </style>

@@ -28,6 +28,14 @@ const {
       } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.documentElement.setAttribute('data-theme', 'dark');
       }
+
+      // Owner Mode state check
+      const isOwner = localStorage.getItem('cyrus_owner_mode') === 'true';
+      const hasToken = Boolean(localStorage.getItem('cyrus_github_pat'));
+      const isVisitorPreview = localStorage.getItem('cyrus_visitor_preview') === 'true';
+      if (isOwner && hasToken && !isVisitorPreview) {
+        document.documentElement.setAttribute('data-owner-mode', 'true');
+      }
     </script>
   </head>
   <body>
@@ -48,9 +56,6 @@ const {
             <span class="pulse-dot"></span>此刻
           </a>
           <a href="/about" class="nav-link">关于</a>
-          <a href="/studio" class="nav-link studio-nav-link">
-            <span>✍️</span> Studio
-          </a>
           <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="nav-link github-nav">GitHub</a>
           
           <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">
@@ -74,12 +79,46 @@ const {
         <div class="footer-links">
           <a href="https://github.com/Cyrus060224/Cyrus-s-IP" target="_blank" rel="noreferrer">Source Code</a>
           <span>·</span>
-          <a href="/">RSS</a>
+          <a href="/now">此刻</a>
+          <span>·</span>
+          <a href="/admin" class="footer-admin-link">站长入口</a>
         </div>
       </div>
     </footer>
 
+    <!-- Floating Owner Control Widget (Only active if device has token) -->
+    <div id="owner-floating-widget" class="owner-widget" style="display: none;">
+      <button id="owner-pill-btn" class="owner-pill" aria-label="站长模式控制">
+        <span class="owner-dot"></span>
+        <span id="owner-pill-label">站长模式</span>
+      </button>
+
+      <div id="owner-popover" class="owner-popover" style="display: none;">
+        <div class="popover-header">
+          <span class="popover-title">⚡ 站长控制台 (Cyrus)</span>
+          <button id="popover-close-btn" class="popover-close">&times;</button>
+        </div>
+        <div class="popover-status">
+          <span class="popover-status-dot"></span>
+          <span id="popover-status-text">已连接到 GitHub 仓库</span>
+        </div>
+        <div class="popover-actions">
+          <button id="toggle-preview-btn" class="popover-btn">
+            👁️ <span id="toggle-preview-text">切换为访客视角</span>
+          </button>
+          <a href="/admin" class="popover-btn">
+            ⚙️ 站长管理中心
+          </a>
+          <button id="quick-logout-btn" class="popover-btn danger">
+            ✕ 退出站长模式
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Theme and Owner Widget scripts -->
     <script is:inline>
+      // 1. Theme toggle
       const toggle = document.getElementById('theme-toggle');
       toggle?.addEventListener('click', () => {
         const current = document.documentElement.getAttribute('data-theme') || 'light';
@@ -87,6 +126,81 @@ const {
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('theme', next);
       });
+
+      // 2. Owner Floating Widget Logic
+      function initOwnerWidget() {
+        const token = localStorage.getItem('cyrus_github_pat');
+        const isOwner = localStorage.getItem('cyrus_owner_mode') === 'true';
+        const isVisitorPreview = localStorage.getItem('cyrus_visitor_preview') === 'true';
+
+        const widget = document.getElementById('owner-floating-widget');
+        const pillBtn = document.getElementById('owner-pill-btn');
+        const pillLabel = document.getElementById('owner-pill-label');
+        const popover = document.getElementById('owner-popover');
+        const closeBtn = document.getElementById('popover-close-btn');
+        const togglePreviewBtn = document.getElementById('toggle-preview-btn');
+        const togglePreviewText = document.getElementById('toggle-preview-text');
+        const quickLogoutBtn = document.getElementById('quick-logout-btn');
+
+        if (!token || !isOwner) {
+          if (widget) widget.style.display = 'none';
+          return;
+        }
+
+        // Show widget
+        if (widget) widget.style.display = 'block';
+
+        if (isVisitorPreview) {
+          if (pillLabel) pillLabel.textContent = '访客预览中';
+          if (pillBtn) pillBtn.classList.add('in-preview');
+          if (togglePreviewText) togglePreviewText.textContent = '恢复站长视角';
+        } else {
+          if (pillLabel) pillLabel.textContent = '站长模式';
+          if (pillBtn) pillBtn.classList.remove('in-preview');
+          if (togglePreviewText) togglePreviewText.textContent = '切换为访客视角';
+        }
+
+        pillBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (popover) {
+            popover.style.display = popover.style.display === 'none' ? 'block' : 'none';
+          }
+        });
+
+        closeBtn?.addEventListener('click', () => {
+          if (popover) popover.style.display = 'none';
+        });
+
+        document.addEventListener('click', (e) => {
+          if (popover && !popover.contains(e.target) && e.target !== pillBtn) {
+            popover.style.display = 'none';
+          }
+        });
+
+        togglePreviewBtn?.addEventListener('click', () => {
+          const currentlyPreview = localStorage.getItem('cyrus_visitor_preview') === 'true';
+          if (currentlyPreview) {
+            localStorage.removeItem('cyrus_visitor_preview');
+            document.documentElement.setAttribute('data-owner-mode', 'true');
+          } else {
+            localStorage.setItem('cyrus_visitor_preview', 'true');
+            document.documentElement.removeAttribute('data-owner-mode');
+          }
+          window.location.reload();
+        });
+
+        quickLogoutBtn?.addEventListener('click', () => {
+          if (confirm('确定要在当前设备上清除站长 Token 并退出吗？')) {
+            localStorage.removeItem('cyrus_github_pat');
+            localStorage.removeItem('cyrus_owner_mode');
+            localStorage.removeItem('cyrus_visitor_preview');
+            document.documentElement.removeAttribute('data-owner-mode');
+            window.location.reload();
+          }
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', initOwnerWidget);
     </script>
   </body>
 </html>
@@ -186,26 +300,6 @@ const {
     color: var(--ink);
   }
 
-  .studio-nav-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: var(--paper-2);
-    border: 1px solid var(--rule);
-    padding: 3px 9px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--ink);
-    transition: all 0.15s ease;
-  }
-
-  .studio-nav-link:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    transform: translateY(-1px);
-  }
-
   @media (max-width: 640px) {
     .header-inner {
       flex-direction: column;
@@ -275,6 +369,7 @@ const {
 
   .footer-links {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
     font-family: var(--font-mono);
     font-size: 0.8rem;
@@ -282,5 +377,167 @@ const {
 
   .footer-links a:hover {
     color: var(--ink);
+  }
+
+  .footer-admin-link {
+    color: var(--soft);
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+  }
+  .footer-admin-link:hover {
+    opacity: 1;
+  }
+
+  /* Global Owner-Only Visibility */
+  :global(.owner-only) {
+    display: none !important;
+  }
+  :global([data-owner-mode="true"] .owner-only) {
+    display: inline-flex !important;
+  }
+
+  :global(.owner-only-flex) {
+    display: none !important;
+  }
+  :global([data-owner-mode="true"] .owner-only-flex) {
+    display: flex !important;
+  }
+
+  /* Floating Owner Mode Widget */
+  .owner-widget {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 999;
+  }
+
+  .owner-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+  }
+
+  .owner-pill:hover {
+    border-color: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .owner-pill.in-preview {
+    border-color: #f59e0b;
+    color: #f59e0b;
+  }
+
+  .owner-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+  }
+
+  .owner-pill.in-preview .owner-dot {
+    background: #f59e0b;
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+  }
+
+  .owner-popover {
+    position: absolute;
+    bottom: 2.5rem;
+    right: 0;
+    width: 260px;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1.2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    margin-bottom: 0.5rem;
+  }
+
+  .popover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+  }
+
+  .popover-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .popover-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--soft);
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .popover-status {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.74rem;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .popover-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+  }
+
+  .popover-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .popover-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+  }
+
+  .popover-btn:hover {
+    background: var(--paper-2);
+    border-color: var(--ink);
+  }
+
+  .popover-btn.danger {
+    color: #ef4444;
+  }
+  .popover-btn.danger:hover {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: #ef4444;
   }
 </style>

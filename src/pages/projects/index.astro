@@ -32,8 +32,16 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
 >
   <div class="container projects-container">
     <header class="projects-header">
-      <div class="mono-eyebrow">SHOWCASE &amp; CRAFTS · 造物工坊</div>
-      <h1 class="serif-title projects-title">我的项目与实验</h1>
+      <div class="projects-header-row">
+        <div>
+          <div class="mono-eyebrow">SHOWCASE &amp; CRAFTS · 造物工坊</div>
+          <h1 class="serif-title projects-title">我的项目与实验</h1>
+        </div>
+        <!-- Owner-only trigger -->
+        <button id="btn-open-create-proj" class="btn btn-primary owner-only in-place-btn">
+          <span>🚀</span> 登记新造物
+        </button>
+      </div>
       <p class="projects-desc">
         “What I cannot create, I do not understand.” 记录我从想法雏形、技术选型到完整落地的每一个作品。
       </p>
@@ -99,9 +107,126 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       })}
     </div>
   </div>
+
+  <!-- ============================================================== -->
+  <!-- In-Place Project Registration Modal (Only accessible to Owner) -->
+  <!-- ============================================================== -->
+  <div id="create-proj-modal" class="in-place-modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <span class="mono-eyebrow">IN-PLACE REGISTRATION · 登记造物</span>
+          <h2 class="modal-title">🚀 登记新造物 / 项目</h2>
+        </div>
+        <button id="btn-close-proj-modal" class="modal-close">&times;</button>
+      </div>
+
+      <form id="form-create-proj" class="modal-form">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="inp-proj-title">项目名称 <span class="req">*</span></label>
+            <input type="text" id="inp-proj-title" class="form-input" placeholder="例如：SuperSearch 极速全文检索系统" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inp-proj-slug">项目标识 (Slug) <span class="req">*</span></label>
+            <input type="text" id="inp-proj-slug" class="form-input mono-font" placeholder="supersearch" required />
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label" for="inp-proj-cat">项目类别 <span class="req">*</span></label>
+            <select id="inp-proj-cat" class="form-select">
+              <option value="ai">AI &amp; 智能体 (ai)</option>
+              <option value="tool">实战工具 (tool)</option>
+              <option value="system">系统底层 (system)</option>
+              <option value="web">Web &amp; 站点 (web)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inp-proj-status">当前状态 <span class="req">*</span></label>
+            <select id="inp-proj-status" class="form-select">
+              <option value="active">活跃维护 (active)</option>
+              <option value="shipped">已发布 (shipped)</option>
+              <option value="experiment">探索实验 (experiment)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inp-proj-featured">置顶推荐</label>
+            <label class="checkbox-wrap">
+              <input type="checkbox" id="inp-proj-featured" />
+              <span>设为首屏精选造物</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inp-proj-desc">项目简介 (Description) <span class="req">*</span></label>
+          <textarea id="inp-proj-desc" class="form-textarea" rows="2" placeholder="用一句话阐明解决的核心痛点或价值..." required></textarea>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="inp-proj-github">GitHub 仓库地址 (可选)</label>
+            <input type="url" id="inp-proj-github" class="form-input mono-font" placeholder="https://github.com/Cyrus060224/..." />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inp-proj-demo">在线访问 / Demo 演示链接 (可选)</label>
+            <input type="url" id="inp-proj-demo" class="form-input mono-font" placeholder="https://..." />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inp-proj-tags">技术栈与关键词 Tags</label>
+          <input type="text" id="inp-proj-tags" class="form-input" placeholder="例如：TypeScript, Cloudflare, WebGL" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inp-proj-content">项目详情页内容 (Markdown 正文)</label>
+          <textarea id="inp-proj-content" class="form-textarea mono-font" rows="5" placeholder="## 项目初衷与架构设计
+
+介绍项目的实现思路、解决的挑战以及未来演进路线..."></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel-proj-modal" class="btn btn-secondary">取消</button>
+          <button type="submit" id="btn-submit-proj" class="btn btn-primary">
+            <span class="btn-text">立即登记新造物</span>
+            <span class="btn-spinner" style="display: none;"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Progress Overlay -->
+  <div id="proj-progress-overlay" class="progress-backdrop" style="display: none;">
+    <div class="progress-dialog">
+      <div class="progress-spinner"></div>
+      <h3 id="proj-progress-title" class="progress-title">正在登记新造物...</h3>
+      <p id="proj-progress-desc" class="progress-desc">请勿关闭页面，正在提交项目数据至 GitHub</p>
+      <div id="proj-progress-done" style="display: none; margin-top: 1.5rem; gap: 0.75rem; justify-content: center;">
+        <a id="proj-view-commit-btn" href="#" target="_blank" rel="noreferrer" class="btn btn-secondary btn-sm">查看 Commit ↗</a>
+        <button id="proj-refresh-btn" class="btn btn-primary btn-sm">完成并刷新页面</button>
+      </div>
+    </div>
+  </div>
 </Layout>
 
-<script is:inline>
+<script>
+  import { 
+    getOwnerState, 
+    commitFileToGitHub, 
+    utf8ToBase64, 
+    slugify 
+  } from '../../utils/github';
+
+  // 1. Filter logic
   function initProjectFilters() {
     const tabs = document.querySelectorAll('.proj-tab');
     const cards = document.querySelectorAll('.project-card');
@@ -115,16 +240,129 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
         cards.forEach(card => {
           const cardCat = card.getAttribute('data-category');
           if (filter === 'all' || cardCat === filter) {
-            card.style.display = 'flex';
+            (card as HTMLElement).style.display = 'flex';
           } else {
-            card.style.display = 'none';
+            (card as HTMLElement).style.display = 'none';
           }
         });
       });
     });
   }
 
-  document.addEventListener('DOMContentLoaded', initProjectFilters);
+  // 2. In-Place Project Registration Modal
+  function initInPlaceProject() {
+    const openBtn = document.getElementById('btn-open-create-proj');
+    const modal = document.getElementById('create-proj-modal');
+    const closeBtn = document.getElementById('btn-close-proj-modal');
+    const cancelBtn = document.getElementById('btn-cancel-proj-modal');
+    const form = document.getElementById('form-create-proj') as HTMLFormElement;
+
+    const titleInput = document.getElementById('inp-proj-title') as HTMLInputElement;
+    const slugInput = document.getElementById('inp-proj-slug') as HTMLInputElement;
+
+    const progressOverlay = document.getElementById('proj-progress-overlay');
+    const progressTitle = document.getElementById('proj-progress-title');
+    const progressDesc = document.getElementById('proj-progress-desc');
+    const progressDone = document.getElementById('proj-progress-done');
+    const viewCommitBtn = document.getElementById('proj-view-commit-btn') as HTMLAnchorElement;
+    const refreshBtn = document.getElementById('proj-refresh-btn');
+
+    function openModal() {
+      if (modal) modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      if (modal) modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    openBtn?.addEventListener('click', openModal);
+    closeBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+
+    titleInput?.addEventListener('blur', () => {
+      if (!slugInput.value.trim() && titleInput.value.trim()) {
+        slugInput.value = slugify(titleInput.value);
+      }
+    });
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const { isOwner, token } = getOwnerState();
+      if (!isOwner || !token) {
+        alert('未检测到站长授权信息，请先访问 /admin 进行认证。');
+        window.location.href = '/admin';
+        return;
+      }
+
+      const title = titleInput.value.trim();
+      const slug = slugInput.value.trim().toLowerCase();
+      const category = (document.getElementById('inp-proj-cat') as HTMLSelectElement).value;
+      const status = (document.getElementById('inp-proj-status') as HTMLSelectElement).value;
+      const featured = (document.getElementById('inp-proj-featured') as HTMLInputElement).checked;
+      const desc = (document.getElementById('inp-proj-desc') as HTMLTextAreaElement).value.trim();
+      const github = (document.getElementById('inp-proj-github') as HTMLInputElement).value.trim();
+      const demo = (document.getElementById('inp-proj-demo') as HTMLInputElement).value.trim();
+      const tagsRaw = (document.getElementById('inp-proj-tags') as HTMLInputElement).value;
+      const content = (document.getElementById('inp-proj-content') as HTMLTextAreaElement).value.trim();
+      const tags = tagsRaw ? tagsRaw.split(/[,，]/).map(t => t.trim()).filter(Boolean) : [];
+
+      if (progressOverlay && progressTitle && progressDesc && progressDone) {
+        progressTitle.textContent = '正在登记新造物...';
+        progressDesc.textContent = '正在生成 Markdown 文件并同步至 GitHub';
+        progressDone.style.display = 'none';
+        progressOverlay.style.display = 'flex';
+      }
+
+      try {
+        const nowIso = new Date().toISOString().split('T')[0];
+        let md = `---\n`;
+        md += `title: ${JSON.stringify(title)}\n`;
+        md += `description: ${JSON.stringify(desc)}\n`;
+        md += `category: "${category}"\n`;
+        md += `status: "${status}"\n`;
+        md += `tags: [${tags.map(t => JSON.stringify(t)).join(', ')}]\n`;
+        if (github) md += `github: ${JSON.stringify(github)}\n`;
+        if (demo) md += `demo: ${JSON.stringify(demo)}\n`;
+        md += `featured: ${featured}\n`;
+        md += `pubDate: ${nowIso}\n`;
+        md += `---\n\n`;
+        md += content || `## ${title}\n\n${desc}`;
+
+        const projPath = `src/content/projects/${slug}.md`;
+        const commitRes = await commitFileToGitHub(
+          projPath,
+          utf8ToBase64(md),
+          `Register new project: ${title} via In-Place Studio`,
+          token
+        );
+
+        if (progressTitle && progressDesc && progressDone && viewCommitBtn) {
+          progressTitle.textContent = '🚀 造物登记成功！';
+          progressDesc.textContent = '项目元数据已提交至 GitHub 仓库。Cloudflare Pages 正在增量发布，片刻后即可在列表查看！';
+          viewCommitBtn.href = commitRes?.commit?.html_url || 'https://github.com/Cyrus060224/Cyrus-s-IP/commits/main';
+          progressDone.style.display = 'flex';
+        }
+
+        closeModal();
+        form.reset();
+      } catch (err: any) {
+        if (progressOverlay) progressOverlay.style.display = 'none';
+        alert(`登记失败：${err.message}`);
+      }
+    });
+
+    refreshBtn?.addEventListener('click', () => {
+      window.location.reload();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initProjectFilters();
+    initInPlaceProject();
+  });
 </script>
 
 <style>
@@ -137,6 +375,24 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
     margin-bottom: 2.5rem;
     padding-bottom: 1.5rem;
     border-bottom: 1px solid var(--rule);
+  }
+
+  .projects-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .in-place-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 0.8rem;
   }
 
   .projects-title {
@@ -319,5 +575,222 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
     .projects-grid {
       grid-template-columns: 1fr;
     }
+  }
+
+  /* In-Place Modal */
+  .in-place-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 12, 16, 0.75);
+    backdrop-filter: blur(6px);
+  }
+
+  .modal-dialog {
+    position: relative;
+    z-index: 10;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    max-width: 760px;
+    width: 100%;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 2rem;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.25);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .modal-title {
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-top: 0.35rem;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.6rem;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .form-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 768px) {
+    .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+    .modal-dialog { padding: 1.25rem; }
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.4rem;
+  }
+
+  .req {
+    color: var(--accent);
+  }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 0.9rem;
+    font-family: var(--font-sans);
+    transition: border-color 0.15s ease;
+  }
+
+  .mono-font {
+    font-family: var(--font-mono);
+  }
+
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--card-bg);
+  }
+
+  .checkbox-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 38px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1.4rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+  }
+
+  .btn-sm {
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+  }
+  .btn-secondary:hover {
+    border-color: var(--ink);
+  }
+
+  /* Progress */
+  .progress-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(10, 12, 16, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .progress-dialog {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    max-width: 480px;
+    width: 100%;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 16px 50px rgba(0,0,0,0.3);
+  }
+
+  .progress-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--paper-2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .progress-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+  }
+
+  .progress-desc {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
   }
 </style>
