@@ -1,0 +1,131 @@
+---
+/**
+ * DEEP SPACE OBSERVATORY · TELEMETRY BOOT SEQUENCE
+ * Clean Monospace Terminal Initialization Sequence (Zero Spinning Wheels)
+ */
+---
+
+<div id="telemetry-boot-overlay" class="telemetry-boot-overlay">
+  <div class="boot-terminal-box">
+    <div class="boot-header">
+      <span class="boot-dot"></span>
+      <span class="mono-eyebrow">OBSERVATORY SYSTEM BOOT · UTC+8</span>
+    </div>
+    <div id="boot-terminal-log" class="boot-log-content mono-font">
+      <div class="boot-line active" data-step="1">&gt;&gt; INITIATING OBSERVATION POST TELEMETRY...</div>
+      <div class="boot-line" data-step="2">&gt;&gt; CALIBRATING HORIZON SHADERS &amp; SENSORS <span class="boot-ok">[ OK ]</span></div>
+      <div class="boot-line" data-step="3">&gt;&gt; SYNCHRONIZING REALTIME ORBITAL BEACONS <span class="boot-ok">[ OK ]</span></div>
+      <div class="boot-line" data-step="4">&gt;&gt; ORBITAL FLEET LOCKED: [ OBS-01, PRJ-02, LOG-03 ]</div>
+      <div class="boot-line" data-step="5">&gt;&gt; DEEP SPACE OBSERVATION POST ACTIVE.</div>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (function() {
+    var overlay = document.getElementById('telemetry-boot-overlay');
+    if (!overlay) return;
+
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) {
+      overlay.style.display = 'none';
+      return;
+    }
+
+    var lines = overlay.querySelectorAll('.boot-line');
+    var index = 0;
+
+    function step() {
+      index++;
+      if (index < lines.length) {
+        lines[index].classList.add('active');
+        setTimeout(step, 180);
+      } else {
+        setTimeout(function() {
+          overlay.classList.add('fade-out');
+          setTimeout(function() {
+            overlay.style.display = 'none';
+          }, 600);
+        }, 320);
+      }
+    }
+
+    setTimeout(step, 180);
+  })();
+</script>
+
+<style>
+  .telemetry-boot-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    background: #0b0d10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .telemetry-boot-overlay.fade-out {
+    opacity: 0;
+  }
+
+  .boot-terminal-box {
+    max-width: 520px;
+    width: 90%;
+    padding: 1.5rem 1.75rem;
+    border: 1px solid var(--rule);
+    background: rgba(19, 22, 28, 0.85);
+    backdrop-filter: blur(8px);
+    border-radius: 4px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .boot-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .boot-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: blink 1.2s infinite ease-in-out;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .boot-log-content {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.75;
+    color: var(--muted);
+  }
+
+  .boot-line {
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.25s ease-out;
+  }
+
+  .boot-line.active {
+    opacity: 0.85;
+    transform: translateY(0);
+    color: var(--ink);
+  }
+
+  .boot-ok {
+    color: var(--accent);
+    font-weight: 600;
+  }
+</style>

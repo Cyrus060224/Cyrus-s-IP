@@ -1,0 +1,250 @@
+/**
+ * DEEP SPACE OBSERVATORY · HERO VIEWPORT & HUD RETICLES
+ */
+
+.observatory-hero-wrapper {
+  position: relative;
+  width: 100%;
+  height: clamp(560px, 80vh, 760px);
+  background-color: #0b0d10;
+  overflow: hidden;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 3rem;
+}
+
+.observatory-canvas-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.observatory-canvas-container:active {
+  cursor: grabbing;
+}
+
+/* Vignette edge mask at bottom to smoothly blend into the rest of the page */
+.observatory-bottom-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 140px;
+  background: linear-gradient(to bottom, transparent, var(--paper));
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Top Station Title Bar */
+.observatory-hud-header {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.hud-title-block {
+  max-width: 480px;
+}
+
+.hud-station-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.hud-station-tag::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.hud-main-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.8rem, 3.5vw, 2.7rem);
+  color: #ece8e1;
+  line-height: 1.18;
+  margin-bottom: 0.5rem;
+}
+
+.hud-sub-desc {
+  font-size: 0.88rem;
+  color: #8a929e;
+  line-height: 1.6;
+}
+
+.hud-coordinates {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #505763;
+  text-align: right;
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   Interactive 2D HUD Pins projected from 3D coordinates
+   ========================================================================== */
+.observatory-hud-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.instrument-hud-pin {
+  position: absolute;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-obs);
+}
+
+.instrument-hud-pin:hover {
+  transform: translate(-50%, -52%) scale(1.04);
+}
+
+/* Crosshair Reticle Anchor */
+.hud-reticle-ring {
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all var(--duration-fast) var(--ease-obs);
+  background: rgba(11, 13, 16, 0.35);
+  backdrop-filter: blur(2px);
+}
+
+.hud-reticle-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ece8e1;
+  transition: all var(--duration-fast) var(--ease-obs);
+}
+
+.instrument-hud-pin:hover .hud-reticle-ring {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.instrument-hud-pin:hover .hud-reticle-dot {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* Connecting hairline */
+.hud-card-label {
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: rgba(19, 22, 28, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 2px solid var(--accent);
+  border-radius: 2px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  transition: all var(--duration-fast) var(--ease-obs);
+}
+
+.instrument-hud-pin:hover .hud-card-label {
+  border-color: var(--accent);
+  background: rgba(23, 27, 34, 0.95);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+.hud-code-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+}
+
+.hud-name-row {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #ece8e1;
+  margin-top: 2px;
+}
+
+.hud-stat-row {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: #8a929e;
+  margin-top: 3px;
+}
+
+/* ==========================================================================
+   Static Fallback Viewport (No WebGL / Reduced Motion)
+   ========================================================================== */
+.observatory-fallback-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 3rem 1.5rem;
+  background: radial-gradient(circle at 85% 90%, rgba(217, 119, 54, 0.18), transparent 50%),
+              #0b0d10;
+}
+
+.fallback-arc {
+  position: absolute;
+  right: -10vw;
+  bottom: -20vh;
+  width: 80vw;
+  height: 80vw;
+  border-radius: 50%;
+  border: 2px solid rgba(217, 119, 54, 0.35);
+  box-shadow: inset 0 0 60px rgba(217, 119, 54, 0.25), 0 0 80px rgba(217, 119, 54, 0.15);
+  pointer-events: none;
+}
+
+.fallback-instruments {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  z-index: 10;
+}
+
+@media (max-width: 640px) {
+  .observatory-hero-wrapper {
+    height: 520px;
+  }
+  .hud-coordinates {
+    display: none;
+  }
+  .hud-card-label {
+    padding: 6px 10px;
+  }
+  .hud-name-row {
+    font-size: 0.78rem;
+  }
+}

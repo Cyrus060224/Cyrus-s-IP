@@ -13,6 +13,10 @@
   },
   "dependencies": {
     "astro": "^7.3.8",
-    "marked": "^18.1.1"
+    "marked": "^18.1.1",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0"
   }
 }
