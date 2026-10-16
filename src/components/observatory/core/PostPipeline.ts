@@ -23,7 +23,7 @@ export class PostPipeline {
     this.enabled = tier === 'tier-1';
 
     this.postScene = new THREE.Scene();
-    this.postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    this.postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1);
 
     if (this.enabled) {
       this.renderTarget = new THREE.WebGLRenderTarget(width, height, {

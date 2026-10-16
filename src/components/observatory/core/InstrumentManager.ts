@@ -42,9 +42,9 @@ export class InstrumentManager {
     this.group.name = 'instruments_fleet';
 
     // 1. OBS-01: Deep Space Optical Telescope (光影视窗 -> /gallery/)
-    // Placed in upper center-right void, clear of the left-side text block
+    // Placed in upper-mid right void, comfortably inside FOV and well away from left text
     const telescope = createTelescopeGroup();
-    const obsPos = new THREE.Vector3(3.6, 4.4, 5.5);
+    const obsPos = new THREE.Vector3(3.4, 2.3, 6.5);
     telescope.position.copy(obsPos);
     telescope.rotation.set(0.2, 0.4, -0.15);
     this.group.add(telescope);
@@ -58,13 +58,13 @@ export class InstrumentManager {
       basePosition: obsPos.clone(),
       targetOffset: new THREE.Vector3(0, 0, 3.2),
       floatingSeed: 12.5,
-      hitRadius: 2.2
+      hitRadius: 3.2
     });
 
     // 2. PRJ-02: Orbital Engineering Probe (轨道造物 -> /projects/)
-    // Placed in far upper-right deep space
+    // Placed in far upper-right deep space (well above the planetary limb to avoid any occlusion)
     const probe = createProbeGroup();
-    const prjPos = new THREE.Vector3(7.4, 1.8, 4.8);
+    const prjPos = new THREE.Vector3(7.2, 4.0, 4.8);
     probe.position.copy(prjPos);
     probe.rotation.set(-0.35, -0.5, 0.1);
     this.group.add(probe);
@@ -78,13 +78,13 @@ export class InstrumentManager {
       basePosition: prjPos.clone(),
       targetOffset: new THREE.Vector3(0, 0, 3.0),
       floatingSeed: 48.2,
-      hitRadius: 2.2
+      hitRadius: 3.2
     });
 
     // 3. LOG-03: Flight Log Command Pod (航行日志 -> /posts/)
-    // Placed in lower center-right just above the sweeping planetary horizon
+    // Placed in lower center-right void, clear of the atmosphere arc
     const logPod = createLogPodGroup();
-    const logPos = new THREE.Vector3(1.6, -3.6, 8.2);
+    const logPos = new THREE.Vector3(2.2, -2.6, 8.5);
     logPod.position.copy(logPos);
     logPod.rotation.set(0.4, 0.2, -0.3);
     this.group.add(logPod);
@@ -98,7 +98,7 @@ export class InstrumentManager {
       basePosition: logPos.clone(),
       targetOffset: new THREE.Vector3(0, 0, 3.0),
       floatingSeed: 91.7,
-      hitRadius: 2.2
+      hitRadius: 3.2
     });
   }
 
@@ -125,14 +125,18 @@ export class InstrumentManager {
       inst.group.rotation.x += 0.0012;
     });
 
+    // Ensure all world transforms are completely updated before raycasting
+    this.group.updateMatrixWorld(true);
+
     // Raycast hover test
     this.raycaster.setFromCamera(this.mouseVec, camera);
     let hit: string | null = null;
+    const worldPos = new THREE.Vector3();
 
     for (const inst of this.instruments) {
-      // Bounding sphere intersection test
+      inst.group.getWorldPosition(worldPos);
       const ray = this.raycaster.ray;
-      const distToSphere = ray.distanceToPoint(inst.group.position);
+      const distToSphere = ray.distanceToPoint(worldPos);
       if (distToSphere < inst.hitRadius) {
         hit = inst.id;
         break;
@@ -144,15 +148,19 @@ export class InstrumentManager {
 
   public getScreenPositions(camera: THREE.Camera, width: number, height: number): InstrumentScreenCoords[] {
     const list: InstrumentScreenCoords[] = [];
+    const worldPos = new THREE.Vector3();
 
     this.instruments.forEach(inst => {
-      const pos = inst.group.position.clone();
-      pos.project(camera);
+      // True 3D world position
+      inst.group.getWorldPosition(worldPos);
 
-      // Check if behind camera
-      const visible = pos.z < 1.0;
-      const screenX = (pos.x * 0.5 + 0.5) * width;
-      const screenY = (-(pos.y * 0.5) + 0.5) * height;
+      // Project into camera normalized device coordinates
+      const proj = worldPos.clone().project(camera);
+
+      // Visible if within frustum depth bounds
+      const visible = proj.z > -1.0 && proj.z < 1.0;
+      const screenX = (proj.x * 0.5 + 0.5) * width;
+      const screenY = (-(proj.y * 0.5) + 0.5) * height;
 
       list.push({
         id: inst.id,

@@ -87,17 +87,23 @@ export class Stage {
     this.renderer.toneMappingExposure = 1.05;
     this.container.appendChild(this.renderer.domElement);
 
-    // 4. Lighting Rig (Side-rear key light + amber bounce + cosmic ambient)
-    const ambientLight = new THREE.AmbientLight(0x131722, 0.35);
+    // 4. Lighting Rig (Side-rear sun key + planetary bounce + cosmic rim + ambient)
+    const ambientLight = new THREE.AmbientLight(0x1c2230, 0.65);
     this.scene.add(ambientLight);
 
     const sunLight = new THREE.DirectionalLight(0xfff5e6, 2.4);
     sunLight.position.set(24, 12, -28);
     this.scene.add(sunLight);
 
-    const planetaryBounceLight = new THREE.DirectionalLight(0xd97736, 0.65);
-    planetaryBounceLight.position.set(10, -14, -6);
+    // Planetary reflection (bounce from huge planet in bottom right up towards instruments)
+    const planetaryBounceLight = new THREE.DirectionalLight(0xd97736, 1.2);
+    planetaryBounceLight.position.set(12, -15, 2);
     this.scene.add(planetaryBounceLight);
+
+    // Subtle cosmic rim light to catch instrument facets against deep void
+    const cosmicRimLight = new THREE.DirectionalLight(0xa5c4e8, 0.95);
+    cosmicRimLight.position.set(-14, 10, 16);
+    this.scene.add(cosmicRimLight);
 
     // 5. Star Field
     this.starField = new StarField(this.profile.tier === 'tier-1' ? 1500 : 800);
@@ -247,15 +253,19 @@ export class Stage {
       this.camera.lookAt(new THREE.Vector3(0, 0, 0));
     }
 
+    // Force camera world matrix update immediately so projection is frame-perfect
+    this.camera.updateMatrixWorld(true);
+
     // 2. Update Subsystems
     this.starField.update(elapsed);
     this.planetEngine.update(delta, elapsed);
     this.instrumentManager.update(elapsed, this.camera);
 
-    // 3. Project 2D Screen Coordinates for Telemetry HUD
+    // 3. Project 2D Screen Coordinates for Telemetry HUD EVERY FRAME
     if (this.onScreenCoordsUpdate) {
-      const width = this.container.clientWidth || window.innerWidth;
-      const height = this.container.clientHeight || window.innerHeight;
+      const rect = this.container.getBoundingClientRect();
+      const width = rect.width || this.container.clientWidth || window.innerWidth;
+      const height = rect.height || this.container.clientHeight || window.innerHeight;
       const coords = this.instrumentManager.getScreenPositions(this.camera, width, height);
       this.onScreenCoordsUpdate(coords);
     }

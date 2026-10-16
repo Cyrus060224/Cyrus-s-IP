@@ -5,8 +5,8 @@
 
 import * as THREE from 'three';
 
-// Shared high-grade space hardware PBR material
-export function createHardwareMaterial(colorHex: number = 0x242830, roughness: number = 0.32, metalness: number = 0.88): THREE.MeshStandardMaterial {
+// Shared high-grade space hardware PBR material with balanced reflection
+export function createHardwareMaterial(colorHex: number = 0x3d4452, roughness: number = 0.40, metalness: number = 0.62): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
     color: new THREE.Color(colorHex),
     roughness,
@@ -20,9 +20,9 @@ export function createTelescopeGroup(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'instrument_obs';
 
-  const bodyMat = createHardwareMaterial(0x282c34, 0.28, 0.92);
-  const darkMetal = createHardwareMaterial(0x13161c, 0.45, 0.85);
-  const goldFoil = createHardwareMaterial(0xaa7028, 0.38, 0.95);
+  const bodyMat = createHardwareMaterial(0x424a5a, 0.35, 0.65);
+  const darkMetal = createHardwareMaterial(0x262b36, 0.48, 0.58);
+  const goldFoil = createHardwareMaterial(0xcc8432, 0.32, 0.75);
 
   // Main 8-sided optical cylinder
   const barrelGeo = new THREE.CylinderGeometry(0.55, 0.62, 2.6, 8);
@@ -58,7 +58,8 @@ export function createTelescopeGroup(): THREE.Group {
   truss.rotation.z = -Math.PI / 2;
   group.add(truss);
 
-  group.scale.setScalar(0.75);
+  // Enlarged 1.8x for clear silhouette (was 0.75)
+  group.scale.setScalar(1.35);
   return group;
 }
 
@@ -67,9 +68,9 @@ export function createProbeGroup(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'instrument_prj';
 
-  const bodyMat = createHardwareMaterial(0x303540, 0.35, 0.85);
-  const foilMat = createHardwareMaterial(0xb36b28, 0.25, 0.95);
-  const dishMat = createHardwareMaterial(0x8a929e, 0.40, 0.70);
+  const bodyMat = createHardwareMaterial(0x444d5c, 0.38, 0.65);
+  const foilMat = createHardwareMaterial(0xc47a32, 0.30, 0.78);
+  const dishMat = createHardwareMaterial(0xa0aab8, 0.35, 0.55);
 
   // Central octagonal core bus
   const coreGeo = new THREE.CylinderGeometry(0.7, 0.75, 1.2, 6);
@@ -109,7 +110,8 @@ export function createProbeGroup(): THREE.Group {
   boom.rotation.x = -0.5;
   group.add(boom);
 
-  group.scale.setScalar(0.72);
+  // Enlarged 1.8x for clear silhouette (was 0.72)
+  group.scale.setScalar(1.30);
   return group;
 }
 
@@ -118,9 +120,9 @@ export function createLogPodGroup(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'instrument_log';
 
-  const hullMat = createHardwareMaterial(0x2a2f38, 0.30, 0.90);
-  const heatShieldMat = createHardwareMaterial(0x15181e, 0.55, 0.80);
-  const accentMat = createHardwareMaterial(0xc97532, 0.35, 0.85);
+  const hullMat = createHardwareMaterial(0x3e4656, 0.35, 0.65);
+  const heatShieldMat = createHardwareMaterial(0x222730, 0.50, 0.55);
+  const accentMat = createHardwareMaterial(0xd97e3a, 0.32, 0.72);
 
   // Re-entry blunt capsule head (cone + rounded base)
   const headGeo = new THREE.ConeGeometry(0.85, 1.6, 8);
@@ -158,6 +160,7 @@ export function createLogPodGroup(): THREE.Group {
   mast.position.y = -1.1;
   group.add(mast);
 
-  group.scale.setScalar(0.78);
+  // Enlarged 1.8x for clear silhouette (was 0.78)
+  group.scale.setScalar(1.40);
   return group;
 }

@@ -9,7 +9,7 @@
   background-color: #0b0d10;
   overflow: hidden;
   border-bottom: 1px solid var(--rule);
-  margin-bottom: 3rem;
+  margin-bottom: 3.5rem;
 }
 
 .observatory-canvas-container {
@@ -22,18 +22,6 @@
 
 .observatory-canvas-container:active {
   cursor: grabbing;
-}
-
-/* Vignette edge mask at bottom to smoothly blend into the rest of the page */
-.observatory-bottom-gradient {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 140px;
-  background: linear-gradient(to bottom, transparent, var(--paper));
-  pointer-events: none;
-  z-index: 10;
 }
 
 /* Top Station Title Bar */
@@ -116,7 +104,7 @@
 .instrument-hud-pin {
   position: absolute;
   pointer-events: auto;
-  transform: translate(-50%, -11px);
+  transform: translate(-50%, -24px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -130,21 +118,31 @@
 .instrument-hud-pin:focus-visible,
 .instrument-hud-pin.hovered,
 .instrument-hud-pin.expanded {
-  transform: translate(-50%, -11px) scale(1.02);
+  transform: translate(-50%, -24px) scale(1.02);
+}
+
+/* Minimum 48px Touch / Click Hitbox */
+.hud-pin-hitbox {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 /* Crosshair Reticle Anchor (Always visible as subtle locator dot) */
 .hud-reticle-ring {
   width: 22px;
   height: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   transition: all var(--duration-fast) var(--ease-obs);
-  background: rgba(11, 13, 16, 0.45);
+  background: rgba(11, 13, 16, 0.5);
   backdrop-filter: blur(2px);
 }
 
@@ -180,7 +178,7 @@
 /* Floating Card Wrapper with Connecting Hairline Guide */
 .hud-card-wrapper {
   position: absolute;
-  top: 22px;
+  top: 38px;
   left: 50%;
   transform: translateX(-50%) translateY(4px);
   display: flex;
@@ -199,7 +197,7 @@
 .hud-guide-line {
   display: block;
   width: 1px;
-  height: 12px;
+  height: 14px;
   background: linear-gradient(to bottom, var(--accent), rgba(217, 119, 54, 0.25));
 }
 
