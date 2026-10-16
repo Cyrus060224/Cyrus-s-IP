@@ -87,28 +87,31 @@ export class Stage {
     this.renderer.toneMappingExposure = 1.05;
     this.container.appendChild(this.renderer.domElement);
 
-    // 4. Lighting Rig (Side-rear sun key + planetary bounce + warm-white rim + cosmic rim + ambient)
-    const ambientLight = new THREE.AmbientLight(0x222a38, 0.75);
+    // 4. Lighting Rig (Side-rear sun key + terminator rim + cool-blue dark fill + planetary bounce + ambient)
+    // Ambient: sets instrument base tone ~1 tier above void (#0b0d10)
+    const ambientLight = new THREE.AmbientLight(0x1c2534, 0.52);
     this.scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfff5e6, 2.4);
+    // Main distant star directional key light
+    const sunLight = new THREE.DirectionalLight(0xfff5e6, 2.0);
     sunLight.position.set(24, 12, -28);
     this.scene.add(sunLight);
 
-    // Planetary reflection (bounce from huge planet in bottom right up towards instruments)
-    const planetaryBounceLight = new THREE.DirectionalLight(0xd97736, 1.2);
-    planetaryBounceLight.position.set(12, -15, 2);
-    this.scene.add(planetaryBounceLight);
-
-    // Warm-white directional rim light for crisp specular edges on instruments (#F2E8D5)
-    const warmWhiteRimLight = new THREE.DirectionalLight(0xf2e8d5, 1.5);
-    warmWhiteRimLight.position.set(-16, 14, 16);
+    // Primary warm-white rim light (#F2E8D5) from planet terminator angle (side-rear grazing)
+    // Traces crisp, narrow razor-sharp rim lights along instrument silhouettes
+    const warmWhiteRimLight = new THREE.DirectionalLight(0xf2e8d5, 2.4);
+    warmWhiteRimLight.position.set(15, 9, -6);
     this.scene.add(warmWhiteRimLight);
 
-    // Subtle cosmic rim light to catch instrument facets against deep void
-    const cosmicRimLight = new THREE.DirectionalLight(0xa5c4e8, 0.95);
-    cosmicRimLight.position.set(-14, -8, 14);
-    this.scene.add(cosmicRimLight);
+    // Faint cool-blue fill light from void side to keep dark sides in readable blue-black depth
+    const coolBlueFillLight = new THREE.DirectionalLight(0x405570, 0.65);
+    coolBlueFillLight.position.set(-14, -4, 16);
+    this.scene.add(coolBlueFillLight);
+
+    // Planetary reflection (warm amber bounce from planet limb up towards instruments)
+    const planetaryBounceLight = new THREE.DirectionalLight(0xd08048, 0.40);
+    planetaryBounceLight.position.set(12, -15, 3);
+    this.scene.add(planetaryBounceLight);
 
     // Procedural low-intensity cosmic environment map (0KB external file)
     try {
@@ -149,6 +152,7 @@ export class Stage {
 
     // 7. Instrument Fleet
     this.instrumentManager = new InstrumentManager();
+    this.instrumentManager.setLayout(width < 768 || width / height < 1.1);
     this.scene.add(this.instrumentManager.group);
 
     // 8. Single-pass Post Pipeline
@@ -186,6 +190,8 @@ export class Stage {
 
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
+
+    this.instrumentManager.setLayout(width < 768 || width / height < 1.1);
 
     this.renderer.setSize(width, height);
     this.postPipeline.setSize(width, height);

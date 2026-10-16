@@ -1,6 +1,6 @@
 /**
  * DEEP SPACE OBSERVATORY · INSTRUMENT MANAGER
- * Controls 3 Procedural Orbital Instruments, Raycasting, Screen-Space 2D Projection & Dolly Zoom
+ * Controls 3 Procedural Orbital Instruments, Responsive Orbit Layouts, Raycasting, Screen-Space 2D Projection & Dolly Zoom
  */
 
 import * as THREE from 'three';
@@ -13,6 +13,8 @@ export interface InstrumentItem {
   route: string;
   group: THREE.Group;
   basePosition: THREE.Vector3;
+  desktopBasePosition: THREE.Vector3;
+  mobileBasePosition: THREE.Vector3;
   targetOffset: THREE.Vector3;
   visualAnchorOffset: THREE.Vector3;
   floatingSeed: number;
@@ -34,6 +36,7 @@ export class InstrumentManager {
   public instruments: InstrumentItem[] = [];
   public hoveredId: string | null = null;
   public activeDollyTarget: InstrumentItem | null = null;
+  public isMobileLayout: boolean = false;
 
   private raycaster: THREE.Raycaster = new THREE.Raycaster();
   private mouseVec: THREE.Vector2 = new THREE.Vector2(-999, -999);
@@ -42,11 +45,13 @@ export class InstrumentManager {
     this.group = new THREE.Group();
     this.group.name = 'instruments_fleet';
 
-    // 1. OBS-01: Deep Space Optical Telescope (光影视窗 -> /gallery/)
-    // Placed in upper-mid space, safe from left text and 80px above atmosphere arc
+    // 1. OBS-01: Deep Space Optical Telescope (深空光影 -> /gallery)
+    // Desktop: Upper mid-void (843, 159), 85px above the planet atmosphere arc
+    // Mobile: Upper right space (257, 187), clear of header text
     const telescope = createTelescopeGroup();
-    const obsPos = new THREE.Vector3(2.8, 3.2, 5.8);
-    telescope.position.copy(obsPos);
+    const obsDesktop = new THREE.Vector3(2.2, 3.4, 2.8);
+    const obsMobile = new THREE.Vector3(1.3, 2.3, 2.8);
+    telescope.position.copy(obsDesktop);
     telescope.rotation.set(0.2, 0.4, -0.15);
     this.group.add(telescope);
 
@@ -56,18 +61,22 @@ export class InstrumentManager {
       code: 'OBS-01',
       route: '/gallery',
       group: telescope,
-      basePosition: obsPos.clone(),
-      targetOffset: new THREE.Vector3(0, 0, 3.2),
+      basePosition: obsDesktop.clone(),
+      desktopBasePosition: obsDesktop,
+      mobileBasePosition: obsMobile,
+      targetOffset: new THREE.Vector3(0, 0, 2.6),
       visualAnchorOffset: new THREE.Vector3(0, 0, 0),
       floatingSeed: 12.5,
-      hitRadius: 3.2
+      hitRadius: 2.2
     });
 
-    // 2. PRJ-02: Orbital Engineering Probe (轨道造物 -> /projects/)
-    // Placed in far upper-right open space, safely away from canvas top edge and atmosphere arc
+    // 2. PRJ-02: Orbital Engineering Probe (轨道造物 -> /projects)
+    // Desktop: Upper right space (1144, 89), well above atmospheric arc apex (Y=147)
+    // Mobile: Mid-right space (288, 382), completely inside mobile viewport
     const probe = createProbeGroup();
-    const prjPos = new THREE.Vector3(6.4, 2.2, 5.2);
-    probe.position.copy(prjPos);
+    const prjDesktop = new THREE.Vector3(7.8, 4.8, 2.2);
+    const prjMobile = new THREE.Vector3(1.4, 0.6, 2.4);
+    probe.position.copy(prjDesktop);
     probe.rotation.set(-0.35, -0.5, 0.1);
     this.group.add(probe);
 
@@ -77,18 +86,22 @@ export class InstrumentManager {
       code: 'PRJ-02',
       route: '/projects',
       group: probe,
-      basePosition: prjPos.clone(),
-      targetOffset: new THREE.Vector3(0, 0, 3.0),
-      visualAnchorOffset: new THREE.Vector3(0, 0.15, 0),
+      basePosition: prjDesktop.clone(),
+      desktopBasePosition: prjDesktop,
+      mobileBasePosition: prjMobile,
+      targetOffset: new THREE.Vector3(0, 0, 2.4),
+      visualAnchorOffset: new THREE.Vector3(0, 0.1, 0),
       floatingSeed: 48.2,
-      hitRadius: 3.2
+      hitRadius: 2.2
     });
 
-    // 3. LOG-03: Flight Log Command Pod (航行日志 -> /posts/)
-    // Placed in lower center-right void, anchored on command capsule head
+    // 3. LOG-03: Autonomous Flight Log Pod (航行日志 -> /posts)
+    // Desktop: Mid-lower left cosmic void (484, 429), 80px+ clear of planet horizon & bottom border
+    // Mobile: Lower-left space (107, 557), well above bottom border
     const logPod = createLogPodGroup();
-    const logPos = new THREE.Vector3(2.0, -2.8, 8.2);
-    logPod.position.copy(logPos);
+    const logDesktop = new THREE.Vector3(-4.2, -1.4, 2.8);
+    const logMobile = new THREE.Vector3(-1.3, -2.0, 2.8);
+    logPod.position.copy(logDesktop);
     logPod.rotation.set(0.4, 0.2, -0.3);
     this.group.add(logPod);
 
@@ -98,11 +111,21 @@ export class InstrumentManager {
       code: 'LOG-03',
       route: '/posts',
       group: logPod,
-      basePosition: logPos.clone(),
-      targetOffset: new THREE.Vector3(0, 0, 3.0),
-      visualAnchorOffset: new THREE.Vector3(0, 0.55, 0),
+      basePosition: logDesktop.clone(),
+      desktopBasePosition: logDesktop,
+      mobileBasePosition: logMobile,
+      targetOffset: new THREE.Vector3(0, 0, 2.5),
+      visualAnchorOffset: new THREE.Vector3(0, 0.2, 0),
       floatingSeed: 91.7,
-      hitRadius: 3.2
+      hitRadius: 2.2
+    });
+  }
+
+  public setLayout(isMobile: boolean): void {
+    if (this.isMobileLayout === isMobile) return;
+    this.isMobileLayout = isMobile;
+    this.instruments.forEach(inst => {
+      inst.basePosition.copy(isMobile ? inst.mobileBasePosition : inst.desktopBasePosition);
     });
   }
 
@@ -112,12 +135,12 @@ export class InstrumentManager {
 
   public update(time: number, camera: THREE.Camera, prefersReducedMotion: boolean = false): void {
     if (!prefersReducedMotion) {
-      // Gentle zero-g orbital float & controlled rotation (>= 2s per specular sweep)
+      // Gentle orbital float with bounded Z-variation (delta Z <= 0.05 keeps size change < 0.3%)
       this.instruments.forEach(inst => {
         const s = inst.floatingSeed;
         const floatX = Math.sin(time * 0.45 + s) * 0.08;
-        const floatY = Math.cos(time * 0.55 + s * 1.3) * 0.10;
-        const floatZ = Math.sin(time * 0.35 + s * 0.7) * 0.06;
+        const floatY = Math.cos(time * 0.55 + s * 1.3) * 0.08;
+        const floatZ = Math.sin(time * 0.35 + s * 0.7) * 0.05;
 
         inst.group.position.set(
           inst.basePosition.x + floatX,
@@ -125,9 +148,9 @@ export class InstrumentManager {
           inst.basePosition.z + floatZ
         );
 
-        // Smooth angular rate ensures specular sweeps take ~2.5s without rapid strobe
-        inst.group.rotation.y += 0.0016;
-        inst.group.rotation.x += 0.0008;
+        // Smooth angular rate ensures facet specular sweeps take >= 2.5s without rapid strobe
+        inst.group.rotation.y += 0.0014;
+        inst.group.rotation.x += 0.0007;
       });
     }
 
