@@ -1,6 +1,6 @@
 /**
  * DEEP SPACE OBSERVATORY · STAGE MASTER
- * Scene graph, Perspective Camera, Dolly Zoom, Parallax Inertia & Lifecycle Management
+ * Dynamic Orbital Sunrise, Drift & Parallax, Lifecycle, Visibility & Performance Guards
  */
 
 import * as THREE from 'three';
@@ -25,6 +25,7 @@ export class Stage {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
+  private sunLight: THREE.DirectionalLight;
 
   private starField: StarField;
   private planetEngine: PlanetEngine;
@@ -34,17 +35,20 @@ export class Stage {
   private clock: THREE.Clock = new THREE.Clock();
   private animFrameId: number | null = null;
   private isPaused: boolean = false;
+  private isIntersecting: boolean = true;
   private intersectionObserver: IntersectionObserver | null = null;
+  private reducedMotionMediaQuery: MediaQueryList | null = null;
 
   // Camera & Parallax State
-  private targetCameraPos: THREE.Vector3 = new THREE.Vector3(0, 0, 22.0);
-  private currentCameraPos: THREE.Vector3 = new THREE.Vector3(0, 0, 22.0);
-  private baseCameraPos: THREE.Vector3 = new THREE.Vector3(0, 0, 22.0);
-
+  private baseCameraPos: THREE.Vector3 = new THREE.Vector3(0, 0, 32.0);
   private mouseTarget: THREE.Vector2 = new THREE.Vector2(0, 0);
   private mouseCurrent: THREE.Vector2 = new THREE.Vector2(0, 0);
 
-  // Dolly Zoom Transition State
+  // Performance auto-downgrade state
+  private lowFpsDuration: number = 0;
+  private hasDowngraded: boolean = false;
+
+  // Dolly Zoom Transition State (reserved for step 3 navigation)
   private isTransitioning: boolean = false;
   private transitionStartTime: number = 0;
   private transitionStartPos: THREE.Vector3 = new THREE.Vector3();
@@ -71,12 +75,13 @@ export class Stage {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x05070B);
 
-    // 2. Perspective Camera (Narrow FOV 36deg for cinematic scale)
+    // 2. Perspective Camera (36 deg FOV for authentic orbital perspective)
     this.camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 700);
-    this.camera.position.copy(this.currentCameraPos);
+    this.camera.position.copy(this.baseCameraPos);
+    this.camera.lookAt(new THREE.Vector3(0, -1.8, 0));
     this.scene.add(this.camera);
 
-    // 3. WebGL Renderer
+    // 3. WebGL Renderer (Clamped DPR, high-performance)
     this.renderer = new THREE.WebGLRenderer({
       powerPreference: 'high-performance',
       antialias: this.profile.tier === 'tier-1',
@@ -84,41 +89,33 @@ export class Stage {
       depth: true
     });
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(this.profile.dpr);
+    this.renderer.setPixelRatio(Math.min(this.profile.dpr, 2.0));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
     this.container.appendChild(this.renderer.domElement);
 
-    // 4. Lighting Rig (Side-rear stellar key + terminator rim + cool-blue dark fill + planetary bounce + ambient)
-    // Ambient: sets instrument base tone ~1 tier above void (#05070B)
-    const ambientLight = new THREE.AmbientLight(0x182230, 0.48);
+    // 4. Planet Engine (Created first to anchor light direction)
+    this.planetEngine = new PlanetEngine();
+    this.scene.add(this.planetEngine.group);
+
+    // 5. Lighting Rig (Grazing stellar key + cool fill + ambient)
+    const ambientLight = new THREE.AmbientLight(0x0c131c, 0.45);
     this.scene.add(ambientLight);
 
-    // Main distant star directional key light (warm-white #F2E8D5)
-    const sunLight = new THREE.DirectionalLight(0xf2e8d5, 2.2);
-    sunLight.position.set(24, 12, -28);
-    this.scene.add(sunLight);
+    // Main rising star directional key light (warm-white #F2E8D5)
+    this.sunLight = new THREE.DirectionalLight(0xf2e8d5, 2.6);
+    this.sunLight.position.copy(this.planetEngine.sunPosition);
+    this.scene.add(this.sunLight);
 
-    // Primary warm-white rim light (#F2E8D5) from planet terminator angle (side-rear grazing)
-    // Traces crisp, narrow razor-sharp rim lights along instrument silhouettes
-    const warmWhiteRimLight = new THREE.DirectionalLight(0xf2e8d5, 2.0);
-    warmWhiteRimLight.position.set(15, 9, -6);
+    // Primary warm-white grazing rim light along terminator
+    const warmWhiteRimLight = new THREE.DirectionalLight(0xf2e8d5, 1.8);
+    warmWhiteRimLight.position.set(13.5, 1.5, -12.0);
     this.scene.add(warmWhiteRimLight);
 
     // Faint cool-blue fill light from void side to keep dark sides in readable blue-black depth
-    const coolBlueFillLight = new THREE.DirectionalLight(0x426084, 0.60);
-    coolBlueFillLight.position.set(-14, -4, 16);
+    const coolBlueFillLight = new THREE.DirectionalLight(0x284260, 0.40);
+    coolBlueFillLight.position.set(-14, 4, 16);
     this.scene.add(coolBlueFillLight);
-
-    // Planetary reflection (subtle cold blue bounce from ice planet)
-    const planetaryBounceLight = new THREE.DirectionalLight(0x456c98, 0.40);
-    planetaryBounceLight.position.set(12, -15, 3);
-    this.scene.add(planetaryBounceLight);
-
-    // Dedicated cool-blue fill light for lower-left instrument (LOG-03) to ensure readable silhouette without excess brightness
-    const logPodFillLight = new THREE.DirectionalLight(0x4a709c, 0.55);
-    logPodFillLight.position.set(-16, 2, 14);
-    this.scene.add(logPodFillLight);
 
     // Procedural low-intensity cosmic environment map (0KB external file)
     try {
@@ -149,18 +146,12 @@ export class Stage {
       console.warn('Procedural PMREM environment fallback:', e);
     }
 
-    // 5. Star Field
-    this.starField = new StarField(this.profile.tier === 'tier-1' ? 1500 : 800);
-    this.scene.add(this.starField.points);
+    // 6. Star Field & Subtle Cold-Slate Milky Way
+    this.starField = new StarField(this.profile.tier === 'tier-1' ? 2400 : 1200);
+    this.scene.add(this.starField.group);
 
-    // 6. Planet Engine
-    this.planetEngine = new PlanetEngine();
-    this.scene.add(this.planetEngine.group);
-
-    // 7. Instrument Fleet
+    // 7. Instrument Fleet (Deferred to Step 3 per user instruction)
     this.instrumentManager = new InstrumentManager();
-    this.instrumentManager.setLayout(width < 768 || width / height < 1.1);
-    this.scene.add(this.instrumentManager.group);
 
     // 8. Single-pass Post Pipeline
     this.postPipeline = new PostPipeline(this.renderer, width, height, this.profile.tier);
@@ -168,20 +159,49 @@ export class Stage {
     // 9. Event Listeners & Observers
     this.bindEvents();
     this.setupIntersectionObserver();
+    this.setupReducedMotion();
+
+    // If reduced motion is requested from start, immediately complete intro
+    if (this.profile.prefersReducedMotion) {
+      this.planetEngine.skipIntro();
+    }
 
     // 10. Start Render Loop
     this.startLoop();
   }
 
+  private setupReducedMotion(): void {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      this.reducedMotionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      this.profile.prefersReducedMotion = this.reducedMotionMediaQuery.matches;
+      this.reducedMotionMediaQuery.addEventListener('change', this.onReducedMotionChange);
+    }
+  }
+
+  private onReducedMotionChange = (e: MediaQueryListEvent): void => {
+    this.profile.prefersReducedMotion = e.matches;
+    if (e.matches) {
+      this.planetEngine.skipIntro();
+      this.mouseTarget.set(0, 0);
+      this.mouseCurrent.set(0, 0);
+    }
+  };
+
   private bindEvents(): void {
     window.addEventListener('resize', this.onResize);
+    window.addEventListener('orientationchange', this.onResize);
     window.addEventListener('blur', this.onWindowBlur);
-    window.addEventListener('mouseleave', this.onPointerLeave);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
 
     this.heroElement.addEventListener('pointermove', this.onPointerMove);
     this.heroElement.addEventListener('pointerleave', this.onPointerLeave);
     this.heroElement.addEventListener('pointercancel', this.onPointerLeave);
     this.heroElement.addEventListener('click', this.onCanvasClick);
+
+    // Interactive intro skip listeners (click, scroll wheel, touch, key press)
+    window.addEventListener('wheel', this.onUserSkipAction, { passive: true });
+    window.addEventListener('keydown', this.onUserSkipAction, { passive: true });
+    this.heroElement.addEventListener('pointerdown', this.onUserSkipAction);
 
     if (this.profile.isMobile) {
       this.heroElement.addEventListener('touchmove', this.onTouchMove, { passive: true });
@@ -191,17 +211,48 @@ export class Stage {
 
   private unbindEvents(): void {
     window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('orientationchange', this.onResize);
     window.removeEventListener('blur', this.onWindowBlur);
-    window.removeEventListener('mouseleave', this.onPointerLeave);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+
+    window.removeEventListener('wheel', this.onUserSkipAction);
+    window.removeEventListener('keydown', this.onUserSkipAction);
+    this.heroElement.removeEventListener('pointerdown', this.onUserSkipAction);
 
     this.heroElement.removeEventListener('pointermove', this.onPointerMove);
     this.heroElement.removeEventListener('pointerleave', this.onPointerLeave);
     this.heroElement.removeEventListener('pointercancel', this.onPointerLeave);
     this.heroElement.removeEventListener('click', this.onCanvasClick);
 
+    if (this.reducedMotionMediaQuery) {
+      this.reducedMotionMediaQuery.removeEventListener('change', this.onReducedMotionChange);
+    }
+
     this.heroElement.removeEventListener('touchmove', this.onTouchMove);
     this.heroElement.removeEventListener('touchend', this.onPointerLeave);
   }
+
+  private onUserSkipAction = (): void => {
+    if (!this.planetEngine.isIntroComplete) {
+      this.planetEngine.skipIntro();
+    }
+  };
+
+  private onVisibilityChange = (): void => {
+    if (document.hidden) {
+      this.isPaused = true;
+      if (this.animFrameId) {
+        cancelAnimationFrame(this.animFrameId);
+        this.animFrameId = null;
+      }
+    } else {
+      if (this.isIntersecting) {
+        this.isPaused = false;
+        this.clock.getDelta(); // flush accumulated delta
+        this.startLoop();
+      }
+    }
+  };
 
   private onResize = (): void => {
     if (!this.container) return;
@@ -218,10 +269,10 @@ export class Stage {
   };
 
   private onPointerMove = (e: PointerEvent): void => {
-    if (!this.heroElement) return;
-    const rect = this.heroElement.getBoundingClientRect();
+    if (!this.heroElement || this.profile.prefersReducedMotion) return;
+    const rect = this.renderer.domElement.getBoundingClientRect();
 
-    // Bounds check: if pointer is outside Hero container, immediately clear hover state
+    // Bounds check: if pointer is outside canvas, smoothly return parallax to neutral
     if (
       e.clientX < rect.left ||
       e.clientX > rect.right ||
@@ -230,7 +281,7 @@ export class Stage {
       rect.width <= 0 ||
       rect.height <= 0
     ) {
-      this.clearHover();
+      this.onPointerLeave();
       return;
     }
 
@@ -263,9 +314,9 @@ export class Stage {
   }
 
   private onTouchMove = (e: TouchEvent): void => {
-    if (e.touches.length > 0 && this.heroElement) {
+    if (e.touches.length > 0 && this.heroElement && !this.profile.prefersReducedMotion) {
       const touch = e.touches[0];
-      const rect = this.heroElement.getBoundingClientRect();
+      const rect = this.renderer.domElement.getBoundingClientRect();
       if (
         touch.clientX < rect.left ||
         touch.clientX > rect.right ||
@@ -274,7 +325,7 @@ export class Stage {
         rect.width <= 0 ||
         rect.height <= 0
       ) {
-        this.clearHover();
+        this.onPointerLeave();
         return;
       }
       const pixelX = touch.clientX - rect.left;
@@ -282,7 +333,7 @@ export class Stage {
       const ndcX = (pixelX / rect.width) * 2 - 1;
       const ndcY = -(pixelY / rect.height) * 2 + 1;
 
-      this.mouseTarget.set(ndcX * 0.6, ndcY * 0.6);
+      this.mouseTarget.set(ndcX * 0.5, ndcY * 0.5);
       this.instrumentManager.updatePointer(ndcX, ndcY, true, pixelX, pixelY, rect.width, rect.height);
     }
   };
@@ -301,21 +352,21 @@ export class Stage {
       this.onTransitionStart(route);
     }
 
-    // Schedule navigation after smooth camera dolly
     setTimeout(() => {
       window.location.href = route;
     }, 720);
   }
 
   private onCanvasClick = (e: MouseEvent): void => {
+    this.onUserSkipAction();
+
     if (this.isTransitioning || !this.heroElement) return;
 
-    // Pin clicks are handled directly by their own DOM click listeners
     if ((e.target as Element).closest('.instrument-hud-pin')) {
       return;
     }
 
-    const rect = this.heroElement.getBoundingClientRect();
+    const rect = this.renderer.domElement.getBoundingClientRect();
     if (
       e.clientX < rect.left ||
       e.clientX > rect.right ||
@@ -332,7 +383,6 @@ export class Stage {
     const ndcX = (pixelX / rect.width) * 2 - 1;
     const ndcY = -(pixelY / rect.height) * 2 + 1;
 
-    // Synchronous hit test using exact click coordinates
     const hitInst = this.instrumentManager.hitTest(
       pixelX,
       pixelY,
@@ -350,13 +400,24 @@ export class Stage {
 
   private setupIntersectionObserver(): void {
     this.intersectionObserver = new IntersectionObserver(([entry]) => {
-      this.isPaused = !entry.isIntersecting;
+      this.isIntersecting = entry.isIntersecting;
+      this.isPaused = !entry.isIntersecting || document.hidden;
       if (!this.isPaused && !this.animFrameId) {
+        this.clock.getDelta();
         this.startLoop();
       }
     }, { threshold: 0.05 });
 
     this.intersectionObserver.observe(this.container);
+  }
+
+  private triggerQualityDowngrade(): void {
+    if (this.hasDowngraded) return;
+    this.hasDowngraded = true;
+    this.renderer.setPixelRatio(1.0);
+    this.postPipeline.disable();
+    this.starField.setReducedStars(true);
+    console.info('Deep Space Observatory: Adaptive quality downgrade applied (DPR=1.0, post-fx disabled, star count halved).');
   }
 
   private startLoop(): void {
@@ -377,50 +438,52 @@ export class Stage {
     const delta = Math.min(this.clock.getDelta(), 0.1);
     const elapsed = this.clock.getElapsedTime();
 
-    // 1. Camera Parallax Inertia (Heavy damping spring lerp)
-    this.mouseCurrent.lerp(this.mouseTarget, 0.038);
-
-    if (this.isTransitioning) {
-      // Execute cinematic Dolly-in curve
-      const progress = Math.min((elapsed - this.transitionStartTime) / 0.72, 1.0);
-      // Heavy ease-out cubic
-      const eased = 1.0 - Math.pow(1.0 - progress, 3.0);
-      this.camera.position.lerpVectors(this.transitionStartPos, this.transitionEndPos, eased);
-      this.camera.fov = THREE.MathUtils.lerp(36, 26, eased);
-      this.camera.updateProjectionMatrix();
-    } else {
-      // Normal subtle parallax drift
-      const parallaxX = this.mouseCurrent.x * 0.9;
-      const parallaxY = this.mouseCurrent.y * 0.65;
-      this.camera.position.x = this.baseCameraPos.x + parallaxX;
-      this.camera.position.y = this.baseCameraPos.y + parallaxY;
-      this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+    // 1. Adaptive Frame Rate Monitor (Sustained < 40fps for 2s triggers downgrade)
+    if (!this.hasDowngraded && delta > 0) {
+      const instantFps = 1.0 / delta;
+      if (instantFps < 40.0) {
+        this.lowFpsDuration += delta;
+        if (this.lowFpsDuration >= 2.0) {
+          this.triggerQualityDowngrade();
+        }
+      } else {
+        this.lowFpsDuration = Math.max(0, this.lowFpsDuration - delta * 0.5);
+      }
     }
 
-    // Force camera world matrix update immediately so projection is frame-perfect
+    // 2. Camera Breathing Drift & Pointer Parallax
+    let driftX = 0;
+    let driftY = 0;
+    let parallaxX = 0;
+    let parallaxY = 0;
+
+    if (!this.profile.prefersReducedMotion) {
+      // Periodic breathing drift (Periods 48s and 42s, amplitude < 1.5% viewport width)
+      driftX = Math.sin((elapsed * 2 * Math.PI) / 48.0) * 0.22 + Math.sin((elapsed * 2 * Math.PI) / 84.0) * 0.08;
+      driftY = Math.cos((elapsed * 2 * Math.PI) / 42.0) * 0.14 + Math.sin((elapsed * 2 * Math.PI) / 68.0) * 0.05;
+
+      // Heavy damping spring lerp for pointer parallax
+      this.mouseCurrent.lerp(this.mouseTarget, 0.038);
+      parallaxX = this.mouseCurrent.x * 0.32;
+      parallaxY = this.mouseCurrent.y * 0.20;
+    } else {
+      this.mouseCurrent.set(0, 0);
+    }
+
+    this.camera.position.set(
+      this.baseCameraPos.x + driftX + parallaxX,
+      this.baseCameraPos.y + driftY + parallaxY,
+      32.0
+    );
+    this.camera.lookAt(new THREE.Vector3(driftX * 0.35, -1.8 + driftY * 0.35, 0));
     this.camera.updateMatrixWorld(true);
 
-    // 2. Update Subsystems
-    const rect = this.container.getBoundingClientRect();
-    const width = rect.width || this.container.clientWidth || window.innerWidth;
-    const height = rect.height || this.container.clientHeight || window.innerHeight;
-
+    // 3. Update Celestial Entities
     this.starField.update(elapsed);
-    this.planetEngine.update(delta, elapsed);
-    this.instrumentManager.update(elapsed, this.camera, this.profile.prefersReducedMotion, width, height);
+    this.planetEngine.update(delta, elapsed, this.profile.prefersReducedMotion);
+    this.sunLight.position.copy(this.planetEngine.sunPosition);
 
-    // 3. Project 2D Screen Coordinates for Telemetry HUD EVERY FRAME
-    if (this.onScreenCoordsUpdate) {
-      const coords = this.instrumentManager.getScreenPositions(this.camera, width, height);
-      this.onScreenCoordsUpdate(coords);
-    }
-
-    // 4. Hover State Change Dispatch
-    if (this.onHoverChange) {
-      this.onHoverChange(this.instrumentManager.hoveredId);
-    }
-
-    // 5. Post-Processing / Final Render
+    // 4. Final Post-Processing
     this.postPipeline.render(this.scene, this.camera, elapsed);
   }
 
@@ -434,6 +497,7 @@ export class Stage {
 
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
+      this.intersectionObserver = null;
     }
 
     if (this.scene.environment) {

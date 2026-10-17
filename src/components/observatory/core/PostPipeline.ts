@@ -41,10 +41,10 @@ export class PostPipeline {
         tDiffuse: { value: null },
         uResolution: { value: new THREE.Vector2(width, height) },
         uTime: { value: 0 },
-        uBloomIntensity: { value: 0.65 },
-        uGrainIntensity: { value: 0.016 },
-        uVignetteStrength: { value: 0.85 },
-        uAberrationStrength: { value: 0.75 }
+        uBloomIntensity: { value: 0.38 },
+        uGrainIntensity: { value: 0.018 },
+        uVignetteStrength: { value: 0.55 },
+        uAberrationStrength: { value: 0.25 }
       },
       depthWrite: false,
       depthTest: false
@@ -78,6 +78,14 @@ export class PostPipeline {
     this.postMaterial.uniforms.tDiffuse.value = this.renderTarget.texture;
     this.postMaterial.uniforms.uTime.value = time;
     this.renderer.render(this.postScene, this.postCamera);
+  }
+
+  public disable(): void {
+    this.enabled = false;
+    if (this.renderTarget) {
+      this.renderTarget.dispose();
+      this.renderTarget = null;
+    }
   }
 
   public dispose(): void {

@@ -1,6 +1,6 @@
 /**
- * DEEP SPACE OBSERVATORY · PLANET SHADERS
- * Smooth Procedural Rocky/Icy Planet with Seamless World-Space Lighting & Volumetric Spherical Relief
+ * DEEP SPACE OBSERVATORY · PLANET SURFACE SHADER
+ * Volumetric Curvature Shading with Latitude Atmospheric Bands, Continents & Non-Black Depth
  */
 
 export const planetVertexShader = /* glsl */ `
@@ -12,24 +12,22 @@ export const planetVertexShader = /* glsl */ `
     vLocalPosition = position;
     vec4 worldPos = modelMatrix * vec4(position, 1.0);
     vWorldPosition = worldPos.xyz;
-    // Compute true World Space Normal to prevent UV seam discontinuities
     vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
     gl_Position = projectionMatrix * viewMatrix * worldPos;
   }
 `;
 
 export const planetFragmentShader = /* glsl */ `
-  uniform vec3 uLightDir;
+  uniform vec3 uSunPosition;
   uniform vec3 uSunColor;
+  uniform vec3 uPlanetCenter;
   uniform float uTime;
 
   varying vec3 vWorldNormal;
   varying vec3 vWorldPosition;
   varying vec3 vLocalPosition;
 
-  // -------------------------------------------------------------
-  // Seamless 3D Simplex Noise for Continuous Smooth Geological Relief
-  // -------------------------------------------------------------
+  // Seamless 3D Simplex Noise for Geological Relief & Planetary Bands
   vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
@@ -94,66 +92,63 @@ export const planetFragmentShader = /* glsl */ `
     return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
   }
 
-  // Smooth, continuous macro topography (no point clouds, no grain)
-  float macroTerrain(vec3 p) {
-    float n = 0.0;
-    n += 0.58 * snoise(p * 0.45);
-    n += 0.28 * snoise(p * 0.95 + vec3(1.2, 3.4, 5.6));
-    n += 0.14 * snoise(p * 2.10 + vec3(4.5, 1.8, 2.3));
-    return n;
-  }
-
   void main() {
-    // Continuous 3D position on sphere
-    vec3 spherePos = normalize(vLocalPosition) * 4.2;
-
-    // Macro geological elevation (smooth range [0, 1])
-    float h = macroTerrain(spherePos);
-    h = clamp(h * 0.5 + 0.5, 0.0, 1.0);
-
-    // World Space Normal (Strictly uniform and seamless)
-    vec3 baseNormal = normalize(vWorldNormal);
-    vec3 lightDir = normalize(uLightDir);
+    vec3 normal = normalize(vWorldNormal);
     vec3 viewDir = normalize(cameraPosition - vWorldPosition);
+    // 1. Viewing angle / Curvature factors
+    // vDotN: 0 at the horizon (grazing), increases towards 0.75 at bottom of viewport
+    float vDotN = max(dot(viewDir, normal), 0.0);
+    float limbFactor = clamp(1.0 - vDotN, 0.0, 1.0);
 
-    // Restrained surface normal perturbation for subtle tactile relief
-    float eps = 0.02;
-    float hX = macroTerrain(spherePos + vec3(eps, 0.0, 0.0));
-    float hY = macroTerrain(spherePos + vec3(0.0, eps, 0.0));
-    float hZ = macroTerrain(spherePos + vec3(0.0, 0.0, eps));
-    vec3 grad = vec3(hX - h, hY - h, hZ - h) / eps;
-    vec3 normal = normalize(baseNormal - grad * 0.12);
+    // 2. Solar illumination along terminator (grazing sunrise)
+    // Parallel astronomical sunlight across the planetary globe
+    vec3 toSun = normalize(uSunPosition - uPlanetCenter);
+    float NdotL = dot(normal, toSun);
+    // Soft grazing dawn terminator
+    float dawnFactor = smoothstep(-0.16, 0.28, NdotL);
 
-    // Cold Planetary Palette: Deep Cold Basalt -> Dark Basin -> Slate Ice-Rock Plain -> Restrained Frost Ridge
-    vec3 deepBasalt      = vec3(0.042, 0.052, 0.072); // Deep dark cold basalt
-    vec3 coldBasin       = vec3(0.078, 0.098, 0.132); // Cold rock shelf / depression
-    vec3 weatheredPlain  = vec3(0.145, 0.185, 0.245); // Subdued cold gray-blue mineral plain
-    vec3 frostRidge      = vec3(0.240, 0.310, 0.395); // Restrained ice/frost plateau ridge
+    // 3. Geological Terrain Simulation
+    vec3 sphereCoord = normalize(vLocalPosition) * 4.2;
+    float landNoise = snoise(sphereCoord * 0.75) * 0.6 + snoise(sphereCoord * 1.8) * 0.3 + snoise(sphereCoord * 4.5) * 0.1;
+    float isLand = smoothstep(0.05, 0.28, landNoise);
 
-    vec3 albedo = mix(deepBasalt, coldBasin, smoothstep(0.10, 0.38, h));
-    albedo = mix(albedo, weatheredPlain, smoothstep(0.38, 0.68, h));
-    albedo = mix(albedo, frostRidge, smoothstep(0.68, 0.95, h));
+    // Palette: Deep Oceanic Basin vs Continental Slate Rock
+    vec3 cOcean = vec3(0.014, 0.024, 0.040);
+    vec3 cLand  = vec3(0.030, 0.045, 0.068);
+    vec3 baseAlbedo = mix(cOcean, cLand, isLand);
 
-    // Volumetric Spherical Shading from terminator inward
-    float NdotL = dot(normal, lightDir);
-    float dayFactor = clamp((NdotL + 0.06) / 1.06, 0.0, 1.0);
-    float terminatorSoft = smoothstep(-0.08, 0.22, NdotL);
-    float diffuse = pow(dayFactor, 1.25) * terminatorSoft;
+    // 4. Latitude-Stretched Atmospheric Cloud Bands
+    // Stretching along Y-axis creates natural planetary weather bands
+    vec3 pCloud = sphereCoord * vec3(1.2, 3.8, 1.2);
+    float cloudNoise = snoise(pCloud * 0.50) * 0.55 + snoise(pCloud * 1.2 + vec3(1.5, 0.0, 3.2)) * 0.32 + snoise(pCloud * 2.8) * 0.13;
+    float cloudMask = smoothstep(0.18, 0.65, cloudNoise);
+    vec3 cCloud = vec3(0.16, 0.22, 0.32);
 
-    // Subtle warm-white to cold-ice intersection along the grazing terminator
-    vec3 stellarWarm = vec3(0.95, 0.91, 0.84); // #F2E8D5 warm star light
-    float terminatorBand = smoothstep(-0.05, 0.14, NdotL) * (1.0 - smoothstep(0.14, 0.40, NdotL));
-    vec3 lightColor = mix(uSunColor, stellarWarm, terminatorBand * 0.42);
+    // 5. Illumination:
+    // Soft dawn skimming light on the right
+    vec3 cDawnSun = vec3(0.98, 0.94, 0.86);
+    vec3 directLit = baseAlbedo * (dawnFactor * 0.28) * cDawnSun;
 
-    // Night hemisphere cold ambient light (readable dark blue-black cosmic void tone, not pure black)
-    vec3 nightAmbient = vec3(0.012, 0.016, 0.024);
+    // Cloud illumination: morning grazing light on cloud crests
+    vec3 cloudLit = cCloud * (dawnFactor * 0.48 * cDawnSun + 0.05);
 
-    // Restrained specular sheen on crystalline ice/rock crust (grazing sunward limb only)
-    vec3 halfVec = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(normal, halfVec), 0.0), 28.0) * 0.09 * terminatorSoft;
+    // Composite surface with clouds
+    vec3 surface = mix(directLit, cloudLit, cloudMask * 0.60);
 
-    vec3 litColor = albedo * (diffuse * lightColor + nightAmbient) + spec * stellarWarm;
+    // 6. Curvature & Night-side Ambient Gradient:
+    // Toward the bottom of the screen (away from horizon), gently fade into deep cosmic blue-black
+    // Preserves non-black depth: noticeably brighter than the space void (#04060A)
+    vec3 cNightAmbient = vec3(0.016, 0.025, 0.038); // #09121E
+    vec3 ambient = cNightAmbient * (0.70 + 0.30 * limbFactor);
 
-    gl_FragColor = vec4(litColor, 1.0);
+    // 7. Atmospheric Surface Haze (Fresnel twilight hugging the curvature)
+    // Seamlessly matches the deep sapphire base of the atmosphere shader at limbFactor = 1.0
+    vec3 cSurfaceHaze = mix(vec3(0.080, 0.260, 0.620), vec3(0.30, 0.54, 0.84), dawnFactor * 0.55);
+    float hazeStrength = pow(limbFactor, 2.6) * 0.58;
+
+    // Combine all components
+    vec3 finalColor = surface + ambient + (cSurfaceHaze * hazeStrength);
+
+    gl_FragColor = vec4(finalColor, 1.0);
   }
 `;

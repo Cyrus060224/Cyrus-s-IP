@@ -20,12 +20,32 @@
   margin-bottom: 3.5rem;
 }
 
+/* Static WebP Backdrop for Non-JS / No-WebGL / Instant First Paint */
+.observatory-static-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.observatory-static-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: bottom right;
+  display: block;
+}
+
 .observatory-canvas-container {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   cursor: grab;
+  z-index: 2;
 }
 
 .observatory-canvas-container:active {
@@ -74,7 +94,7 @@
 .hud-main-title {
   font-family: var(--font-serif);
   font-size: clamp(1.6rem, 3.2vw, 2.5rem);
-  color: #ece8e1;
+  color: var(--hud-ink);
   line-height: 1.25;
   margin-bottom: 0.65rem;
   text-wrap: balance;
@@ -87,14 +107,14 @@
 
 .hud-sub-desc {
   font-size: 0.88rem;
-  color: #8a929e;
+  color: var(--hud-muted);
   line-height: 1.6;
 }
 
 .hud-coordinates {
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  color: #8a929e; /* Raised contrast by one tier from #505763 */
+  color: var(--hud-muted);
   text-align: right;
   line-height: 1.6;
 }
@@ -158,7 +178,7 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #ece8e1;
+  background: var(--hud-ink);
   transition: all var(--duration-fast) var(--ease-obs);
 }
 
@@ -256,14 +276,14 @@
 .hud-name-row {
   font-size: 0.84rem;
   font-weight: 500;
-  color: #ece8e1;
+  color: var(--hud-ink);
   margin-top: 2px;
 }
 
 .hud-stat-row {
   font-family: var(--font-mono);
   font-size: 0.68rem;
-  color: #8a929e;
+  color: var(--hud-muted);
   margin-top: 3px;
 }
 

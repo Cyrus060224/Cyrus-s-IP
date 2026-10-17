@@ -42,7 +42,7 @@ class CdpClient {
       returnByValue: true,
       awaitPromise: true
     });
-    return res.result?.result?.value !== undefined ? res.result.result.value : res.result?.value;
+    return res.result?.value;
   }
 
   close() {
@@ -83,11 +83,10 @@ async function run() {
 
     if (!versionData) throw new Error('Failed to connect to Chrome CDP');
 
-    // Get existing page target from /json/list
-    const listRes = await fetch(`http://127.0.0.1:${port}/json/list`);
-    const tabs = await listRes.json();
-    const pageTab = tabs.find(t => t.type === 'page') || tabs[0];
-    const client = new CdpClient(pageTab.webSocketDebuggerUrl);
+    const browserClient = new CdpClient(versionData.webSocketDebuggerUrl);
+    await browserClient.connect();
+    const target = await browserClient.send('Target.createTarget', { url: 'about:blank' });
+    const client = new CdpClient(`ws://127.0.0.1:${port}/devtools/page/${target.targetId}`);
     await client.connect();
 
     // Enable Page, Runtime, DOM, Input
@@ -102,8 +101,9 @@ async function run() {
       mobile: false
     });
 
-    console.log('--- Navigating to http://127.0.0.1:4322/ ---');
-    await client.send('Page.navigate', { url: 'http://127.0.0.1:4322/' });
+    console.log('--- Navigating to http://localhost:4321/ ---');
+    await client.send('Page.navigate', { url: 'http://localhost:4321/' });
+    await new Promise(r => setTimeout(r, 1500));
 
     // Ensure external stylesheet (@import fonts) is completely loaded and computed
     await client.evaluate('document.fonts.ready');
@@ -134,12 +134,15 @@ async function run() {
       return await client.evaluate(`
         ({
           theme: document.documentElement.getAttribute('data-theme'),
+          pref: document.documentElement.getAttribute('data-theme-pref'),
           url: window.location.href,
           pathname: window.location.pathname
         })
       `);
     }
 
+    console.log('Location:', await client.evaluate('window.location.href'));
+    console.log('Has toggle:', await client.evaluate('!!document.getElementById("theme-toggle")'));
     const themeBtnRect = await getElementRect('#theme-toggle');
     console.log('Theme toggle button position:', themeBtnRect);
     const themeBtnCenter = {
@@ -270,7 +273,7 @@ async function run() {
     status = await getPageStatus();
     console.log('Status after path (b): Theme =', status.theme, 'Path =', status.pathname);
     if (status.pathname !== '/') throw new Error('Path (b) wrongly navigated to ' + status.pathname);
-    if (status.theme !== 'dark') throw new Error('Theme did not toggle back to dark');
+    if (status.pref !== 'system') throw new Error('Theme did not toggle to system, got: ' + status.pref);
 
     // TEST 6: Keyboard interaction (Tab + Enter on theme toggle)
     console.log('\n[TEST 6] Keyboard interaction on theme toggle button');
@@ -289,9 +292,9 @@ async function run() {
     });
     await new Promise(r => setTimeout(r, 850));
     status = await getPageStatus();
-    console.log('Status after keyboard Enter on theme button: Theme =', status.theme, 'Path =', status.pathname);
+    console.log('Status after keyboard Enter on theme button: Theme =', status.theme, 'Pref =', status.pref, 'Path =', status.pathname);
     if (status.pathname !== '/') throw new Error('Keyboard operation on theme toggle wrongly navigated!');
-    if (status.theme !== 'light') throw new Error('Theme did not toggle via keyboard');
+    if (status.pref !== 'dark') throw new Error('Theme did not toggle to dark via keyboard, got: ' + status.pref);
 
     // TEST 7: Page scrolled state
     console.log('\n[TEST 7] Testing while page is scrolled down 150px');
