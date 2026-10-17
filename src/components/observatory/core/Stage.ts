@@ -19,6 +19,7 @@ export interface StageOptions {
 
 export class Stage {
   private container: HTMLElement;
+  private heroElement: HTMLElement;
   private profile: DeviceProfile;
 
   private scene: THREE.Scene;
@@ -56,6 +57,7 @@ export class Stage {
 
   constructor(options: StageOptions) {
     this.container = options.container;
+    this.heroElement = (this.container.closest('.observatory-hero-wrapper') as HTMLElement) || this.container.parentElement || this.container;
     this.onScreenCoordsUpdate = options.onScreenCoordsUpdate;
     this.onHoverChange = options.onHoverChange;
     this.onTransitionStart = options.onTransitionStart;
@@ -173,19 +175,32 @@ export class Stage {
 
   private bindEvents(): void {
     window.addEventListener('resize', this.onResize);
-    window.addEventListener('mousemove', this.onMouseMove);
-    window.addEventListener('click', this.onClick);
+    window.addEventListener('blur', this.onWindowBlur);
+    window.addEventListener('mouseleave', this.onPointerLeave);
+
+    this.heroElement.addEventListener('pointermove', this.onPointerMove);
+    this.heroElement.addEventListener('pointerleave', this.onPointerLeave);
+    this.heroElement.addEventListener('pointercancel', this.onPointerLeave);
+    this.heroElement.addEventListener('click', this.onCanvasClick);
 
     if (this.profile.isMobile) {
-      window.addEventListener('touchmove', this.onTouchMove, { passive: true });
+      this.heroElement.addEventListener('touchmove', this.onTouchMove, { passive: true });
+      this.heroElement.addEventListener('touchend', this.onPointerLeave);
     }
   }
 
   private unbindEvents(): void {
     window.removeEventListener('resize', this.onResize);
-    window.removeEventListener('mousemove', this.onMouseMove);
-    window.removeEventListener('click', this.onClick);
-    window.removeEventListener('touchmove', this.onTouchMove);
+    window.removeEventListener('blur', this.onWindowBlur);
+    window.removeEventListener('mouseleave', this.onPointerLeave);
+
+    this.heroElement.removeEventListener('pointermove', this.onPointerMove);
+    this.heroElement.removeEventListener('pointerleave', this.onPointerLeave);
+    this.heroElement.removeEventListener('pointercancel', this.onPointerLeave);
+    this.heroElement.removeEventListener('click', this.onCanvasClick);
+
+    this.heroElement.removeEventListener('touchmove', this.onTouchMove);
+    this.heroElement.removeEventListener('touchend', this.onPointerLeave);
   }
 
   private onResize = (): void => {
@@ -202,21 +217,73 @@ export class Stage {
     this.postPipeline.setSize(width, height);
   };
 
-  private onMouseMove = (e: MouseEvent): void => {
-    const x = (e.clientX / window.innerWidth) * 2 - 1;
-    const y = -(e.clientY / window.innerHeight) * 2 + 1;
+  private onPointerMove = (e: PointerEvent): void => {
+    if (!this.heroElement) return;
+    const rect = this.heroElement.getBoundingClientRect();
 
-    this.mouseTarget.set(x, y);
-    this.instrumentManager.updatePointer(x, y);
+    // Bounds check: if pointer is outside Hero container, immediately clear hover state
+    if (
+      e.clientX < rect.left ||
+      e.clientX > rect.right ||
+      e.clientY < rect.top ||
+      e.clientY > rect.bottom ||
+      rect.width <= 0 ||
+      rect.height <= 0
+    ) {
+      this.clearHover();
+      return;
+    }
+
+    const pixelX = e.clientX - rect.left;
+    const pixelY = e.clientY - rect.top;
+    const ndcX = (pixelX / rect.width) * 2 - 1;
+    const ndcY = -(pixelY / rect.height) * 2 + 1;
+
+    this.mouseTarget.set(ndcX, ndcY);
+    this.instrumentManager.updatePointer(ndcX, ndcY, true, pixelX, pixelY, rect.width, rect.height);
   };
 
+  private onPointerLeave = (): void => {
+    this.clearHover();
+    this.mouseTarget.set(0, 0);
+  };
+
+  private onWindowBlur = (): void => {
+    this.clearHover();
+    this.mouseTarget.set(0, 0);
+  };
+
+  public clearHover(): void {
+    if (this.instrumentManager) {
+      this.instrumentManager.clearHover();
+    }
+    if (this.onHoverChange) {
+      this.onHoverChange(null);
+    }
+  }
+
   private onTouchMove = (e: TouchEvent): void => {
-    if (e.touches.length > 0) {
+    if (e.touches.length > 0 && this.heroElement) {
       const touch = e.touches[0];
-      const x = (touch.clientX / window.innerWidth) * 2 - 1;
-      const y = -(touch.clientY / window.innerHeight) * 2 + 1;
-      this.mouseTarget.set(x * 0.6, y * 0.6);
-      this.instrumentManager.updatePointer(x, y);
+      const rect = this.heroElement.getBoundingClientRect();
+      if (
+        touch.clientX < rect.left ||
+        touch.clientX > rect.right ||
+        touch.clientY < rect.top ||
+        touch.clientY > rect.bottom ||
+        rect.width <= 0 ||
+        rect.height <= 0
+      ) {
+        this.clearHover();
+        return;
+      }
+      const pixelX = touch.clientX - rect.left;
+      const pixelY = touch.clientY - rect.top;
+      const ndcX = (pixelX / rect.width) * 2 - 1;
+      const ndcY = -(pixelY / rect.height) * 2 + 1;
+
+      this.mouseTarget.set(ndcX * 0.6, ndcY * 0.6);
+      this.instrumentManager.updatePointer(ndcX, ndcY, true, pixelX, pixelY, rect.width, rect.height);
     }
   };
 
@@ -240,12 +307,44 @@ export class Stage {
     }, 720);
   }
 
-  private onClick = (): void => {
-    if (this.instrumentManager.hoveredId && !this.isTransitioning) {
-      const inst = this.instrumentManager.findInstrumentById(this.instrumentManager.hoveredId);
-      if (inst) {
-        this.triggerDollyTransition(inst.route);
-      }
+  private onCanvasClick = (e: MouseEvent): void => {
+    if (this.isTransitioning || !this.heroElement) return;
+
+    // Pin clicks are handled directly by their own DOM click listeners
+    if ((e.target as Element).closest('.instrument-hud-pin')) {
+      return;
+    }
+
+    const rect = this.heroElement.getBoundingClientRect();
+    if (
+      e.clientX < rect.left ||
+      e.clientX > rect.right ||
+      e.clientY < rect.top ||
+      e.clientY > rect.bottom ||
+      rect.width <= 0 ||
+      rect.height <= 0
+    ) {
+      return;
+    }
+
+    const pixelX = e.clientX - rect.left;
+    const pixelY = e.clientY - rect.top;
+    const ndcX = (pixelX / rect.width) * 2 - 1;
+    const ndcY = -(pixelY / rect.height) * 2 + 1;
+
+    // Synchronous hit test using exact click coordinates
+    const hitInst = this.instrumentManager.hitTest(
+      pixelX,
+      pixelY,
+      ndcX,
+      ndcY,
+      this.camera,
+      rect.width,
+      rect.height
+    );
+
+    if (hitInst) {
+      this.triggerDollyTransition(hitInst.route);
     }
   };
 
@@ -302,15 +401,16 @@ export class Stage {
     this.camera.updateMatrixWorld(true);
 
     // 2. Update Subsystems
+    const rect = this.container.getBoundingClientRect();
+    const width = rect.width || this.container.clientWidth || window.innerWidth;
+    const height = rect.height || this.container.clientHeight || window.innerHeight;
+
     this.starField.update(elapsed);
     this.planetEngine.update(delta, elapsed);
-    this.instrumentManager.update(elapsed, this.camera, this.profile.prefersReducedMotion);
+    this.instrumentManager.update(elapsed, this.camera, this.profile.prefersReducedMotion, width, height);
 
     // 3. Project 2D Screen Coordinates for Telemetry HUD EVERY FRAME
     if (this.onScreenCoordsUpdate) {
-      const rect = this.container.getBoundingClientRect();
-      const width = rect.width || this.container.clientWidth || window.innerWidth;
-      const height = rect.height || this.container.clientHeight || window.innerHeight;
       const coords = this.instrumentManager.getScreenPositions(this.camera, width, height);
       this.onScreenCoordsUpdate(coords);
     }

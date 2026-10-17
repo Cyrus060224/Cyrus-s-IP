@@ -226,6 +226,7 @@ const {
       pins.forEach(pin => {
         pin.addEventListener('click', (e) => {
           e.preventDefault();
+          e.stopPropagation();
           const route = pin.getAttribute('data-route');
 
           // Mobile / touch devices: first tap expands, second tap navigates
@@ -247,9 +248,9 @@ const {
         });
       });
 
-      // Collapse pins when tapping outside on touch devices
+      // Collapse pins when tapping or clicking outside pins (including header or nav buttons)
       document.addEventListener('click', (e) => {
-        if (isTouch && !(e.target as Element).closest('.instrument-hud-pin')) {
+        if (!(e.target as Element).closest('.instrument-hud-pin')) {
           pins.forEach(p => p.classList.remove('expanded'));
         }
       });

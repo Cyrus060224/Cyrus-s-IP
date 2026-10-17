@@ -40,6 +40,11 @@ export class InstrumentManager {
 
   private raycaster: THREE.Raycaster = new THREE.Raycaster();
   private mouseVec: THREE.Vector2 = new THREE.Vector2(-999, -999);
+  private isPointerInside: boolean = false;
+  private pointerPixelX: number | null = null;
+  private pointerPixelY: number | null = null;
+  private canvasWidth: number = 1440;
+  private canvasHeight: number = 720;
 
   constructor() {
     this.group = new THREE.Group();
@@ -67,7 +72,7 @@ export class InstrumentManager {
       targetOffset: new THREE.Vector3(0, 0, 2.6),
       visualAnchorOffset: new THREE.Vector3(0, 0, 0),
       floatingSeed: 12.5,
-      hitRadius: 2.2
+      hitRadius: 0.75
     });
 
     // 2. PRJ-02: Orbital Engineering Probe (轨道造物 -> /projects)
@@ -92,7 +97,7 @@ export class InstrumentManager {
       targetOffset: new THREE.Vector3(0, 0, 2.4),
       visualAnchorOffset: new THREE.Vector3(0, 0.1, 0),
       floatingSeed: 48.2,
-      hitRadius: 2.2
+      hitRadius: 0.75
     });
 
     // 3. LOG-03: Autonomous Flight Log Pod (航行日志 -> /posts)
@@ -117,7 +122,7 @@ export class InstrumentManager {
       targetOffset: new THREE.Vector3(0, 0, 2.5),
       visualAnchorOffset: new THREE.Vector3(0, 0.2, 0),
       floatingSeed: 91.7,
-      hitRadius: 2.2
+      hitRadius: 0.75
     });
   }
 
@@ -129,11 +134,79 @@ export class InstrumentManager {
     });
   }
 
-  public updatePointer(normalizedX: number, normalizedY: number): void {
+  public updatePointer(
+    normalizedX: number,
+    normalizedY: number,
+    isInside: boolean = true,
+    pixelX: number | null = null,
+    pixelY: number | null = null,
+    canvasWidth: number = 1440,
+    canvasHeight: number = 720
+  ): void {
+    this.isPointerInside = isInside;
     this.mouseVec.set(normalizedX, normalizedY);
+    this.pointerPixelX = pixelX;
+    this.pointerPixelY = pixelY;
+    this.canvasWidth = canvasWidth;
+    this.canvasHeight = canvasHeight;
+    if (!isInside) {
+      this.hoveredId = null;
+    }
   }
 
-  public update(time: number, camera: THREE.Camera, prefersReducedMotion: boolean = false): void {
+  public clearHover(): void {
+    this.isPointerInside = false;
+    this.hoveredId = null;
+    this.pointerPixelX = null;
+    this.pointerPixelY = null;
+  }
+
+  public hitTest(
+    pixelX: number,
+    pixelY: number,
+    ndcX: number,
+    ndcY: number,
+    camera: THREE.Camera,
+    width: number,
+    height: number
+  ): InstrumentItem | null {
+    this.group.updateMatrixWorld(true);
+    this.raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+    const worldPos = new THREE.Vector3();
+
+    for (const inst of this.instruments) {
+      inst.group.getWorldPosition(worldPos);
+      const anchorOffset = inst.visualAnchorOffset.clone().applyQuaternion(inst.group.quaternion);
+      worldPos.add(anchorOffset);
+
+      // 1. Screen-space distance to visual anchor (strict <= 44px hitbox radius)
+      const proj = worldPos.clone().project(camera);
+      if (proj.z <= -1.0 || proj.z >= 1.0) continue;
+      const screenX = (proj.x * 0.5 + 0.5) * width;
+      const screenY = (-(proj.y * 0.5) + 0.5) * height;
+
+      const distPx = Math.hypot(pixelX - screenX, pixelY - screenY);
+      const distToRay = this.raycaster.ray.distanceToPoint(worldPos);
+
+      // Hit if pointer is on the reticle dot (<= 44px) or on 3D geometry (< hitRadius)
+      if (distPx <= 44 || distToRay < inst.hitRadius) {
+        return inst;
+      }
+    }
+
+    return null;
+  }
+
+  public update(
+    time: number,
+    camera: THREE.Camera,
+    prefersReducedMotion: boolean = false,
+    canvasWidth: number = 1440,
+    canvasHeight: number = 720
+  ): void {
+    this.canvasWidth = canvasWidth;
+    this.canvasHeight = canvasHeight;
+
     if (!prefersReducedMotion) {
       // Gentle orbital float with bounded Z-variation (delta Z <= 0.05 keeps size change < 0.3%)
       this.instruments.forEach(inst => {
@@ -157,7 +230,13 @@ export class InstrumentManager {
     // Ensure all world transforms are completely updated before raycasting
     this.group.updateMatrixWorld(true);
 
-    // Raycast hover test
+    // If pointer is outside the canvas, hover state is strictly null
+    if (!this.isPointerInside || this.pointerPixelX === null || this.pointerPixelY === null) {
+      this.hoveredId = null;
+      return;
+    }
+
+    // Raycast & screen-space hover test
     this.raycaster.setFromCamera(this.mouseVec, camera);
     let hit: string | null = null;
     const worldPos = new THREE.Vector3();
@@ -166,9 +245,20 @@ export class InstrumentManager {
       inst.group.getWorldPosition(worldPos);
       const anchorOffset = inst.visualAnchorOffset.clone().applyQuaternion(inst.group.quaternion);
       worldPos.add(anchorOffset);
-      const ray = this.raycaster.ray;
-      const distToSphere = ray.distanceToPoint(worldPos);
-      if (distToSphere < inst.hitRadius) {
+
+      // 1. Calculate screen coordinates of the instrument's reticle anchor
+      const proj = worldPos.clone().project(camera);
+      if (proj.z <= -1.0 || proj.z >= 1.0) continue;
+      const screenX = (proj.x * 0.5 + 0.5) * canvasWidth;
+      const screenY = (-(proj.y * 0.5) + 0.5) * canvasHeight;
+
+      const distPx = Math.hypot(this.pointerPixelX - screenX, this.pointerPixelY - screenY);
+      const distToRay = this.raycaster.ray.distanceToPoint(worldPos);
+
+      // Strictly bounded hit test: only active when cursor is on the reticle dot (<= 44px)
+      // or directly over the 3D model geometry (distToRay < hitRadius 0.75).
+      // Anywhere in the cosmic void beyond 44px is strictly non-hovered.
+      if (distPx <= 44 || distToRay < inst.hitRadius) {
         hit = inst.id;
         break;
       }

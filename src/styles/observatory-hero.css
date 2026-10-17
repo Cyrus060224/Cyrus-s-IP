@@ -195,9 +195,9 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity var(--duration-fast) var(--ease-obs), 
-              transform var(--duration-fast) var(--ease-obs),
-              visibility var(--duration-fast);
+  transition: opacity 200ms var(--ease-obs), 
+              transform 200ms var(--ease-obs),
+              visibility 200ms;
   z-index: 30;
 }
 
@@ -219,7 +219,7 @@
   border-radius: 2px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
   white-space: nowrap;
-  transition: all var(--duration-fast) var(--ease-obs);
+  transition: all 200ms var(--ease-obs);
 }
 
 /* Reveal card on hover, keyboard focus-visible, or touch expanded state */

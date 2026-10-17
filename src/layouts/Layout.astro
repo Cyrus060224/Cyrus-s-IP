@@ -59,7 +59,7 @@ const {
           <a href="/about" class="nav-link">关于</a>
           <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="nav-link github-nav">GitHub</a>
           
-          <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">
+          <button id="theme-toggle" type="button" class="theme-btn" aria-label="Toggle theme">
             <span class="icon-sun">☼</span>
             <span class="icon-moon">☽</span>
           </button>
@@ -131,11 +131,19 @@ const {
     <script is:inline>
       // 1. Theme toggle
       const toggle = document.getElementById('theme-toggle');
-      toggle?.addEventListener('click', () => {
+      function handleThemeToggle(e) {
+        e.preventDefault();
+        e.stopPropagation();
         const current = document.documentElement.getAttribute('data-theme') || 'light';
         const next = current === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('theme', next);
+      }
+      toggle?.addEventListener('click', handleThemeToggle);
+      toggle?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13 || e.keyCode === 32) {
+          handleThemeToggle(e);
+        }
       });
 
       // 2. Owner Floating Widget Logic
