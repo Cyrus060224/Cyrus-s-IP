@@ -1,4 +1,5 @@
 ---
+import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 
 interface Props {
@@ -13,30 +14,50 @@ const {
 ---
 
 <!doctype html>
-<html lang="zh-CN" data-theme="dark">
+<html lang="zh-CN" data-theme="dark" data-theme-pref="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="theme-color" content="#05070B" id="meta-theme-color" />
+    <ClientRouter />
     <script is:inline>
-      // Persistent theme init (Default: Dark Observatory, supports ?theme=light/dark)
-      const urlTheme = new URLSearchParams(window.location.search).get('theme');
-      const savedTheme = urlTheme || localStorage.getItem('theme');
-      if (savedTheme) {
-        document.documentElement.setAttribute('data-theme', savedTheme);
-      } else {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
+      // Persistent tri-state theme init (Default: Dark Observatory, supports System / Light / Dark)
+      (function() {
+        const urlTheme = new URLSearchParams(window.location.search).get('theme');
+        const storedPref = localStorage.getItem('theme');
+        // First visit defaults to 'dark' for Deep Space Observatory aesthetic
+        const pref = urlTheme || storedPref || 'dark';
 
-      // Owner Mode state check
-      const isOwner = localStorage.getItem('cyrus_owner_mode') === 'true';
-      const hasToken = Boolean(localStorage.getItem('cyrus_github_pat'));
-      const isVisitorPreview = localStorage.getItem('cyrus_visitor_preview') === 'true';
-      if (isOwner && hasToken && !isVisitorPreview) {
-        document.documentElement.setAttribute('data-owner-mode', 'true');
-      }
+        const isSystemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        let effectiveTheme = 'dark';
+        if (pref === 'light') {
+          effectiveTheme = 'light';
+        } else if (pref === 'dark') {
+          effectiveTheme = 'dark';
+        } else if (pref === 'system') {
+          effectiveTheme = isSystemDark ? 'dark' : 'light';
+        }
+
+        document.documentElement.setAttribute('data-theme', effectiveTheme);
+        document.documentElement.setAttribute('data-theme-pref', pref);
+        document.documentElement.style.colorScheme = effectiveTheme;
+
+        const metaThemeColor = document.getElementById('meta-theme-color');
+        if (metaThemeColor) {
+          metaThemeColor.setAttribute('content', effectiveTheme === 'light' ? '#F2F5F9' : '#05070B');
+        }
+
+        // Owner Mode state check
+        const isOwner = localStorage.getItem('cyrus_owner_mode') === 'true';
+        const hasToken = Boolean(localStorage.getItem('cyrus_github_pat'));
+        const isVisitorPreview = localStorage.getItem('cyrus_visitor_preview') === 'true';
+        if (isOwner && hasToken && !isVisitorPreview) {
+          document.documentElement.setAttribute('data-owner-mode', 'true');
+        }
+      })();
     </script>
   </head>
   <body>
@@ -59,9 +80,17 @@ const {
           <a href="/about" class="nav-link">关于</a>
           <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="nav-link github-nav">GitHub</a>
           
-          <button id="theme-toggle" type="button" class="theme-btn" aria-label="Toggle theme">
-            <span class="icon-sun">☼</span>
-            <span class="icon-moon">☽</span>
+          <button 
+            id="theme-toggle" 
+            type="button" 
+            class="theme-btn" 
+            aria-label="当前主题：暗色模式（点击切换为浅色模式）"
+            title="切换主题（深空暗色 / 日照浅色 / 跟随系统）"
+            transition:persist
+          >
+            <span class="icon-moon" title="暗色模式" aria-hidden="true">☽</span>
+            <span class="icon-sun" title="浅色模式" aria-hidden="true">☼</span>
+            <span class="icon-system" title="跟随系统" aria-hidden="true">◐</span>
           </button>
         </nav>
       </div>
@@ -129,22 +158,102 @@ const {
 
     <!-- Theme and Owner Widget scripts -->
     <script is:inline>
-      // 1. Theme toggle
-      const toggle = document.getElementById('theme-toggle');
-      function handleThemeToggle(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const current = document.documentElement.getAttribute('data-theme') || 'light';
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
-      }
-      toggle?.addEventListener('click', handleThemeToggle);
-      toggle?.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13 || e.keyCode === 32) {
-          handleThemeToggle(e);
+      // 1. Theme state manager
+      function getEffectiveTheme(pref) {
+        if (pref === 'light') return 'light';
+        if (pref === 'dark') return 'dark';
+        if (pref === 'system') {
+          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
+        return 'dark';
+      }
+
+      function applyTheme(pref, persist) {
+        if (persist) {
+          localStorage.setItem('theme', pref);
+        }
+        const effective = getEffectiveTheme(pref);
+        document.documentElement.setAttribute('data-theme', effective);
+        document.documentElement.setAttribute('data-theme-pref', pref);
+        document.documentElement.style.colorScheme = effective;
+
+        const meta = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
+        if (meta) {
+          meta.setAttribute('content', effective === 'light' ? '#F2F5F9' : '#05070B');
+        }
+
+        const toggle = document.getElementById('theme-toggle');
+        if (toggle) {
+          if (pref === 'dark') {
+            toggle.setAttribute('aria-label', '当前主题：暗色模式（点击切换为浅色模式）');
+            toggle.setAttribute('title', '当前主题：深空暗色（点击切换为日照浅色）');
+          } else if (pref === 'light') {
+            toggle.setAttribute('aria-label', '当前主题：浅色模式（点击切换为跟随系统）');
+            toggle.setAttribute('title', '当前主题：日照浅色（点击切换为跟随系统）');
+          } else {
+            toggle.setAttribute('aria-label', '当前主题：跟随系统（点击切换为暗色模式）');
+            toggle.setAttribute('title', '当前主题：跟随系统（点击切换为深空暗色）');
+          }
+        }
+      }
+
+      function handleThemeToggle(e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        const currentPref = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme-pref') || 'dark';
+        let nextPref = 'light';
+        if (currentPref === 'dark') {
+          nextPref = 'light';
+        } else if (currentPref === 'light') {
+          nextPref = 'system';
+        } else {
+          nextPref = 'dark';
+        }
+        applyTheme(nextPref, true);
+      }
+
+      function bindThemeButton() {
+        const toggle = document.getElementById('theme-toggle');
+        if (!toggle) return;
+        toggle.removeEventListener('click', handleThemeToggle);
+        toggle.addEventListener('click', handleThemeToggle);
+
+        toggle.onkeydown = (e) => {
+          if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13 || e.keyCode === 32) {
+            handleThemeToggle(e);
+          }
+        };
+
+        const currentPref = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme-pref') || 'dark';
+        applyTheme(currentPref, false);
+      }
+
+      // Listen to OS appearance changes in real time
+      if (window.matchMedia) {
+        const mql = window.matchMedia('(prefers-color-scheme: dark)');
+        mql.addEventListener('change', () => {
+          const pref = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme-pref');
+          if (pref === 'system') {
+            applyTheme('system', false);
+          }
+        });
+      }
+
+      // Astro View Transitions lifecycle hooks
+      document.addEventListener('astro:after-swap', () => {
+        const pref = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme-pref') || 'dark';
+        applyTheme(pref, false);
       });
+
+      document.addEventListener('astro:page-load', () => {
+        bindThemeButton();
+        initOwnerWidget();
+      });
+
+      // Direct load execution
+      bindThemeButton();
 
       // 2. Owner Floating Widget Logic
       function initOwnerWidget() {
@@ -316,15 +425,15 @@ const {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #38a882;
-    box-shadow: 0 0 0 0 rgba(56, 168, 130, 0.7);
+    background: var(--status-online);
+    box-shadow: 0 0 0 0 var(--status-online-tint);
     animation: pulse-ring 2s infinite;
   }
 
   @keyframes pulse-ring {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 168, 130, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(56, 168, 130, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 168, 130, 0); }
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 var(--status-online-tint); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
   }
 
   .nav-link:hover {
@@ -356,11 +465,13 @@ const {
     border-radius: 20px;
     width: 34px;
     height: 34px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     font-size: 1rem;
+    line-height: 1;
+    user-select: none;
     transition: all 0.15s ease;
   }
 
@@ -369,9 +480,21 @@ const {
     border-color: var(--ink);
   }
 
-  .icon-moon { display: none; }
-  :global([data-theme="dark"]) .icon-sun { display: none; }
-  :global([data-theme="dark"]) .icon-moon { display: inline; }
+  .theme-btn .icon-moon,
+  .theme-btn .icon-sun,
+  .theme-btn .icon-system {
+    display: none;
+  }
+
+  :global([data-theme-pref="dark"]) .theme-btn .icon-moon {
+    display: inline-flex;
+  }
+  :global([data-theme-pref="light"]) .theme-btn .icon-sun {
+    display: inline-flex;
+  }
+  :global([data-theme-pref="system"]) .theme-btn .icon-system {
+    display: inline-flex;
+  }
 
   .main-content {
     padding: 3rem 0 5rem;
@@ -470,21 +593,21 @@ const {
   }
 
   .owner-pill.in-preview {
-    border-color: #f59e0b;
-    color: #f59e0b;
+    border-color: var(--status-preview);
+    color: var(--status-preview);
   }
 
   .owner-dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #10b981;
-    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+    background: var(--status-online);
+    box-shadow: 0 0 6px var(--status-online-tint);
   }
 
   .owner-pill.in-preview .owner-dot {
-    background: #f59e0b;
-    box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+    background: var(--status-preview);
+    box-shadow: 0 0 6px var(--status-preview-tint);
   }
 
   .owner-popover {
@@ -538,7 +661,7 @@ const {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #10b981;
+    background: var(--status-online);
   }
 
   .popover-actions {
@@ -569,22 +692,22 @@ const {
   }
 
   .popover-btn.danger {
-    color: #ef4444;
+    color: var(--status-danger);
   }
   .popover-btn.danger:hover {
-    background: rgba(239, 68, 68, 0.08);
-    border-color: #ef4444;
+    background: var(--status-danger-tint);
+    border-color: var(--status-danger);
   }
 
   .popover-highlight {
     background: var(--accent-tint);
-    border-color: rgba(235, 108, 54, 0.3);
+    border-color: var(--accent-glow);
     color: var(--accent);
     font-weight: 600;
   }
   .popover-highlight:hover {
     background: var(--accent);
-    color: #ffffff;
+    color: var(--paper);
     border-color: var(--accent);
   }
 

@@ -313,14 +313,14 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .status-dot-lg.connected {
-    background: #10b981;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    background: var(--status-online);
+    box-shadow: 0 0 10px var(--status-online-tint);
   }
   .status-dot-lg.disconnected {
-    background: #ef4444;
+    background: var(--status-danger);
   }
   .status-dot-lg.checking {
-    background: #f59e0b;
+    background: var(--status-preview);
     animation: pulse 1s infinite;
   }
 
@@ -416,7 +416,7 @@ import Layout from '../layouts/Layout.astro';
   .action-highlight {
     background: var(--accent) !important;
     border-color: var(--accent) !important;
-    color: #fff !important;
+    color: var(--paper) !important;
     font-weight: 600;
   }
   .action-highlight:hover {
@@ -435,12 +435,12 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .danger-btn {
-    color: #ef4444;
+    color: var(--status-danger);
     font-size: 0.85rem;
     font-family: var(--font-mono);
   }
   .danger-btn:hover {
-    background: rgba(239, 68, 68, 0.08);
+    background: var(--status-danger-tint);
   }
 
   /* Form */
@@ -522,15 +522,15 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .auth-msg.error {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.25);
+    background: var(--status-danger-tint);
+    color: var(--status-danger);
+    border: 1px solid var(--status-danger);
   }
 
   .auth-msg.success {
-    background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
-    border: 1px solid rgba(16, 185, 129, 0.25);
+    background: var(--status-online-tint);
+    color: var(--status-online);
+    border: 1px solid var(--status-online);
   }
 
   .form-actions {

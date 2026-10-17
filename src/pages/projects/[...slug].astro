@@ -130,9 +130,9 @@ const status = statusMap[proj.data.status] || { label: proj.data.status, dotClas
     height: 7px;
     border-radius: 50%;
   }
-  .status-active { background: #10b981; }
-  .status-shipped { background: #3b82f6; }
-  .status-exp { background: #f59e0b; }
+  .status-active { background: var(--status-online); }
+  .status-shipped { background: var(--accent); }
+  .status-exp { background: var(--status-preview); }
 
   .cat-pill {
     color: var(--soft);

@@ -132,9 +132,9 @@ const currentLocation = "工作台 · 实验室";
     gap: 0.45rem;
     font-family: var(--font-mono);
     font-size: 0.72rem;
-    color: #10b981;
-    background: rgba(16, 185, 129, 0.08);
-    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: var(--status-online);
+    background: var(--status-online-tint);
+    border: 1px solid var(--status-online);
     padding: 2px 8px;
     border-radius: 20px;
   }
@@ -143,13 +143,13 @@ const currentLocation = "工作台 · 实验室";
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #10b981;
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    background: var(--status-online);
+    box-shadow: 0 0 0 0 var(--status-online-tint);
     animation: pulse 2s infinite;
   }
 
   @keyframes pulse {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 var(--status-online-tint); }
     70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
   }

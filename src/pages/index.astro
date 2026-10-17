@@ -460,7 +460,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
     border-radius: 4px;
     background: var(--accent-tint);
     color: var(--accent);
-    border: 1px solid rgba(235, 108, 54, 0.2);
+    border: 1px solid var(--accent-glow);
   }
 
   .view-all-link {
@@ -696,9 +696,9 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
     border-radius: 50%;
   }
 
-  .status-active { background: #10b981; }
-  .status-shipped { background: #3b82f6; }
-  .status-exp { background: #f59e0b; }
+  .status-active { background: var(--status-online); }
+  .status-shipped { background: var(--accent); }
+  .status-exp { background: var(--status-preview); }
 
   .proj-title {
     font-size: 1.15rem;
