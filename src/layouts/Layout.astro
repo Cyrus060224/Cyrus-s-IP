@@ -8,8 +8,8 @@ interface Props {
 }
 
 const {
-  title = "Cyrus · 数字大本营",
-  description = "探索系统底层、AI 智能体与技术美学的交汇处。Cyrus 的个人独立站点与思考沉淀。"
+  title = "Cyrus · 学 AI，也认真生活",
+  description = "Cyrus 的个人博客：AI 学习笔记、生活随笔、项目与照片。"
 } = Astro.props;
 ---
 
@@ -24,11 +24,10 @@ const {
     <meta name="theme-color" content="#05070B" id="meta-theme-color" />
     <ClientRouter />
     <script is:inline>
-      // Persistent tri-state theme init (Default: Dark Observatory, supports System / Light / Dark)
+      // Persistent tri-state theme init (Default: Dark, supports System / Light / Dark)
       (function() {
         const urlTheme = new URLSearchParams(window.location.search).get('theme');
         const storedPref = localStorage.getItem('theme');
-        // First visit defaults to 'dark' for Deep Space Observatory aesthetic
         const pref = urlTheme || storedPref || 'dark';
 
         const isSystemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -66,17 +65,14 @@ const {
         <a href="/" class="brand">
           <span class="brand-avatar">C</span>
           <span class="brand-name">Cyrus</span>
-          <span class="brand-badge">OBS · 2026</span>
+          <span class="brand-badge">2026</span>
         </a>
         
         <nav class="nav">
-          <a href="/" class="nav-link">深空视窗</a>
-          <a href="/posts" class="nav-link">航行日志</a>
-          <a href="/projects" class="nav-link">轨道造物</a>
-          <a href="/gallery" class="nav-link">深空光影</a>
-          <a href="/now" class="nav-link now-nav-link">
-            <span class="pulse-dot"></span>信标
-          </a>
+          <a href="/" class="nav-link">首页</a>
+          <a href="/posts" class="nav-link">文章</a>
+          <a href="/projects" class="nav-link">项目</a>
+          <a href="/gallery" class="nav-link">照片</a>
           <a href="/about" class="nav-link">关于</a>
           <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="nav-link github-nav">GitHub</a>
           
@@ -84,11 +80,11 @@ const {
             id="theme-toggle" 
             type="button" 
             class="theme-btn" 
-            aria-label="当前主题：暗色模式（点击切换为浅色模式）"
-            title="切换主题（深空暗色 / 日照浅色 / 跟随系统）"
+            aria-label="当前主题：深色模式（点击切换为浅色模式）"
+            title="切换主题（深色 / 浅色 / 跟随系统）"
             transition:persist
           >
-            <span class="icon-moon" title="暗色模式" aria-hidden="true">☽</span>
+            <span class="icon-moon" title="深色模式" aria-hidden="true">☽</span>
             <span class="icon-sun" title="浅色模式" aria-hidden="true">☼</span>
             <span class="icon-system" title="跟随系统" aria-hidden="true">◐</span>
           </button>
@@ -103,15 +99,15 @@ const {
     <footer class="site-footer">
       <div class="container footer-inner">
         <div class="footer-meta">
-          <p class="mono-eyebrow">© 2026 CYRUS · DEEP SPACE OBSERVATORY · ORBIT: CF-EDGE</p>
-          <p class="footer-desc">遥测状态：所有系统运转正常 · 坐标时区 UTC+8 · 保持克制与深空凝视</p>
+          <p class="mono-eyebrow">© 2026 CYRUS</p>
+          <p class="footer-desc">保持克制与思考 · UTC+8</p>
         </div>
         <div class="footer-links">
           <a href="https://github.com/Cyrus060224/Cyrus-s-IP" target="_blank" rel="noreferrer">Git-as-CMS</a>
           <span>·</span>
-          <a href="/now">信标</a>
+          <a href="/now">此刻</a>
           <span>·</span>
-          <a href="/admin" class="footer-admin-link">指令终端</a>
+          <a href="/admin" class="footer-admin-link">管理</a>
         </div>
       </div>
     </footer>
@@ -140,7 +136,7 @@ const {
             <span>📸</span> 上传相片 / 视频
           </a>
           <a href="/projects/?action=new" class="popover-btn popover-highlight">
-            <span>🚀</span> 登记新造物
+            <span>🚀</span> 登记新项目
           </a>
           <div class="popover-divider"></div>
           <button id="toggle-preview-btn" class="popover-btn">
@@ -185,14 +181,14 @@ const {
         const toggle = document.getElementById('theme-toggle');
         if (toggle) {
           if (pref === 'dark') {
-            toggle.setAttribute('aria-label', '当前主题：暗色模式（点击切换为浅色模式）');
-            toggle.setAttribute('title', '当前主题：深空暗色（点击切换为日照浅色）');
+            toggle.setAttribute('aria-label', '当前主题：深色模式（点击切换为浅色模式）');
+            toggle.setAttribute('title', '当前主题：深色模式（点击切换为浅色模式）');
           } else if (pref === 'light') {
             toggle.setAttribute('aria-label', '当前主题：浅色模式（点击切换为跟随系统）');
-            toggle.setAttribute('title', '当前主题：日照浅色（点击切换为跟随系统）');
+            toggle.setAttribute('title', '当前主题：浅色模式（点击切换为跟随系统）');
           } else {
-            toggle.setAttribute('aria-label', '当前主题：跟随系统（点击切换为暗色模式）');
-            toggle.setAttribute('title', '当前主题：跟随系统（点击切换为深空暗色）');
+            toggle.setAttribute('aria-label', '当前主题：跟随系统（点击切换为深色模式）');
+            toggle.setAttribute('title', '当前主题：跟随系统（点击切换为深色模式）');
           }
         }
       }

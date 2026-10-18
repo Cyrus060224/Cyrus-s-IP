@@ -27,23 +27,22 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
 ---
 
 <Layout 
-  title="造物工坊 · 项目展示 · Cyrus"
-  description="Cyrus 的开源项目、AI 智能体工具、可视化实验与技术作品展。"
+  title="项目 · Cyrus"
+  description="我做过的东西，以及背后的思路。“What I cannot create, I do not understand.”"
 >
   <div class="container projects-container">
     <header class="projects-header">
       <div class="projects-header-row">
         <div>
-          <div class="mono-eyebrow">ORBITAL PROBES &amp; WORKBENCH · 轨道造物与探测器</div>
-          <h1 class="serif-title projects-title">轨道工程与造物实验</h1>
+          <h1 class="serif-title projects-title">项目</h1>
         </div>
         <!-- Owner-only trigger -->
         <button id="btn-open-create-proj" class="btn btn-primary owner-only in-place-btn">
-          <span>🚀</span> 登记新造物
+          <span>🚀</span> 登记新项目
         </button>
       </div>
       <p class="projects-desc">
-        “What I cannot create, I do not understand.” 记录深空观测站的轨道探测器、自主智能体与系统级工程工具。
+        我做过的东西，以及背后的思路。“What I cannot create, I do not understand.”
       </p>
     </header>
 
@@ -64,7 +63,6 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
         return (
           <article class="project-card" data-category={proj.data.category}>
             <div class="card-header">
-              <span class="telemetry-badge">PRJ-00{idx + 1}</span>
               <span class="cat-pill" style={`color: ${cat.color}; border-color: ${cat.color}33;`}>
                 {cat.label}
               </span>
@@ -117,8 +115,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
     <div class="modal-dialog">
       <div class="modal-header">
         <div>
-          <span class="mono-eyebrow">IN-PLACE REGISTRATION · 登记造物</span>
-          <h2 class="modal-title">🚀 登记新造物 / 项目</h2>
+          <h2 class="modal-title">🚀 登记新项目</h2>
         </div>
         <button id="btn-close-proj-modal" class="modal-close">&times;</button>
       </div>
@@ -160,7 +157,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
             <label class="form-label" for="inp-proj-featured">置顶推荐</label>
             <label class="checkbox-wrap">
               <input type="checkbox" id="inp-proj-featured" />
-              <span>设为首屏精选造物</span>
+              <span>设为首屏精选项目</span>
             </label>
           </div>
         </div>
@@ -197,7 +194,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
         <div class="modal-footer">
           <button type="button" id="btn-cancel-proj-modal" class="btn btn-secondary">取消</button>
           <button type="submit" id="btn-submit-proj" class="btn btn-primary">
-            <span class="btn-text">立即登记新造物</span>
+            <span class="btn-text">立即登记新项目</span>
             <span class="btn-spinner" style="display: none;"></span>
           </button>
         </div>
@@ -209,7 +206,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
   <div id="proj-progress-overlay" class="progress-backdrop" style="display: none;">
     <div class="progress-dialog">
       <div class="progress-spinner"></div>
-      <h3 id="proj-progress-title" class="progress-title">正在登记新造物...</h3>
+      <h3 id="proj-progress-title" class="progress-title">正在登记新项目...</h3>
       <p id="proj-progress-desc" class="progress-desc">请勿关闭页面，正在提交项目数据至 GitHub</p>
       <div id="proj-progress-done" style="display: none; margin-top: 1.5rem; gap: 0.75rem; justify-content: center;">
         <a id="proj-view-commit-btn" href="#" target="_blank" rel="noreferrer" class="btn btn-secondary btn-sm">查看 Commit ↗</a>
@@ -368,7 +365,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       const tags = tagsRaw ? tagsRaw.split(/[,，]/).map(t => t.trim()).filter(Boolean) : [];
 
       if (progressOverlay && progressTitle && progressDesc && progressDone) {
-        progressTitle.textContent = '正在登记新造物...';
+        progressTitle.textContent = '正在登记新项目...';
         progressDesc.textContent = '正在生成 Markdown 文件并同步至 GitHub';
         progressDone.style.display = 'none';
         progressOverlay.style.display = 'flex';
@@ -398,7 +395,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
         );
 
         if (progressTitle && progressDesc && progressDone && viewCommitBtn) {
-          progressTitle.textContent = '🚀 造物登记成功！';
+          progressTitle.textContent = '🚀 项目登记成功！';
           progressDesc.textContent = '项目元数据已提交至 GitHub 仓库。Cloudflare Pages 正在增量发布，片刻后即可在列表查看！';
           viewCommitBtn.href = commitRes?.commit?.html_url || 'https://github.com/Cyrus060224/Cyrus-s-IP/commits/main';
           progressDone.style.display = 'flex';

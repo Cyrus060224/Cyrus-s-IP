@@ -1,9 +1,8 @@
 ---
 /**
- * DEEP SPACE OBSERVATORY · 3D HERO VIEWPORT ISLAND
- * Interactive Three.js Planetary Orbit Entrance with Real Telemetry Hooks
+ * ORBITAL SUNRISE · HERO HEADER
+ * Clean, direct personal introduction with ambient 3D orbital sunrise background
  */
-import TelemetryBoot from './TelemetryBoot.astro';
 import '../../styles/observatory-hero.css';
 
 interface Props {
@@ -26,15 +25,12 @@ const {
 ---
 
 <section class="observatory-hero-wrapper" id="observatory-hero">
-  <!-- 1. Telemetry Boot Sequence Terminal -->
-  <TelemetryBoot />
-
-  <!-- 2. High-fidelity WebP Static Backdrop for Non-JS / No-WebGL Fallback & Instant First Paint -->
+  <!-- 1. High-fidelity WebP Static Backdrop for Non-JS / No-WebGL Fallback & Instant First Paint -->
   <picture class="observatory-static-backdrop" id="observatory-static-backdrop" aria-hidden="true">
     <source media="(max-width: 767px)" srcset="/images/observatory/orbital_sunrise_mobile.webp" type="image/webp" />
     <img 
       src="/images/observatory/orbital_sunrise_desktop.webp" 
-      alt="Orbital Sunrise over Ice Planet Horizon" 
+      alt="Orbital Sunrise over Horizon" 
       width="1440" 
       height="720" 
       class="observatory-static-img" 
@@ -43,130 +39,51 @@ const {
     />
   </picture>
 
-  <!-- 3. WebGL 3D Canvas Mounting Point -->
+  <!-- 2. WebGL 3D Canvas Mounting Point (Ambient Background Only) -->
   <div id="observatory-canvas-mount" class="observatory-canvas-container"></div>
 
-  <!-- 3. Top Observatory Navigation & Telemetry Metadata -->
-  <div class="observatory-hud-header">
-    <div class="hud-title-block">
-      <div class="hud-station-tag">DEEP SPACE OBSERVATORY · 轨道高度 420KM</div>
-      <h1 class="hud-main-title">
-        <span class="hud-title-line">在寂静的深空与代码之中，</span>
-        <span class="hud-title-line">锚定属于自己的认知坐标。</span>
-      </h1>
-      <p class="hud-sub-desc">你好，我是 <strong>Cyrus</strong>。这里是一座孤独运转的深空观测站。点击轨道上的仪器即可进入各板块。</p>
-    </div>
-    <div class="hud-coordinates">
-      <div>ORBIT: LOW-PLANETARY LIMB</div>
-      <div>SENSOR: ICE-RAYLEIGH V4</div>
-      <div>STATUS: 3 INSTRUMENTS LOCKED</div>
+  <!-- 3. Foreground Main Content: Title, Subtitle and 3 Direct Section Cards -->
+  <div class="hero-foreground-content">
+    <div class="container hero-content-inner">
+      <div class="hero-title-block">
+        <h1 class="hero-main-title">
+          <span class="hero-title-line">我在学 AI，</span>
+          <span class="hero-title-line">也在认真生活。</span>
+        </h1>
+        <p class="hero-sub-desc">这里是 Cyrus 的学习笔记、随笔、项目和照片。</p>
+      </div>
+
+      <!-- Three Entry Cards -->
+      <nav class="hero-entry-cards" aria-label="核心版块入口">
+        <a href="/posts" class="hero-entry-card">
+          <div class="card-head">
+            <span class="card-title">文章</span>
+            <span class="card-arrow" aria-hidden="true">→</span>
+          </div>
+          <p class="card-desc">AI 学习笔记与生活随笔</p>
+          <div class="card-meta">共 {postsCount} 篇 · 最近更新 {latestPostDate}</div>
+        </a>
+
+        <a href="/projects" class="hero-entry-card">
+          <div class="card-head">
+            <span class="card-title">项目</span>
+            <span class="card-arrow" aria-hidden="true">→</span>
+          </div>
+          <p class="card-desc">我做过的东西和背后的思路</p>
+          <div class="card-meta">共 {projectsCount} 个 · 最近上线 {latestProjectDate}</div>
+        </a>
+
+        <a href="/gallery" class="hero-entry-card">
+          <div class="card-head">
+            <span class="card-title">照片</span>
+            <span class="card-arrow" aria-hidden="true">→</span>
+          </div>
+          <p class="card-desc">随手拍下的光影</p>
+          <div class="card-meta">共 {galleryCount} 组 · 最近更新 {latestGalleryDate}</div>
+        </a>
+      </nav>
     </div>
   </div>
-
-  <!-- 4. Interactive 2D Screen-space HUD Pins (Hooked into 3D projection - hidden for Step 1 static frame) -->
-  <div id="observatory-hud-layer" class="observatory-hud-layer" style="display: none;">
-    <!-- Pin 1: OBS-01 Deep Space Optical Telescope -->
-    <a 
-      href="/gallery" 
-      id="hud-pin-gallery" 
-      class="instrument-hud-pin" 
-      data-route="/gallery"
-      tabindex="0"
-      role="button"
-      aria-label="OBS-01 深空光影 观测望远镜"
-      style="display: none;"
-    >
-      <div class="hud-pin-hitbox">
-        <div class="hud-reticle-ring">
-          <span class="hud-reticle-dot"></span>
-        </div>
-      </div>
-      <div class="hud-card-wrapper">
-        <span class="hud-guide-line"></span>
-        <div class="hud-card-label">
-          <div class="hud-code-row">
-            <span>OBS-01</span>
-            <span>//</span>
-            <span>深空光影</span>
-          </div>
-          <div class="hud-name-row">观测望远镜 · Viewport</div>
-          <div class="hud-stat-row">{galleryCount} 组光学记录 · 最近更新 {latestGalleryDate}</div>
-        </div>
-      </div>
-    </a>
-
-    <!-- Pin 2: PRJ-02 Orbital Engineering Probe -->
-    <a 
-      href="/projects" 
-      id="hud-pin-projects" 
-      class="instrument-hud-pin" 
-      data-route="/projects"
-      tabindex="0"
-      role="button"
-      aria-label="PRJ-02 轨道造物 深空探测器"
-      style="display: none;"
-    >
-      <div class="hud-pin-hitbox">
-        <div class="hud-reticle-ring">
-          <span class="hud-reticle-dot"></span>
-        </div>
-      </div>
-      <div class="hud-card-wrapper">
-        <span class="hud-guide-line"></span>
-        <div class="hud-card-label">
-          <div class="hud-code-row">
-            <span>PRJ-02</span>
-            <span>//</span>
-            <span>轨道造物</span>
-          </div>
-          <div class="hud-name-row">深空探测器 · Probes</div>
-          <div class="hud-stat-row">{projectsCount} 台在轨造物 · 最近上线 {latestProjectDate}</div>
-        </div>
-      </div>
-    </a>
-
-    <!-- Pin 3: LOG-03 Flight Log Command Pod -->
-    <a 
-      href="/posts" 
-      id="hud-pin-posts" 
-      class="instrument-hud-pin" 
-      data-route="/posts"
-      tabindex="0"
-      role="button"
-      aria-label="LOG-03 航行日志 日志指令舱"
-      style="display: none;"
-    >
-      <div class="hud-pin-hitbox">
-        <div class="hud-reticle-ring">
-          <span class="hud-reticle-dot"></span>
-        </div>
-      </div>
-      <div class="hud-card-wrapper">
-        <span class="hud-guide-line"></span>
-        <div class="hud-card-label">
-          <div class="hud-code-row">
-            <span>LOG-03</span>
-            <span>//</span>
-            <span>航行日志</span>
-          </div>
-          <div class="hud-name-row">日志指令舱 · Flight Logs</div>
-          <div class="hud-stat-row">{postsCount} 篇思想日志 · 最近发布 {latestPostDate}</div>
-        </div>
-      </div>
-    </a>
-  </div>
-
-  <!-- 6. Non-JS / Low Performance Static Fallback -->
-  <noscript>
-    <div class="observatory-fallback-view">
-      <div class="fallback-arc"></div>
-      <div class="fallback-instruments">
-        <a href="/gallery" class="btn btn-secondary">OBS-01 / 深空光影 ({galleryCount})</a>
-        <a href="/projects" class="btn btn-secondary">PRJ-02 / 轨道造物 ({projectsCount})</a>
-        <a href="/posts" class="btn btn-primary">LOG-03 / 航行日志 ({postsCount}) →</a>
-      </div>
-    </div>
-  </noscript>
 </section>
 
 <script>
@@ -186,101 +103,19 @@ const {
     const mount = document.getElementById('observatory-canvas-mount');
     if (!mount) return;
 
-    // Dispose existing stage if remounting
     cleanupObservatory();
 
     const profile = detectDeviceCapabilities();
     if (!profile.hasWebGL) {
-      // Non-WebGL environments fall back to the static <picture> WebP backdrop
       return;
     }
 
-    const pinGallery = document.getElementById('hud-pin-gallery');
-    const pinProjects = document.getElementById('hud-pin-projects');
-    const pinPosts = document.getElementById('hud-pin-posts');
-
-    const pinMap: Record<string, HTMLElement | null> = {
-      gallery: pinGallery,
-      projects: pinProjects,
-      posts: pinPosts
-    };
-
     try {
       activeStage = new Stage({
-        container: mount,
-        onScreenCoordsUpdate: (coords) => {
-          coords.forEach(c => {
-            const el = pinMap[c.id];
-            if (el) {
-              if (c.visible) {
-                el.style.display = 'flex';
-                el.style.left = `${c.x}px`;
-                el.style.top = `${c.y}px`;
-              } else {
-                el.style.display = 'none';
-              }
-            }
-          });
-        },
-        onHoverChange: (hoveredId) => {
-          Object.entries(pinMap).forEach(([id, el]) => {
-            if (el) {
-              if (hoveredId === id) {
-                el.classList.add('hovered');
-              } else {
-                el.classList.remove('hovered');
-              }
-            }
-          });
-        },
-        onTransitionStart: (route) => {
-          const hero = document.getElementById('observatory-hero');
-          if (hero) {
-            hero.style.transition = 'filter 0.65s ease-out, opacity 0.65s ease-out';
-            hero.style.filter = 'brightness(1.4) blur(4px)';
-            hero.style.opacity = '0.4';
-          }
-        }
+        container: mount
       });
-
-      // Touch, keyboard and click handling for pins
-      const pins = document.querySelectorAll<HTMLElement>('.instrument-hud-pin');
-      const isTouch = window.matchMedia('(pointer: coarse)').matches;
-
-      pins.forEach(pin => {
-        pin.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const route = pin.getAttribute('data-route');
-
-          // Mobile / touch devices: first tap expands, second tap navigates
-          if (isTouch) {
-            const wasExpanded = pin.classList.contains('expanded');
-            if (!wasExpanded) {
-              pins.forEach(p => p.classList.remove('expanded'));
-              pin.classList.add('expanded');
-              return;
-            }
-          }
-
-          // Desktop single click, keyboard Enter, or mobile second tap
-          if (route && activeStage) {
-            activeStage.triggerDollyTransition(route);
-          } else if (route) {
-            window.location.href = route;
-          }
-        });
-      });
-
-      // Collapse pins when tapping or clicking outside pins
-      document.addEventListener('click', (e) => {
-        if (!(e.target as Element).closest('.instrument-hud-pin')) {
-          pins.forEach(p => p.classList.remove('expanded'));
-        }
-      });
-
     } catch (err) {
-      console.error('Failed to initialize 3D Observatory:', err);
+      console.error('Failed to initialize 3D orbital sunrise:', err);
     }
   }
 
@@ -291,7 +126,6 @@ const {
 
   document.addEventListener('astro:before-swap', cleanupObservatory);
 
-  // Initial load check if astro:page-load already fired
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     initObservatory();
   }

@@ -6,15 +6,11 @@
 import * as THREE from 'three';
 import { StarField } from './StarField';
 import { PlanetEngine } from './PlanetEngine';
-import { InstrumentManager, type InstrumentScreenCoords } from './InstrumentManager';
 import { PostPipeline } from './PostPipeline';
 import { detectDeviceCapabilities, type DeviceProfile } from '../utils/deviceTier';
 
 export interface StageOptions {
   container: HTMLElement;
-  onScreenCoordsUpdate?: (coords: InstrumentScreenCoords[]) => void;
-  onHoverChange?: (hoveredId: string | null) => void;
-  onTransitionStart?: (route: string) => void;
 }
 
 export class Stage {
@@ -29,7 +25,6 @@ export class Stage {
 
   private starField: StarField;
   private planetEngine: PlanetEngine;
-  private instrumentManager: InstrumentManager;
   private postPipeline: PostPipeline;
 
   private clock: THREE.Clock = new THREE.Clock();
@@ -48,23 +43,9 @@ export class Stage {
   private lowFpsDuration: number = 0;
   private hasDowngraded: boolean = false;
 
-  // Dolly Zoom Transition State (reserved for step 3 navigation)
-  private isTransitioning: boolean = false;
-  private transitionStartTime: number = 0;
-  private transitionStartPos: THREE.Vector3 = new THREE.Vector3();
-  private transitionEndPos: THREE.Vector3 = new THREE.Vector3();
-  private transitionTargetRoute: string = '';
-
-  private onScreenCoordsUpdate?: (coords: InstrumentScreenCoords[]) => void;
-  private onHoverChange?: (hoveredId: string | null) => void;
-  private onTransitionStart?: (route: string) => void;
-
   constructor(options: StageOptions) {
     this.container = options.container;
     this.heroElement = (this.container.closest('.observatory-hero-wrapper') as HTMLElement) || this.container.parentElement || this.container;
-    this.onScreenCoordsUpdate = options.onScreenCoordsUpdate;
-    this.onHoverChange = options.onHoverChange;
-    this.onTransitionStart = options.onTransitionStart;
 
     this.profile = detectDeviceCapabilities();
 
@@ -150,13 +131,11 @@ export class Stage {
     this.starField = new StarField(this.profile.tier === 'tier-1' ? 2400 : 1200);
     this.scene.add(this.starField.group);
 
-    // 7. Instrument Fleet (Deferred to Step 3 per user instruction)
-    this.instrumentManager = new InstrumentManager();
-
-    // 8. Single-pass Post Pipeline
+    // 7. Instrument Fleet (Active in Step 3)
+    // 7. Single-pass Post Pipeline
     this.postPipeline = new PostPipeline(this.renderer, width, height, this.profile.tier);
 
-    // 9. Event Listeners & Observers
+    // 8. Event Listeners & Observers
     this.bindEvents();
     this.setupIntersectionObserver();
     this.setupReducedMotion();
@@ -166,8 +145,12 @@ export class Stage {
       this.planetEngine.skipIntro();
     }
 
-    // 10. Start Render Loop
+    // 9. Start Render Loop
     this.startLoop();
+
+    if (typeof window !== 'undefined') {
+      (window as any).__stage = this;
+    }
   }
 
   private setupReducedMotion(): void {
@@ -196,7 +179,6 @@ export class Stage {
     this.heroElement.addEventListener('pointermove', this.onPointerMove);
     this.heroElement.addEventListener('pointerleave', this.onPointerLeave);
     this.heroElement.addEventListener('pointercancel', this.onPointerLeave);
-    this.heroElement.addEventListener('click', this.onCanvasClick);
 
     // Interactive intro skip listeners (click, scroll wheel, touch, key press)
     window.addEventListener('wheel', this.onUserSkipAction, { passive: true });
@@ -222,7 +204,6 @@ export class Stage {
     this.heroElement.removeEventListener('pointermove', this.onPointerMove);
     this.heroElement.removeEventListener('pointerleave', this.onPointerLeave);
     this.heroElement.removeEventListener('pointercancel', this.onPointerLeave);
-    this.heroElement.removeEventListener('click', this.onCanvasClick);
 
     if (this.reducedMotionMediaQuery) {
       this.reducedMotionMediaQuery.removeEventListener('change', this.onReducedMotionChange);
@@ -262,8 +243,6 @@ export class Stage {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
 
-    this.instrumentManager.setLayout(width < 768 || width / height < 1.1);
-
     this.renderer.setSize(width, height);
     this.postPipeline.setSize(width, height);
   };
@@ -291,27 +270,15 @@ export class Stage {
     const ndcY = -(pixelY / rect.height) * 2 + 1;
 
     this.mouseTarget.set(ndcX, ndcY);
-    this.instrumentManager.updatePointer(ndcX, ndcY, true, pixelX, pixelY, rect.width, rect.height);
   };
 
   private onPointerLeave = (): void => {
-    this.clearHover();
     this.mouseTarget.set(0, 0);
   };
 
   private onWindowBlur = (): void => {
-    this.clearHover();
     this.mouseTarget.set(0, 0);
   };
-
-  public clearHover(): void {
-    if (this.instrumentManager) {
-      this.instrumentManager.clearHover();
-    }
-    if (this.onHoverChange) {
-      this.onHoverChange(null);
-    }
-  }
 
   private onTouchMove = (e: TouchEvent): void => {
     if (e.touches.length > 0 && this.heroElement && !this.profile.prefersReducedMotion) {
@@ -334,67 +301,6 @@ export class Stage {
       const ndcY = -(pixelY / rect.height) * 2 + 1;
 
       this.mouseTarget.set(ndcX * 0.5, ndcY * 0.5);
-      this.instrumentManager.updatePointer(ndcX, ndcY, true, pixelX, pixelY, rect.width, rect.height);
-    }
-  };
-
-  public triggerDollyTransition(route: string): void {
-    const inst = this.instrumentManager.findInstrumentByRoute(route);
-    if (!inst || this.isTransitioning) return;
-
-    this.isTransitioning = true;
-    this.transitionStartTime = this.clock.getElapsedTime();
-    this.transitionStartPos.copy(this.camera.position);
-    this.transitionEndPos.copy(inst.group.position).add(inst.targetOffset);
-    this.transitionTargetRoute = route;
-
-    if (this.onTransitionStart) {
-      this.onTransitionStart(route);
-    }
-
-    setTimeout(() => {
-      window.location.href = route;
-    }, 720);
-  }
-
-  private onCanvasClick = (e: MouseEvent): void => {
-    this.onUserSkipAction();
-
-    if (this.isTransitioning || !this.heroElement) return;
-
-    if ((e.target as Element).closest('.instrument-hud-pin')) {
-      return;
-    }
-
-    const rect = this.renderer.domElement.getBoundingClientRect();
-    if (
-      e.clientX < rect.left ||
-      e.clientX > rect.right ||
-      e.clientY < rect.top ||
-      e.clientY > rect.bottom ||
-      rect.width <= 0 ||
-      rect.height <= 0
-    ) {
-      return;
-    }
-
-    const pixelX = e.clientX - rect.left;
-    const pixelY = e.clientY - rect.top;
-    const ndcX = (pixelX / rect.width) * 2 - 1;
-    const ndcY = -(pixelY / rect.height) * 2 + 1;
-
-    const hitInst = this.instrumentManager.hitTest(
-      pixelX,
-      pixelY,
-      ndcX,
-      ndcY,
-      this.camera,
-      rect.width,
-      rect.height
-    );
-
-    if (hitInst) {
-      this.triggerDollyTransition(hitInst.route);
     }
   };
 
@@ -417,7 +323,7 @@ export class Stage {
     this.renderer.setPixelRatio(1.0);
     this.postPipeline.disable();
     this.starField.setReducedStars(true);
-    console.info('Deep Space Observatory: Adaptive quality downgrade applied (DPR=1.0, post-fx disabled, star count halved).');
+    console.info('Orbital Sunrise: Adaptive quality downgrade applied (DPR=1.0, post-fx disabled, star count halved).');
   }
 
   private startLoop(): void {
@@ -507,7 +413,6 @@ export class Stage {
 
     this.starField.dispose();
     this.planetEngine.dispose();
-    this.instrumentManager.dispose();
     this.postPipeline.dispose();
 
     this.renderer.dispose();

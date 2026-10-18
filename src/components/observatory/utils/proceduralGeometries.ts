@@ -1,10 +1,15 @@
 /**
  * DEEP SPACE OBSERVATORY · PROCEDURAL INSTRUMENT MESHES
  * 0KB external 3D file overhead - procedural low-poly hardware synthesis
- * Cinematic scale, beveled edges, satin PBR materials & anti-glare specular tuning
+ * Cinematic scale, beveled edges, satin PBR materials, fine wafer grid textures & specular sweep support
  */
 
 import * as THREE from 'three';
+
+export interface ProceduralInstrumentResult {
+  group: THREE.Group;
+  glintMaterials: THREE.MeshStandardMaterial[];
+}
 
 /**
  * Procedural beveled box geometry (chamfered edges catch razor-sharp rim lights)
@@ -65,11 +70,11 @@ export function createSolarMaterial(): THREE.MeshStandardMaterial {
   const ctx = canvas.getContext('2d');
   if (ctx) {
     // Deep desaturated slate navy silicon base
-    ctx.fillStyle = '#1e2838';
+    ctx.fillStyle = '#1c2636';
     ctx.fillRect(0, 0, 128, 128);
 
     // Segmented wafer cells
-    ctx.fillStyle = '#263346';
+    ctx.fillStyle = '#243042';
     for (let r = 0; r < 4; r++) {
       for (let c = 0; c < 4; c++) {
         ctx.fillRect(c * 32 + 2, r * 32 + 2, 28, 28);
@@ -103,21 +108,21 @@ export function createSolarMaterial(): THREE.MeshStandardMaterial {
 
   return new THREE.MeshStandardMaterial({
     map: texture,
-    color: 0xd0dceb,
-    roughness: 0.34, // Satin glass reflection, avoids bloom overexposure
-    metalness: 0.42, // Controlled wafer sheen
+    color: 0xc8d5e5,
+    roughness: 0.35, // Satin glass reflection, avoids bloom overexposure
+    metalness: 0.40, // Controlled wafer sheen
     flatShading: false,
   });
 }
 
 // 1. OBS-01: Deep Space Optical Telescope (深空光影 / 观测望远镜)
-export function createTelescopeGroup(): THREE.Group {
+export function createTelescopeGroup(): ProceduralInstrumentResult {
   const group = new THREE.Group();
   group.name = 'instrument_obs';
 
   const bodyMat = createHardwareMaterial(0x647288, 0.40, 0.40);
   const darkMetal = createHardwareMaterial(0x3e4a5a, 0.46, 0.35);
-  const mirrorMat = createHardwareMaterial(0x8a99ac, 0.36, 0.45);
+  const mirrorMat = createHardwareMaterial(0x8a99ac, 0.32, 0.50);
   const solarMat = createSolarMaterial();
 
   // Main 12-sided optical barrel
@@ -153,18 +158,22 @@ export function createTelescopeGroup(): THREE.Group {
   panels.rotation.x = 0.22;
   group.add(panels);
 
-  // Restrained visual scale (~43% of previous size, allowing planet to dominate)
-  group.scale.setScalar(0.58);
-  return group;
+  // Restrained visual scale (~0.56)
+  group.scale.setScalar(0.56);
+
+  return {
+    group,
+    glintMaterials: [mirrorMat, solarMat]
+  };
 }
 
 // 2. PRJ-02: Deep Space Orbital Probe (轨道造物 / 探测器)
-export function createProbeGroup(): THREE.Group {
+export function createProbeGroup(): ProceduralInstrumentResult {
   const group = new THREE.Group();
   group.name = 'instrument_prj';
 
   const bodyMat = createHardwareMaterial(0x606e82, 0.42, 0.38);
-  const dishMat = createHardwareMaterial(0xa0adbe, 0.38, 0.40);
+  const dishMat = createHardwareMaterial(0xa0adbe, 0.32, 0.45);
   const darkMat = createHardwareMaterial(0x384454, 0.48, 0.32);
   const solarMat = createSolarMaterial();
 
@@ -212,19 +221,23 @@ export function createProbeGroup(): THREE.Group {
   boom.rotation.x = -0.35;
   group.add(boom);
 
-  // Restrained visual scale
-  group.scale.setScalar(0.55);
-  return group;
+  // Foreground scale: prominent, crisp, commanding silhouette
+  group.scale.setScalar(0.70);
+
+  return {
+    group,
+    glintMaterials: [dishMat, solarMat]
+  };
 }
 
 // 3. LOG-03: Autonomous Flight Log Pod (航行日志 / 日志舱)
-export function createLogPodGroup(): THREE.Group {
+export function createLogPodGroup(): ProceduralInstrumentResult {
   const group = new THREE.Group();
   group.name = 'instrument_log';
 
   const hullMat = createHardwareMaterial(0x627084, 0.42, 0.38);
   const heatShieldMat = createHardwareMaterial(0x28323e, 0.55, 0.25);
-  const accentMat = createHardwareMaterial(0x768598, 0.40, 0.38);
+  const accentMat = createHardwareMaterial(0x768598, 0.36, 0.45);
 
   // Command module capsule head (frustum cone + rounded tip)
   const headGeo = new THREE.CylinderGeometry(0.35, 0.72, 1.1, 12);
@@ -267,7 +280,11 @@ export function createLogPodGroup(): THREE.Group {
   mast.position.y = -1.15;
   group.add(mast);
 
-  // Restrained visual scale
-  group.scale.setScalar(0.60);
-  return group;
+  // Background scale (~0.54)
+  group.scale.setScalar(0.54);
+
+  return {
+    group,
+    glintMaterials: [accentMat, hullMat]
+  };
 }

@@ -68,7 +68,7 @@ export class PlanetEngine {
       .normalize();
 
     // 1. Planet Mesh & Procedural Shader
-    this.planetGeo = new THREE.SphereGeometry(this.planetRadius, 128, 96);
+    this.planetGeo = new THREE.SphereGeometry(this.planetRadius, 384, 192);
     this.planetMat = new THREE.ShaderMaterial({
       vertexShader: planetVertexShader,
       fragmentShader: planetFragmentShader,
@@ -85,7 +85,7 @@ export class PlanetEngine {
     this.group.add(this.planetMesh);
 
     // 2. Multi-layer Rayleigh + Mie Scattering Atmosphere & Outer Halo
-    this.atmosphereGeo = new THREE.SphereGeometry(this.haloRadius, 128, 96);
+    this.atmosphereGeo = new THREE.SphereGeometry(this.haloRadius, 384, 192);
     this.atmosphereMat = new THREE.ShaderMaterial({
       vertexShader: atmosphereVertexShader,
       fragmentShader: atmosphereFragmentShader,
@@ -102,7 +102,7 @@ export class PlanetEngine {
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      depthTest: true,
+      depthTest: false,
       side: THREE.BackSide
     });
     this.atmosphereMesh = new THREE.Mesh(this.atmosphereGeo, this.atmosphereMat);

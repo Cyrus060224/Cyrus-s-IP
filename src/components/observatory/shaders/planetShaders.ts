@@ -142,12 +142,15 @@ export const planetFragmentShader = /* glsl */ `
     vec3 ambient = cNightAmbient * (0.70 + 0.30 * limbFactor);
 
     // 7. Atmospheric Surface Haze (Fresnel twilight hugging the curvature)
-    // Seamlessly matches the deep sapphire base of the atmosphere shader at limbFactor = 1.0
     vec3 cSurfaceHaze = mix(vec3(0.080, 0.260, 0.620), vec3(0.30, 0.54, 0.84), dawnFactor * 0.55);
-    float hazeStrength = pow(limbFactor, 2.6) * 0.58;
+    float hazeStrength = pow(limbFactor, 2.6) * 0.40;
+
+    // Edge anti-aliasing feather: smoothly fade planet mesh to zero right at the grazing silhouette
+    // Eliminates polygon chord silhouette cliff between planet mesh and space
+    float limbEdgeFade = smoothstep(0.00, 0.035, vDotN);
 
     // Combine all components
-    vec3 finalColor = surface + ambient + (cSurfaceHaze * hazeStrength);
+    vec3 finalColor = (surface + ambient + (cSurfaceHaze * hazeStrength)) * limbEdgeFade;
 
     gl_FragColor = vec4(finalColor, 1.0);
   }

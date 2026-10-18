@@ -1,10 +1,16 @@
 /**
  * DEEP SPACE OBSERVATORY · INSTRUMENT MANAGER
- * Controls 3 Procedural Orbital Instruments, Responsive Orbit Layouts, Raycasting, Screen-Space 2D Projection & Dolly Zoom
+ * Controls 3 Procedural Orbital Instruments, Horizon Silhouette Positioning,
+ * Specular Glint Sweeps, Screen-Space 2D Projections, Raycasting & Lifecycle Cleanup
  */
 
 import * as THREE from 'three';
-import { createTelescopeGroup, createProbeGroup, createLogPodGroup } from '../utils/proceduralGeometries';
+import {
+  createTelescopeGroup,
+  createProbeGroup,
+  createLogPodGroup,
+  type ProceduralInstrumentResult
+} from '../utils/proceduralGeometries';
 
 export interface InstrumentItem {
   id: string;
@@ -19,6 +25,8 @@ export interface InstrumentItem {
   visualAnchorOffset: THREE.Vector3;
   floatingSeed: number;
   hitRadius: number;
+  glintPhase: number;
+  glintMaterials: THREE.MeshStandardMaterial[];
 }
 
 export interface InstrumentScreenCoords {
@@ -49,80 +57,86 @@ export class InstrumentManager {
   constructor() {
     this.group = new THREE.Group();
     this.group.name = 'instruments_fleet';
+    this.group.renderOrder = 5; // Render after atmosphere (renderOrder 1)
 
-    // 1. OBS-01: Deep Space Optical Telescope (深空光影 -> /gallery)
-    // Desktop: Upper mid-void (843, 159), 85px above the planet atmosphere arc
-    // Mobile: Upper right space (257, 187), clear of header text
-    const telescope = createTelescopeGroup();
-    const obsDesktop = new THREE.Vector3(2.2, 3.4, 2.8);
-    const obsMobile = new THREE.Vector3(1.3, 2.3, 2.8);
-    telescope.position.copy(obsDesktop);
-    telescope.rotation.set(0.2, 0.4, -0.15);
-    this.group.add(telescope);
-
-    this.instruments.push({
-      id: 'gallery',
-      name: '深空光影 / Viewport',
-      code: 'OBS-01',
-      route: '/gallery',
-      group: telescope,
-      basePosition: obsDesktop.clone(),
-      desktopBasePosition: obsDesktop,
-      mobileBasePosition: obsMobile,
-      targetOffset: new THREE.Vector3(0, 0, 2.6),
-      visualAnchorOffset: new THREE.Vector3(0, 0, 0),
-      floatingSeed: 12.5,
-      hitRadius: 0.75
-    });
-
-    // 2. PRJ-02: Orbital Engineering Probe (轨道造物 -> /projects)
-    // Desktop: Upper right space (1057, 111), 130px+ clear of telemetry text area and well above arc
-    // Mobile: Mid-right space (288, 382), completely inside mobile viewport
-    const probe = createProbeGroup();
-    const prjDesktop = new THREE.Vector3(6.2, 4.4, 2.2);
-    const prjMobile = new THREE.Vector3(1.4, 0.6, 2.4);
-    probe.position.copy(prjDesktop);
-    probe.rotation.set(-0.35, -0.5, 0.1);
-    this.group.add(probe);
+    // 1. PRJ-02: Orbital Engineering Probe (轨道造物 -> /projects)
+    // Near Foreground: Center-right, commanding silhouette against the glowing ice-blue atmosphere arc.
+    const probeRes: ProceduralInstrumentResult = createProbeGroup();
+    const prjDesktop = new THREE.Vector3(2.4, -0.15, 8.5);
+    const prjMobile = new THREE.Vector3(0.0, -0.32, 7.5); // Centered on mobile
+    probeRes.group.position.copy(prjDesktop);
+    probeRes.group.rotation.set(-0.15, -0.35, 0.08);
+    this.group.add(probeRes.group);
 
     this.instruments.push({
       id: 'projects',
       name: '轨道造物 / Probes',
       code: 'PRJ-02',
       route: '/projects',
-      group: probe,
+      group: probeRes.group,
       basePosition: prjDesktop.clone(),
       desktopBasePosition: prjDesktop,
       mobileBasePosition: prjMobile,
-      targetOffset: new THREE.Vector3(0, 0, 2.4),
-      visualAnchorOffset: new THREE.Vector3(0, 0.1, 0),
+      targetOffset: new THREE.Vector3(0, 0, 3.2),
+      visualAnchorOffset: new THREE.Vector3(0, 0.25, 0),
       floatingSeed: 48.2,
-      hitRadius: 0.75
+      hitRadius: 0.95,
+      glintPhase: 0.0,
+      glintMaterials: probeRes.glintMaterials
+    });
+
+    // 2. OBS-01: Deep Space Optical Telescope (深空光影 -> /gallery)
+    // Background Right: Placed in the warm-to-cold transitional atmospheric glow,
+    // safely left of the rising star core (X=12.5) to avoid overexposure.
+    const telescopeRes: ProceduralInstrumentResult = createTelescopeGroup();
+    const obsDesktop = new THREE.Vector3(7.2, -0.65, 1.8);
+    const obsMobile = new THREE.Vector3(2.6, -0.75, 1.8); // Right side on mobile
+    telescopeRes.group.position.copy(obsDesktop);
+    telescopeRes.group.rotation.set(0.15, 0.45, -0.12);
+    this.group.add(telescopeRes.group);
+
+    this.instruments.push({
+      id: 'gallery',
+      name: '深空光影 / Viewport',
+      code: 'OBS-01',
+      route: '/gallery',
+      group: telescopeRes.group,
+      basePosition: obsDesktop.clone(),
+      desktopBasePosition: obsDesktop,
+      mobileBasePosition: obsMobile,
+      targetOffset: new THREE.Vector3(0, 0, 3.0),
+      visualAnchorOffset: new THREE.Vector3(0, 0.22, 0),
+      floatingSeed: 12.5,
+      hitRadius: 0.75,
+      glintPhase: 7.5,
+      glintMaterials: telescopeRes.glintMaterials
     });
 
     // 3. LOG-03: Autonomous Flight Log Pod (航行日志 -> /posts)
-    // Desktop: Mid-lower left cosmic void (484, 429), 80px+ clear of planet horizon & bottom border
-    // Mobile: Lower-left space (107, 557), well above bottom border
-    const logPod = createLogPodGroup();
-    const logDesktop = new THREE.Vector3(-4.2, -1.4, 2.8);
-    const logMobile = new THREE.Vector3(-1.3, -2.0, 2.8);
-    logPod.position.copy(logDesktop);
-    logPod.rotation.set(0.4, 0.2, -0.3);
-    this.group.add(logPod);
+    // Background Left: Placed against the deep sapphire/ice-blue atmosphere band on the left,
+    // positioned under the trailing subtitle, well clear of title block.
+    const logPodRes: ProceduralInstrumentResult = createLogPodGroup();
+    const logDesktop = new THREE.Vector3(-6.2, -0.95, 0.8);
+    const logMobile = new THREE.Vector3(-2.2, -0.95, 1.0); // Left side on mobile
+    logPodRes.group.position.copy(logDesktop);
+    logPodRes.group.rotation.set(0.28, 0.20, -0.25);
+    this.group.add(logPodRes.group);
 
     this.instruments.push({
       id: 'posts',
       name: '航行日志 / Logs',
       code: 'LOG-03',
       route: '/posts',
-      group: logPod,
+      group: logPodRes.group,
       basePosition: logDesktop.clone(),
       desktopBasePosition: logDesktop,
       mobileBasePosition: logMobile,
-      targetOffset: new THREE.Vector3(0, 0, 2.5),
-      visualAnchorOffset: new THREE.Vector3(0, 0.2, 0),
+      targetOffset: new THREE.Vector3(0, 0, 2.8),
+      visualAnchorOffset: new THREE.Vector3(0, 0.28, 0),
       floatingSeed: 91.7,
-      hitRadius: 0.75
+      hitRadius: 0.80,
+      glintPhase: 15.0,
+      glintMaterials: logPodRes.glintMaterials
     });
   }
 
@@ -207,13 +221,15 @@ export class InstrumentManager {
     this.canvasWidth = canvasWidth;
     this.canvasHeight = canvasHeight;
 
-    if (!prefersReducedMotion) {
-      // Gentle orbital float with bounded Z-variation (delta Z <= 0.05 keeps size change < 0.3%)
-      this.instruments.forEach(inst => {
+    const glintColor = new THREE.Color(0xf2e8d5); // Warm-white / champagne stellar glint
+
+    this.instruments.forEach(inst => {
+      if (!prefersReducedMotion) {
+        // 1. Gentle orbital micro-float
         const s = inst.floatingSeed;
-        const floatX = Math.sin(time * 0.45 + s) * 0.08;
-        const floatY = Math.cos(time * 0.55 + s * 1.3) * 0.08;
-        const floatZ = Math.sin(time * 0.35 + s * 0.7) * 0.05;
+        const floatX = Math.sin(time * 0.35 + s) * 0.05;
+        const floatY = Math.cos(time * 0.42 + s * 1.3) * 0.04;
+        const floatZ = Math.sin(time * 0.28 + s * 0.7) * 0.03;
 
         inst.group.position.set(
           inst.basePosition.x + floatX,
@@ -221,13 +237,34 @@ export class InstrumentManager {
           inst.basePosition.z + floatZ
         );
 
-        // Smooth angular rate ensures facet specular sweeps take >= 2.5s without rapid strobe
-        inst.group.rotation.y += 0.0014;
-        inst.group.rotation.x += 0.0007;
-      });
-    }
+        // Slow orbital axial precession
+        inst.group.rotation.y += 0.0010;
+        inst.group.rotation.x += 0.0005;
 
-    // Ensure all world transforms are completely updated before raycasting
+        // 2. Specular Glint Sweep (Duration 2.6s >= 2s, period 22.0s, smooth Hann window)
+        const cycleTime = (time + inst.glintPhase) % 22.0;
+        if (cycleTime < 2.6) {
+          const normTime = cycleTime / 2.6;
+          // Smooth bell curve: sin^2(pi * t)
+          const glintVal = Math.pow(Math.sin(normTime * Math.PI), 2.0) * 0.38;
+          inst.glintMaterials.forEach(m => {
+            m.emissive.copy(glintColor).multiplyScalar(glintVal);
+          });
+        } else {
+          inst.glintMaterials.forEach(m => {
+            m.emissive.set(0x000000);
+          });
+        }
+      } else {
+        // Reduced motion: static positions and zero specular sweep
+        inst.group.position.copy(inst.basePosition);
+        inst.glintMaterials.forEach(m => {
+          m.emissive.set(0x000000);
+        });
+      }
+    });
+
+    // Update world transforms before projection and raycasting
     this.group.updateMatrixWorld(true);
 
     // If pointer is outside the canvas, hover state is strictly null
@@ -246,7 +283,7 @@ export class InstrumentManager {
       const anchorOffset = inst.visualAnchorOffset.clone().applyQuaternion(inst.group.quaternion);
       worldPos.add(anchorOffset);
 
-      // 1. Calculate screen coordinates of the instrument's reticle anchor
+      // Calculate screen coordinates of the instrument's reticle anchor
       const proj = worldPos.clone().project(camera);
       if (proj.z <= -1.0 || proj.z >= 1.0) continue;
       const screenX = (proj.x * 0.5 + 0.5) * canvasWidth;
@@ -255,9 +292,7 @@ export class InstrumentManager {
       const distPx = Math.hypot(this.pointerPixelX - screenX, this.pointerPixelY - screenY);
       const distToRay = this.raycaster.ray.distanceToPoint(worldPos);
 
-      // Strictly bounded hit test: only active when cursor is on the reticle dot (<= 44px)
-      // or directly over the 3D model geometry (distToRay < hitRadius 0.75).
-      // Anywhere in the cosmic void beyond 44px is strictly non-hovered.
+      // Hit if cursor is within 44px of reticle dot or over 3D model geometry
       if (distPx <= 44 || distToRay < inst.hitRadius) {
         hit = inst.id;
         break;
@@ -272,15 +307,11 @@ export class InstrumentManager {
     const worldPos = new THREE.Vector3();
 
     this.instruments.forEach(inst => {
-      // True 3D world position + custom visual anchor offset
       inst.group.getWorldPosition(worldPos);
       const anchorOffset = inst.visualAnchorOffset.clone().applyQuaternion(inst.group.quaternion);
       worldPos.add(anchorOffset);
 
-      // Project into camera normalized device coordinates
       const proj = worldPos.clone().project(camera);
-
-      // Visible if within frustum depth bounds
       const visible = proj.z > -1.0 && proj.z < 1.0;
       const screenX = (proj.x * 0.5 + 0.5) * width;
       const screenY = (-(proj.y * 0.5) + 0.5) * height;

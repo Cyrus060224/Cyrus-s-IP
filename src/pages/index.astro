@@ -51,10 +51,10 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
 ---
 
 <Layout 
-  title="Cyrus · 深空观测站 · 独立主权个人站"
-  description="探索系统底层、AI 智能体与技术美学的交汇处。Cyrus 的全方位个人深空观测站与深度沉淀。"
+  title="Cyrus · 学 AI，也认真生活"
+  description="Cyrus 的个人博客：AI 学习笔记、生活随笔、项目与照片。"
 >
-  <!-- 0. 3D Deep Space Planetary Orbit Entrance Island -->
+  <!-- 0. Ambient Orbital Sunrise Background with Direct Hero Intro -->
   <ObservatoryHero 
     postsCount={allPosts.length}
     latestPostDate={latestPostDate}
@@ -68,7 +68,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
     <!-- Quick Category Nav Bridge -->
     <section class="station-bridge-section">
       <div class="bridge-row">
-        <span class="cat-label">常设专栏：</span>
+        <span class="cat-label">分类专栏：</span>
         <div class="cat-pill-list">
           {Object.values(CATEGORIES).map(cat => (
             <a href={`/posts?category=${cat.id}`} class="hero-cat-pill">
@@ -80,15 +80,14 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       </div>
     </section>
 
-    <!-- 2. Featured Spotlight (置顶精选) -->
+    <!-- 2. Featured Article (置顶精选) -->
     {featuredPost && (
       <section class="featured-section">
         <div class="section-header">
           <div>
-            <span class="mono-eyebrow">STATION SPOTLIGHT · 观测台焦点</span>
-            <h2 class="section-title">重点航行日志 / Featured Log</h2>
+            <h2 class="section-title">最新文章</h2>
           </div>
-          <span class="header-badge">本期主标</span>
+          <a href="/posts" class="view-all-link">全部文章 ({allPosts.length}) →</a>
         </div>
 
         {(() => {
@@ -102,7 +101,6 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
           return (
             <a href={`/posts/${featuredPost.id}`} class="featured-card">
               <div class="card-top">
-                <span class="telemetry-badge">LOG-{formattedDate.replace(/\//g, '.')}</span>
                 <span class="badge" style={`background: ${cat.badgeBg}; color: ${cat.badgeColor}`}>
                   {cat.name}
                 </span>
@@ -124,7 +122,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
                     <span class="tag">#{t}</span>
                   ))}
                 </div>
-                <span class="read-more">阅读日志全文 →</span>
+                <span class="read-more">阅读全文 →</span>
               </div>
             </a>
           );
@@ -132,17 +130,9 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       </section>
     )}
 
-    <!-- 3. Recent Posts (最新思考与随笔) -->
+    <!-- 3. Recent Posts (更多文章) -->
     {recentPosts.length > 0 && (
       <section class="recent-posts-section">
-        <div class="section-header">
-          <div>
-            <span class="mono-eyebrow">FLIGHT LOG ARCHIVES · 航行日志</span>
-            <h2 class="section-title">最新思想记录 / Recent Logs</h2>
-          </div>
-          <a href="/posts" class="view-all-link">查看全部日志 ({allPosts.length}) →</a>
-        </div>
-
         <div class="recent-grid">
           {recentPosts.map(post => {
             const cat = getCategoryMeta(post.data.category);
@@ -155,7 +145,6 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
             return (
               <a href={`/posts/${post.id}`} class="recent-card">
                 <div class="recent-meta">
-                  <span class="telemetry-badge">LOG-{formattedDate.replace(/\//g, '.')}</span>
                   <span class="recent-cat" style={`color: ${cat.badgeColor}`}>
                     {cat.name}
                   </span>
@@ -180,10 +169,9 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       <section class="projects-section">
         <div class="section-header">
           <div>
-            <span class="mono-eyebrow">ORBITAL INSTRUMENTS · 轨道造物</span>
-            <h2 class="section-title">探测器与实验台 / Selected Crafts</h2>
+            <h2 class="section-title">精选项目</h2>
           </div>
-          <a href="/projects" class="view-all-link">全部造物 ({allProjects.length}) →</a>
+          <a href="/projects" class="view-all-link">全部项目 ({allProjects.length}) →</a>
         </div>
 
         <div class="projects-grid">
@@ -194,7 +182,6 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
             return (
               <article class="proj-card">
                 <div class="proj-card-top">
-                  <span class="telemetry-badge">PRJ-00{idx + 1}</span>
                   <span class="proj-cat" style={`color: ${cat.color}; border-color: ${cat.color}33;`}>
                     {cat.label}
                   </span>
@@ -234,15 +221,14 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       </section>
     )}
 
-    <!-- 5. Visual Moments & Media (光影画廊速览) -->
+    <!-- 5. Visual Moments & Media (照片速览) -->
     {recentGallery.length > 0 && (
       <section class="gallery-preview-section">
         <div class="section-header">
           <div>
-            <span class="mono-eyebrow">OPTICAL OBSERVATION · 深空光影</span>
-            <h2 class="section-title">深空视窗存档 / Visual Journal</h2>
+            <h2 class="section-title">随手拍下的光影</h2>
           </div>
-          <a href="/gallery" class="view-all-link">浏览完整视窗 ({allGallery.length}) →</a>
+          <a href="/gallery" class="view-all-link">全部照片 ({allGallery.length}) →</a>
         </div>
 
         <div class="gallery-strip">
@@ -266,7 +252,6 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
                 </div>
                 <div class="strip-info">
                   <div class="strip-meta">
-                    <span class="telemetry-badge">OBS-00{idx + 1}</span>
                     <span class="strip-date">{formattedDate}</span>
                     {item.data.location && <span class="strip-loc">📍 {item.data.location}</span>}
                   </div>
@@ -279,14 +264,11 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
       </section>
     )}
 
-
-
-    <!-- 7. Core Pillars / Philosophy (创作基准) -->
+    <!-- 6. Core Pillars / Philosophy (个人原则) -->
     <section class="pillars-section">
       <div class="section-header">
         <div>
-          <span class="mono-eyebrow">OBSERVATORY PROTOCOLS · 站长基准</span>
-          <h2 class="section-title">观测原则 / Protocols</h2>
+          <h2 class="section-title">原则与思考</h2>
         </div>
       </div>
 
@@ -306,7 +288,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
         <div class="pillar-card">
           <div class="pillar-num">03</div>
           <h3>多元共存</h3>
-          <p>硬核的技术造物与细腻的旷野游记并不冲突。代码是理性的骨架，文字与摄影是感性的血肉，二者共同构成丰满的个人 IP。</p>
+          <p>硬核的技术项目与细腻的旷野游记并不冲突。代码是理性的骨架，文字与摄影是感性的血肉，二者共同构成丰满的个人 IP。</p>
         </div>
       </div>
     </section>

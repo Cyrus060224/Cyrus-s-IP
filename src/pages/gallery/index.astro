@@ -10,20 +10,19 @@ const categoryMap: Record<string, { label: string; color: string }> = {
   travel: { label: '旅行足迹', color: '#2a9d8f' },
   film: { label: '胶片日记', color: '#4a8acc' },
   video: { label: '视频动效', color: '#2e5aa8' },
-  life: { label: '生活切片', color: '#5c7290' },
+  life: { label: '生活随拍', color: '#5c7290' },
 };
 ---
 
 <Layout 
-  title="光影画廊 · Moments · Cyrus"
-  description="Cyrus 的旅行摄影、胶片日记、视频作品与日常光影记录。"
+  title="照片 · Cyrus"
+  description="随手拍下的光影：旅行摄影、胶片日记与生活随拍。"
 >
   <div class="container gallery-container">
     <header class="gallery-header">
       <div class="gallery-header-row">
         <div>
-          <div class="mono-eyebrow">DEEP SPACE VIEWPORT · 光影观测窗</div>
-          <h1 class="serif-title gallery-title">深空视窗与光影切片</h1>
+          <h1 class="serif-title gallery-title">随手拍下的光影</h1>
         </div>
         <!-- Owner-only trigger -->
         <button id="btn-open-upload-gal" class="btn btn-primary owner-only in-place-btn">
@@ -31,7 +30,7 @@ const categoryMap: Record<string, { label: string; color: string }> = {
         </button>
       </div>
       <p class="gallery-desc">
-        高原上的寒风暮色、街头的胶片颗粒，以及代码渲染的动效帧率。在深空航行中，用光学传感器记录真实世界的呼吸与温度。
+        高原上的寒风暮色、街头的胶片颗粒，以及代码渲染的动效帧率。记录真实世界的呼吸与温度。
       </p>
     </header>
 
@@ -41,7 +40,7 @@ const categoryMap: Record<string, { label: string; color: string }> = {
       <button class="gallery-tab" data-filter="travel">旅行足迹</button>
       <button class="gallery-tab" data-filter="film">胶片日记</button>
       <button class="gallery-tab" data-filter="video">视频动效</button>
-      <button class="gallery-tab" data-filter="life">生活切片</button>
+      <button class="gallery-tab" data-filter="life">生活随拍</button>
     </div>
 
     <!-- Masonry Grid -->
@@ -84,7 +83,6 @@ const categoryMap: Record<string, { label: string; color: string }> = {
               
               <div class="media-overlay">
                 <div class="overlay-top">
-                  <span class="telemetry-badge">OBS-00{idx + 1}</span>
                   <span class="cat-pill" style={`background: ${cat.color}22; color: ${cat.color}; border: 1px solid ${cat.color}44;`}>
                     {cat.label}
                   </span>
@@ -146,8 +144,7 @@ const categoryMap: Record<string, { label: string; color: string }> = {
     <div class="modal-dialog">
       <div class="modal-header">
         <div>
-          <span class="mono-eyebrow">IN-PLACE UPLOADER · 实时上传</span>
-          <h2 class="modal-title">📸 上传光影 / 视频</h2>
+          <h2 class="modal-title">📸 上传相片 / 视频</h2>
         </div>
         <button id="btn-close-gal-modal" class="modal-close">&times;</button>
       </div>
@@ -155,7 +152,7 @@ const categoryMap: Record<string, { label: string; color: string }> = {
       <form id="form-upload-gal" class="modal-form">
         <div class="form-grid-2">
           <div class="form-group">
-            <label class="form-label" for="inp-gal-title">光影标题 <span class="req">*</span></label>
+            <label class="form-label" for="inp-gal-title">标题 <span class="req">*</span></label>
             <input type="text" id="inp-gal-title" class="form-input" placeholder="例如：川西高原的暮色星芒" required />
           </div>
 
@@ -180,7 +177,7 @@ const categoryMap: Record<string, { label: string; color: string }> = {
               <option value="travel">旅行足迹 (travel)</option>
               <option value="film">胶片日记 (film)</option>
               <option value="video">视频动效 (video)</option>
-              <option value="life">生活切片 (life)</option>
+              <option value="life">生活随拍 (life)</option>
             </select>
           </div>
 

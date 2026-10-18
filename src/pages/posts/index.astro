@@ -27,15 +27,14 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
 ---
 
 <Layout 
-  title="文章与思考 · Cyrus"
-  description="涵盖系统底层、AI 智能体工程、造物日记、旅行见闻与生活散文的完整文章档案。"
+  title="文章 · Cyrus"
+  description="Cyrus 的文章与随笔：AI 学习笔记、系统底层探索、项目手记与生活随笔。"
 >
   <div class="container archive-container">
     <header class="archive-header">
       <div class="archive-header-row">
         <div>
-          <div class="mono-eyebrow">DEEP SPACE FLIGHT LOGS · 航行日志档案</div>
-          <h1 class="serif-title archive-title">航行日志与思考</h1>
+          <h1 class="serif-title archive-title">文章</h1>
         </div>
         <!-- Owner-only in-place creation trigger -->
         <button id="btn-open-create-post" class="btn btn-primary owner-only in-place-btn">
@@ -43,7 +42,7 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
         </button>
       </div>
       <p class="archive-desc">
-        记录深空航行中的系统底层、AI 智能体工程、漫长思考与行旅随笔。以文字为刻度，锚定认知坐标。
+        AI 学习笔记、系统底层探索、项目手记与生活随笔。
       </p>
     </header>
 
@@ -96,7 +95,6 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
               data-tags={JSON.stringify(post.data.tags || [])}
             >
               <div class="card-meta">
-                <span class="telemetry-badge">LOG-{formattedDate.replace(/\//g, '.')}</span>
                 <span class="card-cat" style={`background: ${cat.badgeBg}; color: ${cat.badgeColor}`}>
                   {cat.name}
                 </span>
@@ -138,7 +136,6 @@ const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
     <div class="modal-dialog">
       <div class="modal-header">
         <div>
-          <span class="mono-eyebrow">IN-PLACE PUBLISHER · 实时发布</span>
           <h2 class="modal-title">✍️ 撰写新文章</h2>
         </div>
         <button id="btn-close-post-modal" class="modal-close">&times;</button>

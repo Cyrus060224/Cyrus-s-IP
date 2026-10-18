@@ -22,14 +22,14 @@ const status = statusMap[proj.data.status] || { label: proj.data.status, dotClas
 ---
 
 <Layout 
-  title={`${proj.data.title} · 项目详情 · Cyrus`}
+  title={`${proj.data.title} · Cyrus`}
   description={proj.data.description}
 >
   <article class="container project-detail-container">
     <nav class="breadcrumb">
       <a href="/">首页</a>
       <span class="sep">/</span>
-      <a href="/projects">造物工坊</a>
+      <a href="/projects">项目</a>
       <span class="sep">/</span>
       <span class="current">{proj.data.title}</span>
     </nav>
@@ -40,7 +40,7 @@ const status = statusMap[proj.data.status] || { label: proj.data.status, dotClas
           <span class={`status-dot ${status.dotClass}`}></span>
           <span class="status-text">{status.label}</span>
         </div>
-        <span class="cat-pill">CATEGORY: {proj.data.category.toUpperCase()}</span>
+        <span class="cat-pill">{proj.data.category.toUpperCase()}</span>
       </div>
 
       <h1 class="serif-title detail-title">{proj.data.title}</h1>

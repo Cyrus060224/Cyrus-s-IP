@@ -43,7 +43,7 @@ export const atmosphereFragmentShader = /* glsl */ `
 
     // Altitude above planet surface
     float h = b - uPlanetRadius;
-    if (h < -0.05) discard; // Inside planet body
+    if (h < -0.06) discard; // Inside planet body
 
     float mainThickness = uMainAtmoRadius - uPlanetRadius;
     float haloThickness = uHaloRadius - uMainAtmoRadius;
@@ -131,7 +131,7 @@ export const atmosphereFragmentShader = /* glsl */ `
     vec3 totalRadiance = denseAtmo + outerHalo;
 
     // Continuous attachment to ground horizon (h = 0)
-    float groundAttachment = smoothstep(-0.02, 0.02, h);
+    float groundAttachment = smoothstep(-0.05, 0.02, h);
     totalRadiance *= groundAttachment;
     gl_FragColor = vec4(totalRadiance, 1.0);
   }
