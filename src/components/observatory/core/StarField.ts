@@ -24,6 +24,9 @@ export class StarField {
     // 1. Procedural Subtle Milky Way Dust Lane (Cold-slate, low saturation, angled diagonally)
     this.milkyWayGeometry = new THREE.PlaneGeometry(160, 100);
     this.milkyWayMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uOpacity: { value: 1.0 }
+      },
       vertexShader: /* glsl */ `
         varying vec2 vUv;
         void main() {
@@ -32,6 +35,7 @@ export class StarField {
         }
       `,
       fragmentShader: /* glsl */ `
+        uniform float uOpacity;
         varying vec2 vUv;
 
         // Simple hash / noise function
@@ -73,7 +77,7 @@ export class StarField {
 
           // Subdued cold slate-blue cosmic tone (zero magenta / zero purple)
           vec3 milkyWayColor = vec3(0.065, 0.098, 0.155);
-          float alpha = clamp(dust * 0.38 * textZoneMask, 0.0, 1.0);
+          float alpha = clamp(dust * 0.38 * textZoneMask, 0.0, 1.0) * uOpacity;
 
           gl_FragColor = vec4(milkyWayColor * alpha, alpha);
         }
@@ -153,7 +157,8 @@ export class StarField {
 
     this.pointsMaterial = new THREE.ShaderMaterial({
       uniforms: {
-        uTime: { value: 0 }
+        uTime: { value: 0 },
+        uOpacity: { value: 1.0 }
       },
       vertexShader: /* glsl */ `
         attribute float size;
@@ -177,6 +182,7 @@ export class StarField {
         }
       `,
       fragmentShader: /* glsl */ `
+        uniform float uOpacity;
         varying vec3 vColor;
         varying float vAlpha;
 
@@ -186,7 +192,7 @@ export class StarField {
           if (dist > 0.5) discard;
 
           float intensity = smoothstep(0.5, 0.04, dist);
-          gl_FragColor = vec4(vColor, intensity * vAlpha);
+          gl_FragColor = vec4(vColor, intensity * vAlpha * uOpacity);
         }
       `,
       transparent: true,
@@ -196,6 +202,13 @@ export class StarField {
 
     this.points = new THREE.Points(this.pointsGeometry, this.pointsMaterial);
     this.group.add(this.points);
+  }
+
+  public setOpacity(opacity: number): void {
+    const clamped = Math.max(0.0, Math.min(1.0, opacity));
+    this.pointsMaterial.uniforms.uOpacity.value = clamped;
+    this.milkyWayMaterial.uniforms.uOpacity.value = clamped;
+    this.group.visible = clamped > 0.005;
   }
 
   public setReducedStars(reduced: boolean): void {

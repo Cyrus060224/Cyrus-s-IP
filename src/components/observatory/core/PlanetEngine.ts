@@ -76,7 +76,8 @@ export class PlanetEngine {
         uSunPosition: { value: this.sunPosition },
         uSunColor: { value: this.sunColor },
         uPlanetCenter: { value: this.planetCenter },
-        uTime: { value: 0 }
+        uTime: { value: 0 },
+        uThemeProgress: { value: 0.0 }
       }
     });
     this.planetMesh = new THREE.Mesh(this.planetGeo, this.planetMat);
@@ -97,7 +98,8 @@ export class PlanetEngine {
         uMainAtmoRadius: { value: this.mainAtmoRadius },
         uHaloRadius: { value: this.haloRadius },
         uTime: { value: 0 },
-        uIntroProgress: { value: 0.0 }
+        uIntroProgress: { value: 0.0 },
+        uThemeProgress: { value: 0.0 }
       },
       transparent: true,
       blending: THREE.AdditiveBlending,
@@ -119,7 +121,8 @@ export class PlanetEngine {
     const flareUniforms = {
       uPlanetCenter: { value: this.planetCenter },
       uPlanetRadius: { value: this.planetRadius },
-      uIntroProgress: { value: 0.0 }
+      uIntroProgress: { value: 0.0 },
+      uThemeProgress: { value: 0.0 }
     };
 
     // 3a. Smooth Point-Source Core (Partially tucked behind horizon, smooth Gaussian + Cauchy tail)
@@ -139,6 +142,7 @@ export class PlanetEngine {
         uniform vec3 uPlanetCenter;
         uniform float uPlanetRadius;
         uniform float uIntroProgress;
+        uniform float uThemeProgress;
         varying vec2 vUv;
         varying vec3 vWorldPos;
         void main() {
@@ -156,7 +160,7 @@ export class PlanetEngine {
           float fade = pow(1.0 - rCore, 2.5);
           float coreVal = (exp(-rCore * rCore * 16.0) * 0.65 + 1.0 / (1.0 + rCore * rCore * 28.0) * 0.35) * fade * 1.55;
           vec3 coreCol = vec3(1.0, 0.98, 0.93);
-          gl_FragColor = vec4(coreCol * coreVal * horizonClip * mix(0.10, 1.0, uIntroProgress), 1.0);
+          gl_FragColor = vec4(coreCol * coreVal * horizonClip * mix(0.10, 1.0, uIntroProgress) * mix(1.0, 0.65, uThemeProgress), 1.0);
         }
       `,
       transparent: true,
@@ -185,6 +189,7 @@ export class PlanetEngine {
         uniform vec3 uPlanetCenter;
         uniform float uPlanetRadius;
         uniform float uIntroProgress;
+        uniform float uThemeProgress;
         varying vec2 vUv;
         varying vec3 vWorldPos;
         void main() {
@@ -200,7 +205,7 @@ export class PlanetEngine {
           float fade = pow(1.0 - rEllip, 3.0);
           float falloff = (exp(-rEllip * rEllip * 5.0) * 0.40 + 1.0 / (1.0 + rEllip * rEllip * 10.0) * 0.60) * fade * 0.85;
           vec3 coronaCol = mix(vec3(0.99, 0.95, 0.88), vec3(0.50, 0.78, 1.00), smoothstep(0.10, 0.70, rEllip));
-          gl_FragColor = vec4(coronaCol * falloff * horizonClip * mix(0.15, 1.0, uIntroProgress), 1.0);
+          gl_FragColor = vec4(coronaCol * falloff * horizonClip * mix(0.15, 1.0, uIntroProgress) * mix(1.0, 0.12, uThemeProgress), 1.0);
         }
       `,
       transparent: true,
@@ -229,6 +234,7 @@ export class PlanetEngine {
         uniform vec3 uPlanetCenter;
         uniform float uPlanetRadius;
         uniform float uIntroProgress;
+        uniform float uThemeProgress;
         varying vec2 vUv;
         varying vec3 vWorldPos;
         void main() {
@@ -245,8 +251,9 @@ export class PlanetEngine {
           float spike = (exp(-abs(rotP.x) * 60.0) * exp(-abs(rotP.y) * 6.0) +
                          exp(-abs(rotP.y) * 60.0) * exp(-abs(rotP.x) * 6.0)) * 0.08 * fade;
           vec3 spikeCol = mix(vec3(1.0, 0.98, 0.94), vec3(0.65, 0.85, 1.0), r);
-          gl_FragColor = vec4(spikeCol * spike * horizonClip * uIntroProgress, 1.0);
+          gl_FragColor = vec4(spikeCol * spike * horizonClip * uIntroProgress * mix(1.0, 0.40, uThemeProgress), 1.0);
         }
+
       `,
       transparent: true,
       blending: THREE.AdditiveBlending,
@@ -318,7 +325,7 @@ export class PlanetEngine {
     this.isIntroComplete = true;
   }
 
-  public update(delta: number, elapsed: number, prefersReducedMotion: boolean = false): void {
+  public update(delta: number, elapsed: number, prefersReducedMotion: boolean = false, themeProgress: number = 0.0): void {
     if (prefersReducedMotion) {
       this.introElapsed = this.introDuration;
       this.isIntroComplete = true;
@@ -338,14 +345,24 @@ export class PlanetEngine {
     this.sunFlareGroup.position.copy(this.sunPosition);
 
     this.planetMat.uniforms.uTime.value = elapsed;
+    this.planetMat.uniforms.uThemeProgress.value = themeProgress;
+
     this.atmosphereMat.uniforms.uTime.value = elapsed;
     this.atmosphereMat.uniforms.uIntroProgress.value = eased;
-    this.coreMat.uniforms.uIntroProgress.value = eased;
-    this.coronaMat.uniforms.uIntroProgress.value = eased;
-    this.diffMat.uniforms.uIntroProgress.value = eased;
+    this.atmosphereMat.uniforms.uThemeProgress.value = themeProgress;
 
-    const ghost1Opacity = 0.022 * Math.min(1.0, Math.max(0.0, (eased - 0.35) / 0.65));
-    const ghost2Opacity = 0.016 * Math.min(1.0, Math.max(0.0, (eased - 0.50) / 0.50));
+    this.coreMat.uniforms.uIntroProgress.value = eased;
+    this.coreMat.uniforms.uThemeProgress.value = themeProgress;
+
+    this.coronaMat.uniforms.uIntroProgress.value = eased;
+    this.coronaMat.uniforms.uThemeProgress.value = themeProgress;
+
+    this.diffMat.uniforms.uIntroProgress.value = eased;
+    this.diffMat.uniforms.uThemeProgress.value = themeProgress;
+
+    const ghostDim = Math.max(0.0, 1.0 - themeProgress);
+    const ghost1Opacity = 0.022 * Math.min(1.0, Math.max(0.0, (eased - 0.35) / 0.65)) * ghostDim;
+    const ghost2Opacity = 0.016 * Math.min(1.0, Math.max(0.0, (eased - 0.50) / 0.50)) * ghostDim;
     this.lensGhost1Mat.uniforms.uOpacity.value = ghost1Opacity;
     this.lensGhost2Mat.uniforms.uOpacity.value = ghost2Opacity;
   }

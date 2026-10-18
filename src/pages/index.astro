@@ -86,6 +86,8 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
         <div class="section-header">
           <div>
             <h2 class="section-title">最新文章</h2>
+            <p class="section-sub-desc theme-text-dark" aria-hidden="true">探索智能体与系统前沿，沉淀可落地的工程实践与思辨。</p>
+            <p class="section-sub-desc theme-text-light" aria-hidden="true">生活随笔、思考杂谈与学习手记。</p>
           </div>
           <a href="/posts" class="view-all-link">全部文章 ({allPosts.length}) →</a>
         </div>
@@ -227,6 +229,7 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
         <div class="section-header">
           <div>
             <h2 class="section-title">随手拍下的光影</h2>
+            <p class="section-sub-desc theme-text-light" aria-hidden="true">在白昼的光影与旷野里，记录真实的瞬间与视觉记忆。</p>
           </div>
           <a href="/gallery" class="view-all-link">全部照片 ({allGallery.length}) →</a>
         </div>
@@ -298,6 +301,46 @@ const statusMap: Record<string, { label: string; dotClass: string }> = {
 <style>
   .home-container {
     padding-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .station-bridge-section { order: 1; }
+  .featured-section { order: 2; }
+  .recent-posts-section { order: 3; }
+  .projects-section { order: 4; }
+  .gallery-preview-section { order: 5; }
+  .pillars-section { order: 6; }
+
+  /* Light Theme Differentiated Content Order: Showcase Photography & Life Moments upfront */
+  :global([data-theme="light"]) .home-container .gallery-preview-section {
+    order: 2;
+  }
+  :global([data-theme="light"]) .home-container .featured-section {
+    order: 3;
+  }
+  :global([data-theme="light"]) .home-container .recent-posts-section {
+    order: 4;
+  }
+  :global([data-theme="light"]) .home-container .projects-section {
+    order: 5;
+  }
+  :global([data-theme="light"]) .home-container .pillars-section {
+    order: 6;
+  }
+
+  .section-sub-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.35rem;
+    line-height: 1.5;
+  }
+
+  :global([data-theme="dark"]) .home-container .theme-text-light {
+    display: none;
+  }
+  :global([data-theme="light"]) .home-container .theme-text-dark {
+    display: none;
   }
 
   .station-bridge-section {

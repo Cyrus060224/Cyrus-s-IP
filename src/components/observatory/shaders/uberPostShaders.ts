@@ -69,8 +69,9 @@ export const uberPostFragmentShader = /* glsl */ `
     float grain = (hash12(grainCoord) - 0.5) * 2.0;
     color += grain * uGrainIntensity * (0.85 + dist * 0.3);
 
-    // 4. Cinema Vignette (Edge falloff)
-    float vignette = smoothstep(0.95, 0.35, dist * (1.0 + uVignetteStrength * 0.4));
+    // 4. Cinema Vignette (Edge falloff, strictly 1.0 when uVignetteStrength is 0.0)
+    float rawVignette = smoothstep(0.95, 0.35, dist * 1.4);
+    float vignette = mix(1.0, rawVignette, uVignetteStrength);
     color *= vignette;
 
     gl_FragColor = vec4(max(color, vec3(0.0)), 1.0);

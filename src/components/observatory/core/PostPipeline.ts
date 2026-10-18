@@ -62,6 +62,15 @@ export class PostPipeline {
     this.postMaterial.uniforms.uResolution.value.set(width, height);
   }
 
+  public updateTheme(themeProgress: number): void {
+    const t = Math.max(0.0, Math.min(1.0, themeProgress));
+    // In light mode: eliminate vignette (prevent dirty corners), reduce bloom and film grain
+    this.postMaterial.uniforms.uVignetteStrength.value = THREE.MathUtils.lerp(0.55, 0.0, t);
+    this.postMaterial.uniforms.uBloomIntensity.value = THREE.MathUtils.lerp(0.38, 0.16, t);
+    this.postMaterial.uniforms.uGrainIntensity.value = THREE.MathUtils.lerp(0.018, 0.003, t);
+    this.postMaterial.uniforms.uAberrationStrength.value = THREE.MathUtils.lerp(0.25, 0.05, t);
+  }
+
   public render(scene: THREE.Scene, camera: THREE.Camera, time: number): void {
     if (!this.enabled || !this.renderTarget) {
       // Direct rasterization for maximum performance

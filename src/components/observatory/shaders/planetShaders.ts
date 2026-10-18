@@ -22,6 +22,7 @@ export const planetFragmentShader = /* glsl */ `
   uniform vec3 uSunColor;
   uniform vec3 uPlanetCenter;
   uniform float uTime;
+  uniform float uThemeProgress;
 
   varying vec3 vWorldNormal;
   varying vec3 vWorldPosition;
@@ -96,57 +97,90 @@ export const planetFragmentShader = /* glsl */ `
     vec3 normal = normalize(vWorldNormal);
     vec3 viewDir = normalize(cameraPosition - vWorldPosition);
     // 1. Viewing angle / Curvature factors
-    // vDotN: 0 at the horizon (grazing), increases towards 0.75 at bottom of viewport
     float vDotN = max(dot(viewDir, normal), 0.0);
     float limbFactor = clamp(1.0 - vDotN, 0.0, 1.0);
 
-    // 2. Solar illumination along terminator (grazing sunrise)
-    // Parallel astronomical sunlight across the planetary globe
+    // 2. Solar illumination along terminator (grazing sunrise vs daytime)
     vec3 toSun = normalize(uSunPosition - uPlanetCenter);
     float NdotL = dot(normal, toSun);
-    // Soft grazing dawn terminator
     float dawnFactor = smoothstep(-0.16, 0.28, NdotL);
+    float dayFactor = smoothstep(-0.45, 0.35, NdotL);
+    float effectiveDawn = mix(dawnFactor, dayFactor, uThemeProgress);
 
     // 3. Geological Terrain Simulation
     vec3 sphereCoord = normalize(vLocalPosition) * 4.2;
     float landNoise = snoise(sphereCoord * 0.75) * 0.6 + snoise(sphereCoord * 1.8) * 0.3 + snoise(sphereCoord * 4.5) * 0.1;
     float isLand = smoothstep(0.05, 0.28, landNoise);
 
-    // Palette: Deep Oceanic Basin vs Continental Slate Rock
-    vec3 cOcean = vec3(0.014, 0.024, 0.040);
-    vec3 cLand  = vec3(0.030, 0.045, 0.068);
+    // Dark Mode Palette vs Light Mode Apollo/ISS Earth Palette
+    vec3 cOceanDark = vec3(0.014, 0.024, 0.040);
+    vec3 cLandDark  = vec3(0.030, 0.045, 0.068);
+    
+    // Light Mode: Vibrant deep sapphire ocean with cyan continental shelves & natural continental earth
+    vec3 cOceanDeep = vec3(0.05, 0.18, 0.42);
+    vec3 cOceanShelf = vec3(0.09, 0.34, 0.54);
+    float shelfFactor = smoothstep(-0.04, 0.08, landNoise);
+    vec3 cOceanLight = mix(cOceanDeep, cOceanShelf, shelfFactor);
+
+    vec3 cLandMuted = vec3(0.24, 0.33, 0.30);
+    vec3 cLandWarm  = vec3(0.36, 0.34, 0.26);
+    vec3 cLandLight = mix(cLandMuted, cLandWarm, smoothstep(0.10, 0.32, landNoise));
+
+    vec3 cOcean = mix(cOceanDark, cOceanLight, uThemeProgress);
+    vec3 cLand  = mix(cLandDark, cLandLight, uThemeProgress);
     vec3 baseAlbedo = mix(cOcean, cLand, isLand);
 
-    // 4. Latitude-Stretched Atmospheric Cloud Bands
-    // Stretching along Y-axis creates natural planetary weather bands
+    // 4. Latitude-Stretched Atmospheric Cloud Bands & 3D Cloud Shadows
     vec3 pCloud = sphereCoord * vec3(1.2, 3.8, 1.2);
     float cloudNoise = snoise(pCloud * 0.50) * 0.55 + snoise(pCloud * 1.2 + vec3(1.5, 0.0, 3.2)) * 0.32 + snoise(pCloud * 2.8) * 0.13;
     float cloudMask = smoothstep(0.18, 0.65, cloudNoise);
-    vec3 cCloud = vec3(0.16, 0.22, 0.32);
+    vec3 cCloudDark = vec3(0.16, 0.22, 0.32);
+    vec3 cCloudLight = vec3(0.92, 0.95, 0.98); // Brilliant crisp cloud white in daytime
+    vec3 cCloud = mix(cCloudDark, cCloudLight, uThemeProgress);
+
+    // 3D Cloud cast shadow onto surface beneath (offset along solar incidence)
+    vec3 shadowOffset = normalize(toSun) * 0.065;
+    vec3 pCloudShadow = (sphereCoord + shadowOffset) * vec3(1.2, 3.8, 1.2);
+    float cloudShadowNoise = snoise(pCloudShadow * 0.50) * 0.55 + snoise(pCloudShadow * 1.2 + vec3(1.5, 0.0, 3.2)) * 0.32 + snoise(pCloudShadow * 2.8) * 0.13;
+    float cloudShadowMask = smoothstep(0.22, 0.65, cloudShadowNoise);
+    float shadowFactor = mix(1.0, 1.0 - cloudShadowMask * 0.40 * (1.0 - cloudMask), uThemeProgress);
 
     // 5. Illumination:
-    // Soft dawn skimming light on the right
     vec3 cDawnSun = vec3(0.98, 0.94, 0.86);
-    vec3 directLit = baseAlbedo * (dawnFactor * 0.28) * cDawnSun;
+    vec3 cDaySun  = vec3(1.00, 0.98, 0.94);
+    vec3 lightCol = mix(cDawnSun, cDaySun, uThemeProgress);
 
-    // Cloud illumination: morning grazing light on cloud crests
-    vec3 cloudLit = cCloud * (dawnFactor * 0.48 * cDawnSun + 0.05);
+    float directMul = mix(dawnFactor * 0.28, effectiveDawn * 0.52 + 0.20, uThemeProgress);
+    vec3 directLit = baseAlbedo * directMul * shadowFactor * lightCol;
+
+    float cloudMul = mix(dawnFactor * 0.48 * cDawnSun.r + 0.05, effectiveDawn * 0.48 + 0.26, uThemeProgress);
+    vec3 cloudLit = cCloud * cloudMul * lightCol;
 
     // Composite surface with clouds
-    vec3 surface = mix(directLit, cloudLit, cloudMask * 0.60);
+    vec3 surface = mix(directLit, cloudLit, cloudMask * (0.60 + 0.22 * uThemeProgress));
 
-    // 6. Curvature & Night-side Ambient Gradient:
-    // Toward the bottom of the screen (away from horizon), gently fade into deep cosmic blue-black
-    // Preserves non-black depth: noticeably brighter than the space void (#04060A)
+    // Specular Sun Glint on Ocean (Apollo / ISS space photography hallmark)
+    vec3 halfVec = normalize(toSun + viewDir);
+    float NdotH = max(dot(normal, halfVec), 0.0);
+    float glintCore = pow(NdotH, 36.0) * 1.35;
+    float glintSpread = pow(NdotH, 10.0) * 0.38;
+    float oceanGlint = (glintCore + glintSpread) * (1.0 - isLand) * (1.0 - cloudMask * 0.85) * max(NdotL + 0.15, 0.0);
+    vec3 cSunGlint = vec3(1.00, 0.98, 0.92) * oceanGlint * uThemeProgress;
+    surface += cSunGlint;
+
+    // 6. Curvature & Ambient Gradient:
     vec3 cNightAmbient = vec3(0.016, 0.025, 0.038); // #09121E
-    vec3 ambient = cNightAmbient * (0.70 + 0.30 * limbFactor);
+    vec3 cDayAmbient   = vec3(0.08, 0.18, 0.30);    // Daytime atmospheric backscatter
+    vec3 cAmbientBase  = mix(cNightAmbient, cDayAmbient, uThemeProgress);
+    vec3 ambient = cAmbientBase * (mix(0.70, 0.82, uThemeProgress) + mix(0.30, 0.18, uThemeProgress) * limbFactor);
 
     // 7. Atmospheric Surface Haze (Fresnel twilight hugging the curvature)
-    vec3 cSurfaceHaze = mix(vec3(0.080, 0.260, 0.620), vec3(0.30, 0.54, 0.84), dawnFactor * 0.55);
-    float hazeStrength = pow(limbFactor, 2.6) * 0.40;
+    vec3 cSurfaceHazeDark = mix(vec3(0.080, 0.260, 0.620), vec3(0.30, 0.54, 0.84), dawnFactor * 0.55);
+    vec3 cSurfaceHazeLight = mix(vec3(0.20, 0.52, 0.86), vec3(0.48, 0.78, 1.00), limbFactor);
+    vec3 cSurfaceHaze = mix(cSurfaceHazeDark, cSurfaceHazeLight, uThemeProgress);
+    float hazeStrength = mix(pow(limbFactor, 2.6) * 0.40, pow(limbFactor, 2.4) * 0.48, uThemeProgress);
 
     // Edge anti-aliasing feather: smoothly fade planet mesh to zero right at the grazing silhouette
-    // Eliminates polygon chord silhouette cliff between planet mesh and space
     float limbEdgeFade = smoothstep(0.00, 0.035, vDotN);
 
     // Combine all components
@@ -154,4 +188,5 @@ export const planetFragmentShader = /* glsl */ `
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
+
 `;

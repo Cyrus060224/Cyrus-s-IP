@@ -21,11 +21,22 @@ export class Stage {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
+  private ambientLight: THREE.AmbientLight;
   private sunLight: THREE.DirectionalLight;
+  private warmWhiteRimLight: THREE.DirectionalLight;
+  private coolBlueFillLight: THREE.DirectionalLight;
 
   private starField: StarField;
   private planetEngine: PlanetEngine;
   private postPipeline: PostPipeline;
+
+  // Dual-state theme interpolation
+  private themeProgress: number = 0.0;
+  private targetThemeProgress: number = 0.0;
+  private themeObserver: MutationObserver | null = null;
+  private darkBgColor: THREE.Color = new THREE.Color(0x05070B);
+  private lightBgColor: THREE.Color = new THREE.Color(0xEBF2FA);
+  private currentBgColor: THREE.Color = new THREE.Color(0x05070B);
 
   private clock: THREE.Clock = new THREE.Clock();
   private animFrameId: number | null = null;
@@ -52,9 +63,15 @@ export class Stage {
     const width = this.container.clientWidth || window.innerWidth;
     const height = this.container.clientHeight || window.innerHeight;
 
-    // 1. Scene
+    // 1. Scene & Initial Theme Determination
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x05070B);
+    const currentTheme = (typeof document !== 'undefined')
+      ? (document.documentElement.getAttribute('data-theme') || 'dark')
+      : 'dark';
+    this.themeProgress = (currentTheme === 'light') ? 1.0 : 0.0;
+    this.targetThemeProgress = this.themeProgress;
+    this.currentBgColor.copy(this.themeProgress > 0.5 ? this.lightBgColor : this.darkBgColor);
+    this.scene.background = this.currentBgColor;
 
     // 2. Perspective Camera (36 deg FOV for authentic orbital perspective)
     this.camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 700);
@@ -80,8 +97,9 @@ export class Stage {
     this.scene.add(this.planetEngine.group);
 
     // 5. Lighting Rig (Grazing stellar key + cool fill + ambient)
-    const ambientLight = new THREE.AmbientLight(0x0c131c, 0.45);
-    this.scene.add(ambientLight);
+    // 5. Lighting Rig (Grazing stellar key + cool fill + ambient)
+    this.ambientLight = new THREE.AmbientLight(0x0c131c, 0.45);
+    this.scene.add(this.ambientLight);
 
     // Main rising star directional key light (warm-white #F2E8D5)
     this.sunLight = new THREE.DirectionalLight(0xf2e8d5, 2.6);
@@ -89,14 +107,14 @@ export class Stage {
     this.scene.add(this.sunLight);
 
     // Primary warm-white grazing rim light along terminator
-    const warmWhiteRimLight = new THREE.DirectionalLight(0xf2e8d5, 1.8);
-    warmWhiteRimLight.position.set(13.5, 1.5, -12.0);
-    this.scene.add(warmWhiteRimLight);
+    this.warmWhiteRimLight = new THREE.DirectionalLight(0xf2e8d5, 1.8);
+    this.warmWhiteRimLight.position.set(13.5, 1.5, -12.0);
+    this.scene.add(this.warmWhiteRimLight);
 
     // Faint cool-blue fill light from void side to keep dark sides in readable blue-black depth
-    const coolBlueFillLight = new THREE.DirectionalLight(0x284260, 0.40);
-    coolBlueFillLight.position.set(-14, 4, 16);
-    this.scene.add(coolBlueFillLight);
+    this.coolBlueFillLight = new THREE.DirectionalLight(0x284260, 0.40);
+    this.coolBlueFillLight.position.set(-14, 4, 16);
+    this.scene.add(this.coolBlueFillLight);
 
     // Procedural low-intensity cosmic environment map (0KB external file)
     try {
@@ -131,7 +149,6 @@ export class Stage {
     this.starField = new StarField(this.profile.tier === 'tier-1' ? 2400 : 1200);
     this.scene.add(this.starField.group);
 
-    // 7. Instrument Fleet (Active in Step 3)
     // 7. Single-pass Post Pipeline
     this.postPipeline = new PostPipeline(this.renderer, width, height, this.profile.tier);
 
@@ -139,6 +156,13 @@ export class Stage {
     this.bindEvents();
     this.setupIntersectionObserver();
     this.setupReducedMotion();
+    this.setupThemeListener();
+
+    if (this.themeProgress > 0.5) {
+      this.starField.setOpacity(0.0);
+      this.postPipeline.updateTheme(1.0);
+      this.planetEngine.update(0, 0, this.profile.prefersReducedMotion, 1.0);
+    }
 
     // If reduced motion is requested from start, immediately complete intro
     if (this.profile.prefersReducedMotion) {
@@ -151,6 +175,18 @@ export class Stage {
     if (typeof window !== 'undefined') {
       (window as any).__stage = this;
     }
+  }
+
+  private setupThemeListener(): void {
+    if (typeof document === 'undefined') return;
+    this.themeObserver = new MutationObserver(() => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      this.targetThemeProgress = (theme === 'light') ? 1.0 : 0.0;
+    });
+    this.themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    });
   }
 
   private setupReducedMotion(): void {
@@ -384,12 +420,37 @@ export class Stage {
     this.camera.lookAt(new THREE.Vector3(driftX * 0.35, -1.8 + driftY * 0.35, 0));
     this.camera.updateMatrixWorld(true);
 
-    // 3. Update Celestial Entities
+    // 3. Smooth Dual-State Theme Transition
+    if (Math.abs(this.themeProgress - this.targetThemeProgress) > 0.001) {
+      this.themeProgress = THREE.MathUtils.lerp(
+        this.themeProgress,
+        this.targetThemeProgress,
+        Math.min(delta * 6.0, 1.0)
+      );
+      this.currentBgColor.lerpColors(this.darkBgColor, this.lightBgColor, this.themeProgress);
+      this.scene.background = this.currentBgColor;
+    } else if (this.themeProgress !== this.targetThemeProgress) {
+      this.themeProgress = this.targetThemeProgress;
+      this.currentBgColor.lerpColors(this.darkBgColor, this.lightBgColor, this.themeProgress);
+      this.scene.background = this.currentBgColor;
+    }
+
+    // Dynamic light modulation
+    this.ambientLight.intensity = THREE.MathUtils.lerp(0.45, 1.10, this.themeProgress);
+    this.sunLight.intensity = THREE.MathUtils.lerp(2.6, 2.2, this.themeProgress);
+    this.warmWhiteRimLight.intensity = THREE.MathUtils.lerp(1.8, 1.2, this.themeProgress);
+    this.coolBlueFillLight.intensity = THREE.MathUtils.lerp(0.40, 0.65, this.themeProgress);
+
+    // Starfield fade out in daytime
+    this.starField.setOpacity(1.0 - this.themeProgress);
+
+    // 4. Update Celestial Entities
     this.starField.update(elapsed);
-    this.planetEngine.update(delta, elapsed, this.profile.prefersReducedMotion);
+    this.planetEngine.update(delta, elapsed, this.profile.prefersReducedMotion, this.themeProgress);
     this.sunLight.position.copy(this.planetEngine.sunPosition);
 
-    // 4. Final Post-Processing
+    // 5. Final Post-Processing with Theme Calibration
+    this.postPipeline.updateTheme(this.themeProgress);
     this.postPipeline.render(this.scene, this.camera, elapsed);
   }
 
@@ -400,6 +461,11 @@ export class Stage {
     }
 
     this.unbindEvents();
+
+    if (this.themeObserver) {
+      this.themeObserver.disconnect();
+      this.themeObserver = null;
+    }
 
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();

@@ -47,10 +47,26 @@ const {
     <div class="container hero-content-inner">
       <div class="hero-title-block">
         <h1 class="hero-main-title">
-          <span class="hero-title-line">我在学 AI，</span>
-          <span class="hero-title-line">也在认真生活。</span>
+          <span class="hero-title-group theme-text-dark" aria-hidden="true">
+            <span class="hero-title-line">我在学 AI，</span>
+            <span class="hero-title-line">也在认真生活。</span>
+          </span>
+          <span class="hero-title-group theme-text-light" aria-hidden="true">
+            <span class="hero-title-line">我在认真生活，</span>
+            <span class="hero-title-line">也在学着拥抱 AI。</span>
+          </span>
+          <span class="sr-only">我在学 AI，也在认真生活。</span>
         </h1>
-        <p class="hero-sub-desc">这里是 Cyrus 的学习笔记、随笔、项目和照片。</p>
+        
+        <div class="hero-sub-wrapper">
+          <p class="hero-sub-desc theme-text-dark" aria-hidden="true">
+            在寂静的算力与深空中，探索认知的新边界。这里是深度笔记与技术项目。
+          </p>
+          <p class="hero-sub-desc theme-text-light" aria-hidden="true">
+            在白昼的光影与烟火里，记录真实世界的瞬间。这里是生活随笔、摄影与手记。
+          </p>
+          <p class="sr-only">这里是 Cyrus 的个人博客：AI 学习笔记、生活随笔、项目与照片。</p>
+        </div>
       </div>
 
       <!-- Three Entry Cards -->
@@ -60,7 +76,10 @@ const {
             <span class="card-title">文章</span>
             <span class="card-arrow" aria-hidden="true">→</span>
           </div>
-          <p class="card-desc">AI 学习笔记与生活随笔</p>
+          <div class="card-desc-wrapper">
+            <p class="card-desc theme-text-dark" aria-hidden="true">AI 学习笔记与生活随笔</p>
+            <p class="card-desc theme-text-light" aria-hidden="true">生活随笔与技术探索</p>
+          </div>
           <div class="card-meta">共 {postsCount} 篇 · 最近更新 {latestPostDate}</div>
         </a>
 
@@ -69,7 +88,10 @@ const {
             <span class="card-title">项目</span>
             <span class="card-arrow" aria-hidden="true">→</span>
           </div>
-          <p class="card-desc">我做过的东西和背后的思路</p>
+          <div class="card-desc-wrapper">
+            <p class="card-desc theme-text-dark" aria-hidden="true">我做过的东西和背后的思路</p>
+            <p class="card-desc theme-text-light" aria-hidden="true">我做过的东西和背后的思路</p>
+          </div>
           <div class="card-meta">共 {projectsCount} 个 · 最近上线 {latestProjectDate}</div>
         </a>
 
@@ -78,7 +100,10 @@ const {
             <span class="card-title">照片</span>
             <span class="card-arrow" aria-hidden="true">→</span>
           </div>
-          <p class="card-desc">随手拍下的光影</p>
+          <div class="card-desc-wrapper">
+            <p class="card-desc theme-text-dark" aria-hidden="true">随手拍下的光影</p>
+            <p class="card-desc theme-text-light" aria-hidden="true">胶片与旷野的真实光影</p>
+          </div>
           <div class="card-meta">共 {galleryCount} 组 · 最近更新 {latestGalleryDate}</div>
         </a>
       </nav>
@@ -97,6 +122,8 @@ const {
       activeStage.dispose();
       activeStage = null;
     }
+    const backdrop = document.getElementById('observatory-static-backdrop');
+    if (backdrop) backdrop.style.display = '';
   }
 
   function initObservatory() {
@@ -114,6 +141,9 @@ const {
       activeStage = new Stage({
         container: mount
       });
+      // Hide static backdrop when 3D WebGL stage is active
+      const backdrop = document.getElementById('observatory-static-backdrop');
+      if (backdrop) backdrop.style.display = 'none';
     } catch (err) {
       console.error('Failed to initialize 3D orbital sunrise:', err);
     }

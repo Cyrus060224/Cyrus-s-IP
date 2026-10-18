@@ -25,6 +25,7 @@ export const atmosphereFragmentShader = /* glsl */ `
   uniform float uHaloRadius;     // Outer boundary of extended diffuse halo
   uniform float uTime;
   uniform float uIntroProgress;
+  uniform float uThemeProgress;
 
   varying vec3 vWorldNormal;
   varying vec3 vWorldPosition;
@@ -104,14 +105,22 @@ export const atmosphereFragmentShader = /* glsl */ `
     mainBody *= mix(0.65, 1.0, uIntroProgress);
     vec3 razorLine = razorColor * razorIntensity;
 
+    // Razor and dense atmosphere daytime calibration
+    vec3 cDayAtmosphere = vec3(0.20, 0.55, 0.94);
+    vec3 effectiveMainBody = mix(mainBody, cDayAtmosphere * (0.40 + 0.35 * (1.0 - normAlt)), uThemeProgress);
+    float atmoThemeScale = mix(1.0, 0.75, uThemeProgress);
+    float razorThemeScale = mix(1.0, 0.88, uThemeProgress);
+    vec3 effectiveRazorLine = mix(razorLine, vec3(0.50, 0.82, 1.00) * razorIntensity, uThemeProgress);
+
     // Top fade: ensure the dense atmosphere fades out completely and smoothly at normAlt = 1.0
     // Prevents any step or hard boundary between dense atmosphere and outer space
     float topFade = smoothstep(1.00, 0.88, normAlt);
-    vec3 denseAtmo = (mainBody + razorLine) * topFade;
+    vec3 denseAtmo = (effectiveMainBody * atmoThemeScale + effectiveRazorLine * razorThemeScale) * topFade;
 
     // 5. Extended Outer Cosmic Halo (外辉光)
     // Extends only on the sunrise side (driven by forward scattering).
-    // Zero on the left night side -> completely pure space black, zero hard boundary.
+    // In light mode: avoid washing out the daytime sky with oversized outer bloom
+    float haloThemeScale = mix(1.0, 0.04, uThemeProgress);
     float hHalo = h - effectiveThick * 0.90;
     float haloAlt = clamp(hHalo / haloThickness, 0.0, 1.0);
     float fadeEdge = 1.0 - haloAlt;
@@ -124,7 +133,7 @@ export const atmosphereFragmentShader = /* glsl */ `
 
     // Exosphere scatter only exists near rising star, strictly zero on left arc
     float sunProximity = smoothstep(0.35, 0.88, decayFactor);
-    float haloStrength = pow(sunProximity, 1.8) * 0.45 * haloFalloff * mix(0.15, 1.0, uIntroProgress);
+    float haloStrength = pow(sunProximity, 1.8) * 0.45 * haloFalloff * mix(0.15, 1.0, uIntroProgress) * haloThemeScale;
     vec3 outerHalo = haloColor * haloStrength;
 
     // 6. Final Radiance Composite

@@ -18,7 +18,22 @@
   overflow: hidden;
   border-bottom: 1px solid var(--rule);
   margin-bottom: 2rem;
+  transition: background-color 350ms ease, border-color 350ms ease;
 }
+
+/* Light Theme Adaptations (High Stratosphere Daytime Overlook) */
+[data-theme="light"] .observatory-hero-wrapper {
+  background-color: #EBF2FA;
+  color: #121820;
+  --paper: #EBF2FA;
+  --ink: #121820;
+  --muted: #5B6573;
+  --accent: #2F6FB5;
+  --accent-tint: rgba(47, 111, 181, 0.08);
+  --rule: rgba(47, 111, 181, 0.14);
+  border-bottom: 1px solid rgba(47, 111, 181, 0.14);
+}
+
 
 /* Static WebP Backdrop for Non-JS / No-WebGL / Instant First Paint */
 .observatory-static-backdrop {
@@ -71,28 +86,92 @@
   pointer-events: auto;
 }
 
+/* Accessibility Screen Reader Only Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .hero-main-title {
+  display: grid;
+  grid-template-areas: "title";
   font-family: var(--font-serif);
   font-size: clamp(2rem, 3.8vw, 3rem);
   font-weight: 400;
   color: #FFFFFF;
   line-height: 1.24;
   margin-bottom: 0.75rem;
-  text-wrap: balance;
-  word-break: keep-all;
   letter-spacing: -0.01em;
+}
+
+.hero-title-group {
+  grid-area: title;
+  transition: opacity 300ms ease, transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hero-title-line {
   display: block;
 }
 
+.hero-sub-wrapper {
+  display: grid;
+  grid-template-areas: "sub";
+  margin-bottom: 1.65rem;
+  max-width: 580px;
+}
+
 .hero-sub-desc {
+  grid-area: sub;
   font-size: 0.98rem;
   color: #A3B5CC;
   line-height: 1.6;
-  margin-bottom: 1.65rem;
-  max-width: 580px;
+  margin-bottom: 0;
+  transition: opacity 300ms ease, transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-desc-wrapper {
+  display: grid;
+  grid-template-areas: "cdesc";
+  margin-bottom: 0.65rem;
+}
+
+.card-desc {
+  grid-area: cdesc;
+  font-size: 0.82rem;
+  color: #8A94A3;
+  line-height: 1.45;
+  margin-bottom: 0;
+  transition: opacity 250ms ease;
+}
+
+/* Dual Theme Visibility & Crossfade */
+[data-theme="dark"] .theme-text-dark {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+[data-theme="dark"] .theme-text-light {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+}
+
+[data-theme="light"] .theme-text-light {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+[data-theme="light"] .theme-text-dark {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
 }
 
 /* Three Entry Cards (Restrained, Direct, Hairline Border) */
@@ -167,6 +246,48 @@
   margin-top: auto;
   white-space: nowrap;
 }
+
+/* Light Theme Adaptations: Typography & Glass Cards */
+[data-theme="light"] .hero-main-title {
+  color: #0F172A;
+}
+
+[data-theme="light"] .hero-sub-desc {
+  color: #475569;
+}
+
+[data-theme="light"] .hero-entry-card {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(186, 210, 238, 0.70);
+  box-shadow: 0 2px 10px rgba(47, 111, 181, 0.04);
+}
+
+[data-theme="light"] .hero-entry-card:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: #2F6FB5;
+  box-shadow: 0 4px 16px rgba(47, 111, 181, 0.12);
+}
+
+[data-theme="light"] .card-title {
+  color: #0F172A;
+}
+
+[data-theme="light"] .card-arrow {
+  color: #64748B;
+}
+
+[data-theme="light"] .hero-entry-card:hover .card-arrow {
+  color: #2F6FB5;
+}
+
+[data-theme="light"] .card-desc {
+  color: #475569;
+}
+
+[data-theme="light"] .card-meta {
+  color: #64748B;
+}
+
 
 /* Mobile & Tablet Adjustments */
 @media (max-width: 767px) {
