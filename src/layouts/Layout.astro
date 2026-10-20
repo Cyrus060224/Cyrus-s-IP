@@ -24,24 +24,17 @@ const {
     <meta name="theme-color" content="#05070B" id="meta-theme-color" />
     <ClientRouter />
     <script is:inline>
-      // Persistent tri-state theme init (Default: Dark, supports System / Light / Dark)
+      // Persistent dual-state theme init (Default: Dark, First-time: Dark, Remembers returning user)
       (function() {
         const urlTheme = new URLSearchParams(window.location.search).get('theme');
-        const storedPref = localStorage.getItem('theme');
-        const pref = urlTheme || storedPref || 'dark';
-
-        const isSystemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        let effectiveTheme = 'dark';
-        if (pref === 'light') {
-          effectiveTheme = 'light';
-        } else if (pref === 'dark') {
-          effectiveTheme = 'dark';
-        } else if (pref === 'system') {
-          effectiveTheme = isSystemDark ? 'dark' : 'light';
-        }
+        const storedPref = localStorage.getItem('cyrus_theme');
+        // First-time visitor has no storedPref -> strictly 'dark'
+        const effectiveTheme = (urlTheme === 'light' || urlTheme === 'dark')
+          ? urlTheme
+          : (storedPref === 'light' ? 'light' : 'dark');
 
         document.documentElement.setAttribute('data-theme', effectiveTheme);
-        document.documentElement.setAttribute('data-theme-pref', pref);
+        document.documentElement.setAttribute('data-theme-pref', effectiveTheme);
         document.documentElement.style.colorScheme = effectiveTheme;
 
         const metaThemeColor = document.getElementById('meta-theme-color');
@@ -81,12 +74,11 @@ const {
             type="button" 
             class="theme-btn" 
             aria-label="当前主题：深色模式（点击切换为浅色模式）"
-            title="切换主题（深色 / 浅色 / 跟随系统）"
+            title="切换主题（深色 / 浅色）"
             transition:persist
           >
             <span class="icon-moon" title="深色模式" aria-hidden="true">☽</span>
             <span class="icon-sun" title="浅色模式" aria-hidden="true">☼</span>
-            <span class="icon-system" title="跟随系统" aria-hidden="true">◐</span>
           </button>
         </nav>
       </div>
@@ -155,22 +147,14 @@ const {
     <!-- Theme and Owner Widget scripts -->
     <script is:inline>
       // 1. Theme state manager
-      function getEffectiveTheme(pref) {
-        if (pref === 'light') return 'light';
-        if (pref === 'dark') return 'dark';
-        if (pref === 'system') {
-          return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        return 'dark';
-      }
-
-      function applyTheme(pref, persist) {
+      // 1. Dual-State Theme manager (Dark ⇄ Light, strictly Dark by default)
+      function applyTheme(theme, persist) {
+        const effective = (theme === 'light') ? 'light' : 'dark';
         if (persist) {
-          localStorage.setItem('theme', pref);
+          localStorage.setItem('cyrus_theme', effective);
         }
-        const effective = getEffectiveTheme(pref);
         document.documentElement.setAttribute('data-theme', effective);
-        document.documentElement.setAttribute('data-theme-pref', pref);
+        document.documentElement.setAttribute('data-theme-pref', effective);
         document.documentElement.style.colorScheme = effective;
 
         const meta = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
@@ -180,15 +164,12 @@ const {
 
         const toggle = document.getElementById('theme-toggle');
         if (toggle) {
-          if (pref === 'dark') {
+          if (effective === 'dark') {
             toggle.setAttribute('aria-label', '当前主题：深色模式（点击切换为浅色模式）');
-            toggle.setAttribute('title', '当前主题：深色模式（点击切换为浅色模式）');
-          } else if (pref === 'light') {
-            toggle.setAttribute('aria-label', '当前主题：浅色模式（点击切换为跟随系统）');
-            toggle.setAttribute('title', '当前主题：浅色模式（点击切换为跟随系统）');
+            toggle.setAttribute('title', '切换为浅色模式');
           } else {
-            toggle.setAttribute('aria-label', '当前主题：跟随系统（点击切换为深色模式）');
-            toggle.setAttribute('title', '当前主题：跟随系统（点击切换为深色模式）');
+            toggle.setAttribute('aria-label', '当前主题：浅色模式（点击切换为深色模式）');
+            toggle.setAttribute('title', '切换为深色模式');
           }
         }
       }
@@ -198,16 +179,9 @@ const {
           e.preventDefault();
           e.stopPropagation();
         }
-        const currentPref = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme-pref') || 'dark';
-        let nextPref = 'light';
-        if (currentPref === 'dark') {
-          nextPref = 'light';
-        } else if (currentPref === 'light') {
-          nextPref = 'system';
-        } else {
-          nextPref = 'dark';
-        }
-        applyTheme(nextPref, true);
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const nextTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+        applyTheme(nextTheme, true);
       }
 
       function bindThemeButton() {
@@ -222,25 +196,14 @@ const {
           }
         };
 
-        const currentPref = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme-pref') || 'dark';
-        applyTheme(currentPref, false);
-      }
-
-      // Listen to OS appearance changes in real time
-      if (window.matchMedia) {
-        const mql = window.matchMedia('(prefers-color-scheme: dark)');
-        mql.addEventListener('change', () => {
-          const pref = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme-pref');
-          if (pref === 'system') {
-            applyTheme('system', false);
-          }
-        });
+        const currentTheme = localStorage.getItem('cyrus_theme') || document.documentElement.getAttribute('data-theme') || 'dark';
+        applyTheme(currentTheme, false);
       }
 
       // Astro View Transitions lifecycle hooks
       document.addEventListener('astro:after-swap', () => {
-        const pref = localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme-pref') || 'dark';
-        applyTheme(pref, false);
+        const theme = localStorage.getItem('cyrus_theme') || document.documentElement.getAttribute('data-theme') || 'dark';
+        applyTheme(theme, false);
       });
 
       document.addEventListener('astro:page-load', () => {
@@ -477,18 +440,21 @@ const {
   }
 
   .theme-btn .icon-moon,
-  .theme-btn .icon-sun,
-  .theme-btn .icon-system {
+  .theme-btn .icon-sun {
     display: none;
   }
 
-  :global([data-theme-pref="dark"]) .theme-btn .icon-moon {
+  :global([data-theme="dark"]) .theme-btn .icon-moon {
     display: inline-flex;
   }
-  :global([data-theme-pref="light"]) .theme-btn .icon-sun {
-    display: inline-flex;
+  :global([data-theme="dark"]) .theme-btn .icon-sun {
+    display: none;
   }
-  :global([data-theme-pref="system"]) .theme-btn .icon-system {
+
+  :global([data-theme="light"]) .theme-btn .icon-moon {
+    display: none;
+  }
+  :global([data-theme="light"]) .theme-btn .icon-sun {
     display: inline-flex;
   }
 
