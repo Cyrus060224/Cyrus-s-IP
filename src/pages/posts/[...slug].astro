@@ -68,6 +68,10 @@ const formattedDate = new Intl.DateTimeFormat('zh-CN', {
 
     <!-- Post Footer -->
     <footer class="post-footer">
+      <div class="post-guestbook-box">
+        <span>若对本文有思考或想探讨更多，欢迎前往 <a href="/guestbook" class="gb-prompt-link">留言板 ↗</a> 留下你的想法与足迹。</span>
+      </div>
+
       <div class="author-card">
         <div class="author-avatar">C</div>
         <div class="author-info">
@@ -269,6 +273,39 @@ const formattedDate = new Intl.DateTimeFormat('zh-CN', {
     margin-top: 4.5rem;
     padding-top: 2rem;
     border-top: 1px solid var(--rule);
+  }
+
+  .post-guestbook-box {
+    margin-bottom: 2rem;
+    padding: 1rem 1.25rem;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  :root[data-theme="light"] .post-guestbook-box {
+    background: #FFFFFF;
+    border-color: #E2E8F0;
+    color: #475569;
+  }
+
+  .gb-prompt-link {
+    color: var(--accent);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.15s ease;
+  }
+
+  :root[data-theme="light"] .gb-prompt-link {
+    color: #2563EB;
+  }
+
+  .gb-prompt-link:hover {
+    color: var(--ink);
   }
 
   .author-card {

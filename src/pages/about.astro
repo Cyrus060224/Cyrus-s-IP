@@ -37,11 +37,90 @@ import Layout from '../layouts/Layout.astro';
       <section class="about-section">
         <h2>如何找到我？</h2>
         <p>如果你想交流技术、探讨想法或有合作意向，可以通过以下方式与我取得联系：</p>
-        <div class="contact-links">
-          <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="contact-item">
-            <span class="contact-label">GitHub</span>
-            <span class="contact-value">@Cyrus060224 ↗</span>
+        
+        <div class="contact-grid">
+          <!-- 0. Guestbook -->
+          <a href="/guestbook" class="contact-card contact-link contact-highlight">
+            <div class="contact-info">
+              <div class="contact-header">
+                <span class="contact-label">💬 站内留言板</span>
+                <span class="contact-badge badge-guestbook">免登录 · 自由交流</span>
+              </div>
+              <div class="contact-val">欢迎前往留言板留下你的问候、足迹或想法</div>
+            </div>
+            <span class="link-arrow">前往留言板 ↗</span>
           </a>
+
+          <!-- 1. Email -->
+          <div class="contact-card">
+            <div class="contact-info">
+              <div class="contact-header">
+                <span class="contact-label">电子邮箱</span>
+                <span class="contact-badge">深度合作 / 探讨</span>
+              </div>
+              <div class="contact-val">wangcyrus6@gmail.com</div>
+            </div>
+            <div class="contact-actions">
+              <button type="button" class="action-btn copy-btn" data-copy="wangcyrus6@gmail.com">一键复制</button>
+            </div>
+          </div>
+
+          <!-- 2. WeChat -->
+          <div class="contact-card">
+            <div class="contact-info">
+              <div class="contact-header">
+                <span class="contact-label">微信 WeChat</span>
+                <span class="contact-badge badge-wechat">即时交流</span>
+              </div>
+              <div class="contact-val">
+                wxcyrus060224 <span class="contact-hint">（添加请注明来意）</span>
+              </div>
+            </div>
+            <div class="contact-actions">
+              <button type="button" class="action-btn copy-btn" data-copy="wxcyrus060224">复制微信号</button>
+            </div>
+          </div>
+
+          <!-- 3. X (Twitter) -->
+          <a href="https://x.com/CyrusW68175" target="_blank" rel="noreferrer" class="contact-card contact-link">
+            <div class="contact-info">
+              <div class="contact-header">
+                <span class="contact-label">X (Twitter)</span>
+                <span class="contact-badge">思考与动态</span>
+              </div>
+              <div class="contact-val">@CyrusW68175</div>
+            </div>
+            <span class="link-arrow">关注 / 私信 ↗</span>
+          </a>
+
+          <!-- 4. Telegram -->
+          <a href="https://t.me/cyrus" target="_blank" rel="noreferrer" class="contact-card contact-link">
+            <div class="contact-info">
+              <div class="contact-header">
+                <span class="contact-label">Telegram</span>
+                <span class="contact-badge badge-tg">极客与隐私交流</span>
+              </div>
+              <div class="contact-val">@cyrus</div>
+            </div>
+            <span class="link-arrow">发起对话 ↗</span>
+          </a>
+
+          <!-- 5. GitHub -->
+          <a href="https://github.com/Cyrus060224" target="_blank" rel="noreferrer" class="contact-card contact-link">
+            <div class="contact-info">
+              <div class="contact-header">
+                <span class="contact-label">GitHub</span>
+                <span class="contact-badge">代码与开源足迹</span>
+              </div>
+              <div class="contact-val">@Cyrus060224</div>
+            </div>
+            <span class="link-arrow">浏览项目 ↗</span>
+          </a>
+        </div>
+
+        <div class="contact-footer-note">
+          <span>⏱ 响应承诺：重要商务与深度来信通常在 24~48 小时内回复</span>
+          <span class="mono-tz">UTC+8</span>
         </div>
       </section>
     </div>
@@ -96,32 +175,203 @@ import Layout from '../layouts/Layout.astro';
     line-height: 1.65;
   }
 
-  .contact-links {
-    margin-top: 1rem;
+  .contact-grid {
+    margin-top: 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.85rem;
   }
 
-  .contact-item {
+  .contact-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: var(--card-bg);
     border: 1px solid var(--rule);
-    padding: 0.85rem 1.25rem;
-    border-radius: 6px;
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    transition: all 0.15s ease;
+    padding: 0.9rem 1.25rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s var(--ease-obs);
   }
 
-  .contact-item:hover {
-    border-color: var(--ink);
+  .contact-card:hover {
+    border-color: var(--rule-bold);
+    background: var(--card-bg-elevated);
     transform: translateY(-1px);
   }
 
-  .contact-value {
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .contact-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .contact-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .contact-badge {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--accent-tint);
+    color: var(--accent);
+    border: 1px solid var(--accent-glow);
+  }
+
+  .badge-guestbook {
+    background: var(--accent-tint);
+    color: var(--accent);
+    border-color: var(--accent-glow);
+  }
+
+  .contact-highlight {
+    border-color: var(--accent-glow);
+  }
+
+  .badge-wechat {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.25);
+  }
+
+  .badge-tg {
+    background: rgba(56, 189, 248, 0.1);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.25);
+  }
+
+  .contact-val {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .contact-hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    opacity: 0.8;
+  }
+
+  .contact-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .action-btn {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    padding: 5px 11px;
+    border-radius: 5px;
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    color: var(--ink);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.18s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .action-btn:hover {
+    border-color: var(--accent);
     color: var(--accent);
   }
+
+  .action-btn.primary-btn {
+    background: var(--accent-tint);
+    border-color: var(--accent-glow);
+    color: var(--accent);
+  }
+
+  .action-btn.primary-btn:hover {
+    background: var(--accent);
+    color: #05070B;
+  }
+
+  .action-btn.copied {
+    border-color: #10b981;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.12);
+  }
+
+  .link-arrow {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    transition: transform 0.2s ease;
+  }
+
+  .contact-link:hover .link-arrow {
+    transform: translateX(2px);
+  }
+
+  .contact-footer-note {
+    margin-top: 1.25rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  @media (max-width: 600px) {
+    .contact-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .contact-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+
+    .link-arrow {
+      align-self: flex-end;
+    }
+
+    .contact-footer-note {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
+  }
 </style>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const text = btn.getAttribute('data-copy');
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        const originalText = btn.textContent;
+        btn.textContent = '已复制 ✓';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('copied');
+        }, 1500);
+      } catch (err) {
+        console.error('Copy failed:', err);
+      }
+    });
+  });
+</script>

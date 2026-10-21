@@ -1,0 +1,693 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout 
+  title="留言板 · Cyrus"
+  description="Cyrus 的个人站点留言板。欢迎留下你的足迹、想法、问候或技术探讨。无需注册账号，输入昵称即可留言。"
+>
+  <div class="container guestbook-container">
+    <header class="guestbook-header">
+      <h1 class="serif-title guestbook-title">留言板</h1>
+      <p class="guestbook-lead">
+        欢迎在这里留下你的足迹、想法、问候或技术探讨。无需注册账号，输入昵称即可留言。
+      </p>
+    </header>
+
+    <div class="guestbook-body">
+      <!-- 留言表单卡片 -->
+      <section class="gb-form-card">
+        <div class="gb-form-header">
+          <h2 class="gb-form-title">留下你的留言</h2>
+          <span class="gb-form-tag">免登录 · 支持换行</span>
+        </div>
+
+        <form id="gb-form" class="gb-form">
+          <!-- 蜜罐反爬虫字段 (对人类隐藏) -->
+          <input type="text" name="hp_field" id="hp-field" class="hp-field" tabindex="-1" autocomplete="off" />
+
+          <div class="gb-input-row">
+            <div class="gb-field">
+              <label for="gb-name" class="gb-label">
+                你的称呼 / 昵称 <span class="req-star">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="gb-name" 
+                name="name" 
+                required 
+                maxlength="30"
+                placeholder="怎么称呼你（例如：Alex、小王）" 
+                class="gb-input"
+              />
+            </div>
+
+            <div class="gb-field">
+              <label for="gb-contact" class="gb-label">
+                网址或邮箱 <span class="opt-hint">(选填)</span>
+              </label>
+              <input 
+                type="text" 
+                id="gb-contact" 
+                name="contact" 
+                maxlength="60"
+                placeholder="方便我回复或回访你的主页" 
+                class="gb-input"
+              />
+            </div>
+          </div>
+
+          <div class="gb-field">
+            <label for="gb-msg" class="gb-label">
+              留言内容 <span class="req-star">*</span>
+            </label>
+            <textarea 
+              id="gb-msg" 
+              name="message" 
+              required 
+              rows="3" 
+              maxlength="1000"
+              placeholder="写下一句问候、一次交流，或是你的想法..." 
+              class="gb-input gb-textarea"
+            ></textarea>
+          </div>
+
+          <div class="gb-form-footer">
+            <span class="gb-foot-tip">友善交流 · 严谨理性</span>
+            <button type="submit" id="gb-submit-btn" class="gb-submit-btn">
+              <span>提交留言</span>
+              <span class="btn-arrow">↗</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- 留言列表区块 -->
+      <section class="gb-list-section">
+        <div class="gb-list-header">
+          <h3 class="gb-list-title" id="gb-counter">全部留言</h3>
+          <span class="gb-list-sub">最新在前</span>
+        </div>
+
+        <div id="gb-list" class="gb-list">
+          <!-- 动态渲染的留言与种子留言 -->
+        </div>
+      </section>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .guestbook-container {
+    max-width: 720px;
+  }
+
+  .guestbook-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .guestbook-title {
+    font-size: clamp(2rem, 3.5vw + 1rem, 2.75rem);
+    margin: 0.8rem 0 0.5rem;
+    color: var(--ink);
+  }
+
+  .guestbook-lead {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  /* 留言表单卡片 */
+  .gb-form-card {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  :root[data-theme="light"] .gb-form-card {
+    background: #FFFFFF;
+    border-color: #E2E8F0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  .gb-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .gb-form-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  :root[data-theme="light"] .gb-form-title {
+    color: #0F172A;
+  }
+
+  .gb-form-tag {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  :root[data-theme="light"] .gb-form-tag {
+    color: #64748B;
+  }
+
+  /* 反爬虫蜜罐隐藏 */
+  .hp-field {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .gb-input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 600px) {
+    .gb-input-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .gb-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+  }
+
+  .gb-label {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 0.4rem;
+  }
+
+  :root[data-theme="light"] .gb-label {
+    color: #1E293B;
+  }
+
+  .req-star {
+    color: var(--accent);
+  }
+
+  :root[data-theme="light"] .req-star {
+    color: #2563EB;
+  }
+
+  .opt-hint {
+    font-weight: normal;
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+
+  :root[data-theme="light"] .opt-hint {
+    color: #64748B;
+  }
+
+  /* 输入框核心样式 (双主题精修) */
+  .gb-input {
+    width: 100%;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    transition: all 0.2s ease;
+  }
+
+  .gb-input::placeholder {
+    color: var(--muted);
+    opacity: 0.7;
+  }
+
+  .gb-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  /* 浅色模式专属高对比度覆写 */
+  :root[data-theme="light"] .gb-input {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #0F172A !important;
+  }
+
+  :root[data-theme="light"] .gb-input::placeholder {
+    color: #94A3B8 !important;
+    opacity: 1 !important;
+  }
+
+  :root[data-theme="light"] .gb-input:focus {
+    border-color: #2563EB !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+  }
+
+  .gb-textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.6;
+  }
+
+  .gb-form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+  }
+
+  .gb-foot-tip {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  :root[data-theme="light"] .gb-foot-tip {
+    color: #64748B;
+  }
+
+  .gb-submit-btn {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.55rem 1.25rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s ease;
+    background: var(--accent-tint);
+    border: 1px solid var(--accent-glow);
+    color: var(--accent);
+  }
+
+  .gb-submit-btn:hover {
+    background: var(--accent);
+    color: #05070B;
+    transform: translateY(-1px);
+  }
+
+  :root[data-theme="light"] .gb-submit-btn {
+    background: #2563EB !important;
+    border: 1px solid #1D4ED8 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+  }
+
+  :root[data-theme="light"] .gb-submit-btn:hover {
+    background: #1D4ED8 !important;
+    color: #FFFFFF !important;
+  }
+
+  .btn-arrow {
+    transition: transform 0.2s ease;
+  }
+
+  .gb-submit-btn:hover .btn-arrow {
+    transform: translateX(2px);
+  }
+
+  /* 留言列表 */
+  .gb-list-section {
+    margin-top: 1rem;
+  }
+
+  .gb-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 1.25rem;
+  }
+
+  .gb-list-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  :root[data-theme="light"] .gb-list-title {
+    color: #0F172A;
+  }
+
+  .gb-list-sub {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  :root[data-theme="light"] .gb-list-sub {
+    color: #64748B;
+  }
+
+  .gb-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  /* 独立卡片封装 (使用 :global 穿透动态插入的 DOM) */
+  .gb-list :global(.gb-msg-card) {
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 1.25rem 1.4rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  }
+
+  .gb-list :global(.gb-msg-card:hover) {
+    border-color: var(--rule-bold);
+    background: var(--card-bg-elevated);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  }
+
+  :root[data-theme="light"] .gb-list :global(.gb-msg-card) {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  :root[data-theme="light"] .gb-list :global(.gb-msg-card:hover) {
+    border-color: #CBD5E1 !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07) !important;
+  }
+
+  .gb-list :global(.gb-msg-header) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  :root[data-theme="light"] .gb-list :global(.gb-msg-header) {
+    border-bottom-color: #F1F5F9 !important;
+  }
+
+  .gb-list :global(.gb-author-box) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .gb-list :global(.gb-avatar) {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .gb-list :global(.gb-author-meta) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .gb-list :global(.gb-name-row) {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+
+  .gb-list :global(.gb-author-name) {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  :root[data-theme="light"] .gb-list :global(.gb-author-name) {
+    color: #0F172A;
+  }
+
+  .gb-list :global(.gb-author-contact) {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  :root[data-theme="light"] .gb-list :global(.gb-author-contact) {
+    color: #64748B;
+  }
+
+  .gb-list :global(.gb-author-badge) {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--accent-tint);
+    color: var(--accent);
+    border: 1px solid var(--accent-glow);
+  }
+
+  :root[data-theme="light"] .gb-list :global(.gb-author-badge) {
+    background: rgba(37, 99, 235, 0.08) !important;
+    color: #2563EB !important;
+    border-color: rgba(37, 99, 235, 0.25) !important;
+  }
+
+  .gb-list :global(.gb-floor-tag) {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+  }
+
+  :root[data-theme="light"] .gb-list :global(.gb-floor-tag) {
+    background: #F8FAFC !important;
+    border-color: #E2E8F0 !important;
+    color: #64748B !important;
+  }
+
+  .gb-list :global(.gb-time) {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  :root[data-theme="light"] .gb-list :global(.gb-time) {
+    color: #94A3B8;
+  }
+
+  .gb-list :global(.gb-msg-body) {
+    padding-left: 0.25rem;
+  }
+
+  .gb-list :global(.gb-msg-content) {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+  }
+
+  :root[data-theme="light"] .gb-list :global(.gb-msg-content) {
+    color: #334155;
+  }
+</style>
+
+<script>
+  // 默认种子留言数据 (防止初期冷清)
+  const defaultMessages = [
+    {
+      id: "seed-1",
+      name: "Karlen",
+      contact: "@dev_karlen",
+      isOwner: false,
+      time: "2026-10-21 14:20",
+      content: "在 GitHub 看到你的 AI Agent 架构文章顺路摸过来的！博客非常干净舒服，排版与色调很有品味，保持更新！"
+    },
+    {
+      id: "seed-2",
+      name: "读者小李",
+      contact: "",
+      isOwner: false,
+      time: "2026-10-20 22:45",
+      content: "特别喜欢这种没有算法推荐、安安静静看长文和个人作品的独立博客。"
+    },
+    {
+      id: "seed-3",
+      name: "Cyrus",
+      contact: "",
+      isOwner: true,
+      time: "2026-10-18 09:12",
+      content: "留言板正式开放。欢迎大家在这里自由交流探讨，留下你的足迹。"
+    }
+  ];
+
+  const STORAGE_KEY = "cyrus_guestbook_messages";
+
+  function getStoredMessages() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error("Failed to read stored guestbook messages", e);
+    }
+    return defaultMessages;
+  }
+
+  function saveMessages(msgs) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs));
+    } catch (e) {
+      console.error("Failed to save guestbook messages", e);
+    }
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>'"]/g, 
+      tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+  }
+
+  function getAvatarStyle(name, isOwner) {
+    if (isOwner) {
+      return "background: linear-gradient(135deg, rgba(143,196,255,0.2), rgba(37,99,235,0.25)); color: #8FC4FF; border: 1px solid rgba(143,196,255,0.35);";
+    }
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    const hues = [215, 265, 155, 30, 185, 330];
+    const hue = hues[Math.abs(hash) % hues.length];
+    return `background: hsla(${hue}, 65%, 50%, 0.12); color: hsl(${hue}, 80%, 60%); border: 1px solid hsla(${hue}, 65%, 50%, 0.25);`;
+  }
+
+  function renderMessages() {
+    const listEl = document.getElementById("gb-list");
+    const countEl = document.getElementById("gb-counter");
+    if (!listEl) return;
+
+    const messages = getStoredMessages();
+    if (countEl) {
+      countEl.textContent = `全部留言 (${messages.length})`;
+    }
+
+    listEl.innerHTML = messages.map((msg, index) => {
+      const initial = (msg.name || "客").trim().charAt(0).toUpperCase();
+      const floor = `#${String(messages.length - index).padStart(3, '0')}`;
+      const avatarStyle = getAvatarStyle(msg.name, msg.isOwner);
+
+      return `
+        <div class="gb-msg-card">
+          <div class="gb-msg-header">
+            <div class="gb-author-box">
+              <div class="gb-avatar" style="${avatarStyle}">
+                ${initial}
+              </div>
+              <div class="gb-author-meta">
+                <div class="gb-name-row">
+                  <span class="gb-author-name">${escapeHtml(msg.name)}</span>
+                  ${msg.isOwner ? `<span class="gb-author-badge">站长</span>` : ''}
+                  ${msg.contact ? `<span class="gb-author-contact">${escapeHtml(msg.contact)}</span>` : ''}
+                </div>
+                <time class="gb-time">${escapeHtml(msg.time)}</time>
+              </div>
+            </div>
+            <span class="gb-floor-tag">${floor}</span>
+          </div>
+          <div class="gb-msg-body">
+            <p class="gb-msg-content">${escapeHtml(msg.content)}</p>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function initForm() {
+    const form = document.getElementById("gb-form");
+    if (!form) return;
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      // 蜜罐检测 (机器人若填了则直接丢弃)
+      const hp = document.getElementById("hp-field");
+      if (hp && hp.value.trim() !== "") {
+        console.warn("Honeypot triggered");
+        return;
+      }
+
+      const nameInput = document.getElementById("gb-name");
+      const contactInput = document.getElementById("gb-contact");
+      const msgInput = document.getElementById("gb-msg");
+      const submitBtn = document.getElementById("gb-submit-btn");
+
+      const name = nameInput.value.trim();
+      const contact = contactInput.value.trim();
+      const content = msgInput.value.trim();
+
+      if (!name || !content) return;
+
+      const now = new Date();
+      const timeStr = now.toISOString().slice(0, 10) + " " + now.toTimeString().slice(0, 5);
+
+      const newMsg = {
+        id: "msg-" + Date.now(),
+        name,
+        contact,
+        isOwner: name.toLowerCase() === "cyrus",
+        time: timeStr,
+        content
+      };
+
+      const current = getStoredMessages();
+      current.unshift(newMsg);
+      saveMessages(current);
+      renderMessages();
+
+      form.reset();
+
+      if (submitBtn) {
+        const origText = submitBtn.innerHTML;
+        submitBtn.innerHTML = "<span>✓ 留言已发布</span>";
+        setTimeout(() => {
+          submitBtn.innerHTML = origText;
+        }, 2000);
+      }
+    });
+  }
+
+  // 初始化
+  renderMessages();
+  initForm();
+
+  // 支持 ViewTransitions 路由跳转重新绑定
+  document.addEventListener("astro:page-load", () => {
+    renderMessages();
+    initForm();
+  });
+</script>
